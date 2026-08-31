@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { canManageContent, canManageMembership, canReadWorkspace, canUpdateLocation, explainDenied } from "@/lib/rbac/permissions";
+import { canDeleteWorkspace, canManageContent, canManageMembership, canReadWorkspace, canUpdateLocation, explainDenied } from "@/lib/rbac/permissions";
 
 describe("workspace permissions", () => {
   it("allows all active roles to read a workspace", () => {
@@ -19,6 +19,12 @@ describe("workspace permissions", () => {
     expect(canManageMembership("owner")).toBe(true);
     expect(canManageMembership("editor")).toBe(false);
     expect(canUpdateLocation("viewer")).toBe(false);
+  });
+
+  it("limits workspace deletion to owners", () => {
+    expect(canDeleteWorkspace("owner")).toBe(true);
+    expect(canDeleteWorkspace("editor")).toBe(false);
+    expect(canDeleteWorkspace("viewer")).toBe(false);
   });
 
   it("returns a clear denial message", () => {

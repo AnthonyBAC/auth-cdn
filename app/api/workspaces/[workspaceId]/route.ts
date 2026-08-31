@@ -18,3 +18,20 @@ export async function GET(_: Request, { params }: { params: Promise<{ workspaceI
   if (error) return apiError("NOT_FOUND", "Workspace not found.");
   return NextResponse.json({ workspace: data });
 }
+
+export async function DELETE(_: Request, { params }: { params: Promise<{ workspaceId: string }> }) {
+  const session = await requireUser();
+  if ("error" in session) return session.error;
+  const { workspaceId } = await params;
+
+  const { data, error } = await session.supabase
+    .from("workspaces")
+    .update({ archived_at: new Date().toISOString() })
+    .eq("id", workspaceId)
+    .is("archived_at", null)
+    .select("id")
+    .single();
+
+  if (error || !data) return apiError("FORBIDDEN", "Only workspace owners can delete workspaces.");
+  return new NextResponse(null, { status: 204 });
+}

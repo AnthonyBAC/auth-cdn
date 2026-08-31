@@ -2,8 +2,9 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 
 import { LocationSettings } from "@/components/context/location-settings";
+import { DeleteWorkspaceButton } from "@/components/workspace/delete-workspace-button";
 import { MemberManagement, type Member } from "@/components/workspace/member-management";
-import { canManageMembership, type WorkspaceRole } from "@/lib/rbac/permissions";
+import { canDeleteWorkspace, canManageMembership, type WorkspaceRole } from "@/lib/rbac/permissions";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export default async function WorkspaceSettingsPage({ params }: { params: Promise<{ workspaceId: string }> }) {
@@ -16,7 +17,7 @@ export default async function WorkspaceSettingsPage({ params }: { params: Promis
 
   const [{ data: membership }, { data: workspace }, { data: members }] = await Promise.all([
     supabase.from("memberships").select("role").eq("workspace_id", workspaceId).eq("user_id", user.id).eq("status", "active").single(),
-    supabase.from("workspaces").select("id, name, location_name, latitude, longitude, timezone").eq("id", workspaceId).single(),
+    supabase.from("workspaces").select("id, name, location_name, latitude, longitude, timezone").eq("id", workspaceId).is("archived_at", null).single(),
     supabase.from("memberships").select("user_id, role, status, profiles(email, name)").eq("workspace_id", workspaceId).neq("status", "removed").order("created_at")
   ]);
 
@@ -42,6 +43,7 @@ export default async function WorkspaceSettingsPage({ params }: { params: Promis
         }}
       />
       <MemberManagement workspaceId={workspaceId} members={(members ?? []) as unknown as Member[]} canManage={isOwner} />
+      <DeleteWorkspaceButton workspaceId={workspaceId} canDelete={canDeleteWorkspace(membership.role as WorkspaceRole)} />
     </section>
   );
 }

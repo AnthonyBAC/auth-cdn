@@ -6,7 +6,7 @@ import { workspaceInput } from "@/lib/validation/domain";
 
 type WorkspaceJoinRow = {
   role: string;
-  workspaces: { id: string; name: string; location_name: string | null };
+  workspaces: { id: string; name: string; location_name: string | null; archived_at: string | null };
 };
 
 export async function GET() {
@@ -15,9 +15,10 @@ export async function GET() {
 
   const { data, error } = await session.supabase
     .from("memberships")
-    .select("role, workspaces(id, name, location_name)")
+    .select("role, workspaces!inner(id, name, location_name, archived_at)")
     .eq("user_id", session.user.id)
     .eq("status", "active")
+    .is("workspaces.archived_at", null)
     .order("created_at", { ascending: true });
 
   if (error) return apiError("BAD_REQUEST", error.message);
