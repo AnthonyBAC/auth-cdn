@@ -1,8 +1,28 @@
+import { getSupabaseConfig } from "@/lib/supabase/config";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export default async function SupabaseDiagnosticsPage() {
-  const supabase = await createSupabaseServerClient();
   const startedAt = Date.now();
+  const { isConfigured } = getSupabaseConfig();
+  if (!isConfigured) {
+    return (
+      <section className="grid">
+        <h1>Supabase diagnostics</h1>
+        <div className="panel">
+          <dl className="diagnostics">
+            <dt>Project URL</dt>
+            <dd>{process.env.NEXT_PUBLIC_SUPABASE_URL ? "Configured" : "Missing"}</dd>
+            <dt>Publishable key</dt>
+            <dd>{process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Configured" : "Missing"}</dd>
+            <dt>Status</dt>
+            <dd>Supabase environment variables are missing.</dd>
+          </dl>
+        </div>
+      </section>
+    );
+  }
+
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user },
     error: userError
