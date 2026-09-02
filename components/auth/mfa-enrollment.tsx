@@ -88,7 +88,7 @@ export function MfaEnrollment({ enabled }: { enabled: boolean }) {
 
     const { error: profileError } = await supabase
       .from("profiles")
-      .update({ totp_enabled: true, totp_recovery_code_hash: hashToken(code) })
+      .update({ totp_enabled: true, totp_recovery_code_hash: await hashToken(code) })
       .eq("id", user.id);
 
     if (profileError) {

@@ -112,7 +112,7 @@ export function MfaChallengeForm() {
       return;
     }
 
-    const submittedHash = hashToken(values.recoveryCode.trim());
+    const submittedHash = await hashToken(values.recoveryCode.trim());
     if (!profile?.totp_recovery_code_hash || profile.totp_recovery_code_hash !== submittedHash) {
       setPending(false);
       setError("Invalid recovery code.");

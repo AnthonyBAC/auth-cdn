@@ -20,7 +20,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ wor
       workspace_id: workspaceId,
       email: parsed.data.email,
       role: parsed.data.role,
-      token_hash: hashToken(token),
+      token_hash: await hashToken(token),
       expires_at: expiresAt,
       created_by_user_id: session.user.id
     })

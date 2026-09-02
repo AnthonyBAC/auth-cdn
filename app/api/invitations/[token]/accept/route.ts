@@ -11,7 +11,7 @@ export async function POST(_: Request, { params }: { params: Promise<{ token: st
   const { data: invitation } = await session.supabase
     .from("invitations")
     .select("id, workspace_id, email, role, expires_at, accepted_at, revoked_at")
-    .eq("token_hash", hashToken(token))
+    .eq("token_hash", await hashToken(token))
     .single();
 
   if (!invitation || invitation.accepted_at || invitation.revoked_at || new Date(invitation.expires_at).getTime() < Date.now()) {
