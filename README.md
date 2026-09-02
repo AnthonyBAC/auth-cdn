@@ -5,6 +5,7 @@ Supabase-backed Trello-style MVP built with Next.js App Router, Ant Design, and 
 ## Features
 
 - Supabase Auth registration and sign-in.
+- Optional TOTP two-factor authentication (Supabase MFA): users enable it from `/security`, scan the QR code with an authenticator app, and complete a 6-digit code challenge on every sign-in.
 - Automatic personal workspace creation through a Supabase trigger.
 - Workspace-scoped RLS for profiles, memberships, invitations, boards, lists, cards, assignees, and context snapshots.
 - Owner/editor/viewer role behavior.
@@ -38,6 +39,14 @@ curl http://localhost:3000/api/health/supabase
 ```
 
 You can also open `/diagnostics/supabase` in the browser. It checks whether the project URL and publishable key are configured, whether Supabase Auth responds, and whether a basic RLS-protected workspace query succeeds.
+
+## Two-Factor Authentication (TOTP)
+
+TOTP MFA is opt-in per user and uses Supabase Auth MFA, so no extra tables or dependencies are required. Make sure TOTP is enabled in the Supabase Dashboard under **Authentication → Sign In / Providers → MFA** (enabled by default).
+
+- Enable it from `/security` (linked in the Workspaces toolbar): scan the QR code with an authenticator app and confirm with the 6-digit code it generates.
+- After enabling, every sign-in requires the password **plus** a 6-digit TOTP code (`/login/mfa`).
+- The session's authenticator assurance level (AAL) is enforced in `middleware.ts` for pages and in `lib/auth/require-user.ts` for API routes: an `aal1` session with a verified factor is redirected to the challenge / rejected until the code is verified (`aal2`).
 
 ## Vercel
 

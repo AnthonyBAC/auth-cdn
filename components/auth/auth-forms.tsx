@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { getMfaState } from "@/lib/auth/mfa";
 
 export function AuthForm({ mode }: { mode: "login" | "register" }) {
   const router = useRouter();
@@ -32,6 +33,15 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
     if (result.error) {
       setError(result.error.message);
       return;
+    }
+
+    if (mode === "login") {
+      const mfaState = await getMfaState(supabase);
+      if (mfaState.needsChallenge) {
+        router.replace(`/login/mfa?redirectTo=${encodeURIComponent(redirectTo)}`);
+        router.refresh();
+        return;
+      }
     }
 
     router.replace(redirectTo);
