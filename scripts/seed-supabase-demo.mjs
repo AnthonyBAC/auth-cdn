@@ -1,5 +1,13 @@
 import { createClient } from "@supabase/supabase-js";
 
+// Load credentials from the project .env when present (Next.js does not load
+// .env for plain Node scripts).
+try {
+  process.loadEnvFile(".env");
+} catch {
+  // .env is optional: variables may come from the environment.
+}
+
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -58,7 +66,9 @@ async function upsertProfile(user, name) {
   const { error } = await supabase.from("profiles").upsert({
     id: user.id,
     email: user.email.toLowerCase(),
-    name
+    name,
+    totp_enabled: false,
+    totp_recovery_code_hash: null
   });
   if (error) throw error;
 }

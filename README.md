@@ -5,7 +5,7 @@ Supabase-backed Trello-style MVP built with Next.js App Router, Ant Design, and 
 ## Features
 
 - Supabase Auth registration and sign-in.
-- Optional TOTP two-factor authentication (Supabase MFA): users enable it from `/security`, scan the QR code with an authenticator app, and complete a 6-digit code challenge on every sign-in.
+- Optional TOTP two-factor authentication (Supabase MFA): users enable it from `/security`, scan the QR code with an authenticator app, get a single-use recovery code, and complete a 6-digit code challenge on every sign-in.
 - Automatic personal workspace creation through a Supabase trigger.
 - Workspace-scoped RLS for profiles, memberships, invitations, boards, lists, cards, assignees, and context snapshots.
 - Owner/editor/viewer role behavior.
@@ -24,7 +24,7 @@ pnpm install
 
 2. Create `.env.local` from `.env.example` and set the Supabase project URL plus publishable/anon key.
 
-3. Apply `supabase/migrations/0001_initial.sql` to the Supabase project.
+3. Apply the migrations in `supabase/migrations/` (in order) to the Supabase project.
 
 4. Run the app:
 
@@ -42,11 +42,12 @@ You can also open `/diagnostics/supabase` in the browser. It checks whether the 
 
 ## Two-Factor Authentication (TOTP)
 
-TOTP MFA is opt-in per user and uses Supabase Auth MFA, so no extra tables or dependencies are required. Make sure TOTP is enabled in the Supabase Dashboard under **Authentication → Sign In / Providers → MFA** (enabled by default).
+TOTP MFA is opt-in per user and uses Supabase Auth MFA. Make sure TOTP is enabled in the Supabase Dashboard under **Authentication → Sign In / Providers → MFA** (enabled by default), and apply `supabase/migrations/0002_profile_totp.sql` (adds `totp_enabled` and `totp_recovery_code_hash` to `profiles`).
 
 - Enable it from `/security` (linked in the Workspaces toolbar): scan the QR code with an authenticator app and confirm with the 6-digit code it generates.
-- After enabling, every sign-in requires the password **plus** a 6-digit TOTP code (`/login/mfa`).
-- The session's authenticator assurance level (AAL) is enforced in `middleware.ts` for pages and in `lib/auth/require-user.ts` for API routes: an `aal1` session with a verified factor is redirected to the challenge / rejected until the code is verified (`aal2`).
+- On activation a **recovery code** is shown once; only its SHA-256 hash is stored in `profiles.totp_recovery_code_hash`. The TOTP secret itself stays in Supabase Auth (`auth.mfa_factors`) and is never stored in cookies or in the database.
+- After enabling, every sign-in requires the password **plus** a 6-digit TOTP code (`/login/mfa`). Users who lose their device can sign in with the recovery code, which disables TOTP on the account (single-use).
+- The session's authenticator assurance level (AAL) is enforced in `middleware.ts` for pages and in `lib/auth/require-user.ts` for API routes: an `aal1` session with a verified factor is redirected to the challenge / rejected until the code is verified (`aal2`). The session JWT remains in httpOnly cookies via `@supabase/ssr`.
 
 ## Vercel
 

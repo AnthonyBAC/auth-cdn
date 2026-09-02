@@ -5,6 +5,7 @@ import { Alert, Button, Card, Form, Input, QRCode, Space, Typography } from "ant
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { createToken, hashToken } from "@/lib/auth/tokens";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type EnrollmentData = {
@@ -20,10 +21,12 @@ export function MfaEnrollment({ enabled }: { enabled: boolean }) {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [enrollment, setEnrollment] = useState<EnrollmentData | null>(null);
+  const [recoveryCode, setRecoveryCode] = useState<string | null>(null);
 
   async function startEnrollment() {
     setError(null);
     setMessage(null);
+    setRecoveryCode(null);
     setPending(true);
 
     const { data, error: enrollError } = await supabase.auth.mfa.enroll({
@@ -72,8 +75,29 @@ export function MfaEnrollment({ enabled }: { enabled: boolean }) {
       return;
     }
 
+    // Generate a one-time recovery code and persist only its hash plus the
+    // enabled flag on the user's own profile row (RLS: update own profile).
+    const code = createToken(9);
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+    if (!user) {
+      setError("Session expired. Sign in again to finish enabling two-factor authentication.");
+      return;
+    }
+
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .update({ totp_enabled: true, totp_recovery_code_hash: hashToken(code) })
+      .eq("id", user.id);
+
+    if (profileError) {
+      setError(profileError.message);
+      return;
+    }
+
     setEnrollment(null);
-    setMessage("Two-factor authentication enabled. You will be asked for a code on your next sign-in.");
+    setRecoveryCode(code);
     router.refresh();
   }
 
@@ -98,7 +122,23 @@ export function MfaEnrollment({ enabled }: { enabled: boolean }) {
       }
     }
 
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+    if (user) {
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ totp_enabled: false, totp_recovery_code_hash: null })
+        .eq("id", user.id);
+      if (profileError) {
+        setPending(false);
+        setError(profileError.message);
+        return;
+      }
+    }
+
     setPending(false);
+    setRecoveryCode(null);
     setMessage("Two-factor authentication disabled.");
     router.refresh();
   }
@@ -147,6 +187,24 @@ export function MfaEnrollment({ enabled }: { enabled: boolean }) {
           </Typography.Text>
           {error ? <Alert type="error" showIcon message={error} /> : null}
           {message ? <Alert type="success" showIcon message={message} /> : null}
+          {recoveryCode ? (
+            <Alert
+              type="warning"
+              showIcon
+              message="Save your recovery code"
+              description={
+                <Space direction="vertical" size="small">
+                  <Typography.Text>
+                    If you lose access to your authenticator app, this code is the only way to sign in. It is shown once and only its
+                    hash is stored.
+                  </Typography.Text>
+                  <Typography.Paragraph copyable={{ text: recoveryCode }} strong style={{ fontSize: 18, marginBottom: 0 }}>
+                    {recoveryCode}
+                  </Typography.Paragraph>
+                </Space>
+              }
+            />
+          ) : null}
           {enabled ? (
             <Button danger icon={<StopOutlined />} loading={pending} onClick={disableMfa}>
               Disable two-factor authentication

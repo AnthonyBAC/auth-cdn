@@ -1,11 +1,12 @@
 "use client";
 
-import { SafetyCertificateOutlined } from "@ant-design/icons";
+import { KeyOutlined, SafetyCertificateOutlined } from "@ant-design/icons";
 import { Alert, Button, Card, Form, Input, Typography } from "antd";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { getMfaState } from "@/lib/auth/mfa";
+import { hashToken } from "@/lib/auth/tokens";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 export function MfaChallengeForm() {
@@ -14,6 +15,7 @@ export function MfaChallengeForm() {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [useRecovery, setUseRecovery] = useState(false);
   const supabase = createSupabaseBrowserClient();
 
   useEffect(() => {
@@ -85,6 +87,71 @@ export function MfaChallengeForm() {
     router.refresh();
   }
 
+  async function onRecoverySubmit(values: { recoveryCode: string }) {
+    setError(null);
+    setPending(true);
+
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+    if (!user) {
+      setPending(false);
+      setError("Session expired. Sign in again.");
+      return;
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("totp_recovery_code_hash")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError) {
+      setPending(false);
+      setError(profileError.message);
+      return;
+    }
+
+    const submittedHash = hashToken(values.recoveryCode.trim());
+    if (!profile?.totp_recovery_code_hash || profile.totp_recovery_code_hash !== submittedHash) {
+      setPending(false);
+      setError("Invalid recovery code.");
+      return;
+    }
+
+    // Recovery code is single-use: remove all TOTP factors and reset the
+    // profile flags so the account drops back to password-only sign-in.
+    const { data: factors, error: listError } = await supabase.auth.mfa.listFactors();
+    if (listError) {
+      setPending(false);
+      setError(listError.message);
+      return;
+    }
+
+    for (const factor of factors.totp) {
+      const { error: unenrollError } = await supabase.auth.mfa.unenroll({ factorId: factor.id });
+      if (unenrollError) {
+        setPending(false);
+        setError(unenrollError.message);
+        return;
+      }
+    }
+
+    const { error: resetError } = await supabase
+      .from("profiles")
+      .update({ totp_enabled: false, totp_recovery_code_hash: null })
+      .eq("id", user.id);
+
+    setPending(false);
+    if (resetError) {
+      setError(resetError.message);
+      return;
+    }
+
+    router.replace(searchParams.get("redirectTo") ?? "/workspaces");
+    router.refresh();
+  }
+
   if (checking) {
     return null;
   }
@@ -92,16 +159,41 @@ export function MfaChallengeForm() {
   return (
     <Card className="auth-card">
       <Typography.Title level={1}>Two-factor verification</Typography.Title>
-      <Typography.Paragraph type="secondary">Enter the 6-digit code from your authenticator app.</Typography.Paragraph>
-      <Form layout="vertical" onFinish={onSubmit} requiredMark={false}>
-        <Form.Item name="code" label="Verification code" rules={[{ required: true, len: 6, message: "Enter the 6-digit code." }]}>
-          <Input autoComplete="one-time-code" autoFocus inputMode="numeric" maxLength={6} placeholder="000000" />
-        </Form.Item>
-        {error ? <Alert type="error" showIcon message={error} /> : null}
-        <Button block htmlType="submit" icon={<SafetyCertificateOutlined />} loading={pending} type="primary">
-          Verify
-        </Button>
-      </Form>
+      {useRecovery ? (
+        <>
+          <Typography.Paragraph type="secondary">
+            Enter the recovery code you saved when enabling two-factor authentication. Using it disables TOTP on your account.
+          </Typography.Paragraph>
+          <Form layout="vertical" onFinish={onRecoverySubmit} requiredMark={false}>
+            <Form.Item name="recoveryCode" label="Recovery code" rules={[{ required: true, message: "Enter your recovery code." }]}>
+              <Input autoComplete="off" autoFocus placeholder="Recovery code" />
+            </Form.Item>
+            {error ? <Alert type="error" showIcon message={error} /> : null}
+            <Button block htmlType="submit" icon={<KeyOutlined />} loading={pending} type="primary">
+              Recover access
+            </Button>
+            <Button block type="link" onClick={() => setUseRecovery(false)}>
+              Back to authenticator code
+            </Button>
+          </Form>
+        </>
+      ) : (
+        <>
+          <Typography.Paragraph type="secondary">Enter the 6-digit code from your authenticator app.</Typography.Paragraph>
+          <Form layout="vertical" onFinish={onSubmit} requiredMark={false}>
+            <Form.Item name="code" label="Verification code" rules={[{ required: true, len: 6, message: "Enter the 6-digit code." }]}>
+              <Input autoComplete="one-time-code" autoFocus inputMode="numeric" maxLength={6} placeholder="000000" />
+            </Form.Item>
+            {error ? <Alert type="error" showIcon message={error} /> : null}
+            <Button block htmlType="submit" icon={<SafetyCertificateOutlined />} loading={pending} type="primary">
+              Verify
+            </Button>
+            <Button block type="link" onClick={() => setUseRecovery(true)}>
+              Lost your device? Use a recovery code
+            </Button>
+          </Form>
+        </>
+      )}
     </Card>
   );
 }
