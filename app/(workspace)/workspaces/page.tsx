@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { SignOutButton } from "@/components/auth/sign-out-button";
@@ -36,6 +37,9 @@ export default async function WorkspacesPage() {
     <section className="grid">
       <div className="toolbar">
         <h1 style={{ margin: 0, flex: 1 }}>Workspaces</h1>
+        <Link className="button secondary" href="/security">
+          Security
+        </Link>
         <SignOutButton />
       </div>
       <WorkspaceList workspaces={workspaces} />
