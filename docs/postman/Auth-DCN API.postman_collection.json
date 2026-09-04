@@ -1,0 +1,1661 @@
+{
+  "info": {
+    "name": "Auth-DCN API",
+    "description": "Auth-DCN REST API collection.\nNext.js App Router + Supabase.\nLos endpoints privados utilizan sesión Supabase mediante cookies (sb-...-auth-token).\nNo existen endpoints REST de login/register: se realizan desde el cliente con Supabase Auth.\n\nCÓMO PROBAR:\n1. Ejecuta '0. Auth (Supabase)' -> 'Sign In (password)' con {{loginEmail}} / {{loginPassword}}.\n   Ese request guarda la cookie de sesión y el accessToken automáticamente.\n2. Ejecuta los endpoints de cada recurso (Workspaces, Boards, Lists, Cards, Members, Invitations, Location & Context).\n3. Los IDs (workspaceId, boardId, listId, cardId, invitationToken) se guardan solos tras cada Create.\n\nAlterna Local/Producción con los Environments:\n  - Auth-DCN API - Local: http://localhost:3000\n  - Auth-DCN API - Production: https://auth-cdn.vercel.app\nConsultar docs/postman/postman-api.md para documentación completa.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string",
+      "description": "URL base de la aplicación. Se controla mediante el Environment de Postman (Local: http://localhost:3000, Producción: https://auth-cdn.vercel.app)."
+    },
+    {
+      "key": "workspaceId",
+      "value": "",
+      "type": "string",
+      "description": "ID del workspace utilizado por requests dependientes. Se guarda automáticamente después de Workspaces - Create."
+    },
+    {
+      "key": "boardId",
+      "value": "",
+      "type": "string",
+      "description": "ID del board utilizado por requests dependientes. Se guarda automáticamente después de Boards - Create."
+    },
+    {
+      "key": "listId",
+      "value": "",
+      "type": "string",
+      "description": "ID de la lista utilizada por requests dependientes. Se guarda automáticamente después de Lists - Create."
+    },
+    {
+      "key": "cardId",
+      "value": "",
+      "type": "string",
+      "description": "ID de la card utilizada por requests dependientes. Se guarda automáticamente después de Cards - Create."
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string",
+      "description": "ID del usuario autenticado como owner. Se guarda automáticamente después de Sign In."
+    },
+    {
+      "key": "invitationToken",
+      "value": "",
+      "type": "string",
+      "description": "Token en claro devuelto al crear una invitación. Se guarda automáticamente después de Invitations - Create. Es temporal y no debe persistirse con un valor real al versionar la colección."
+    },
+    {
+      "key": "supabaseUrl",
+      "value": "",
+      "type": "string",
+      "description": "URL base de Supabase Auth (para login/signup). Debe venir del environment seleccionado."
+    },
+    {
+      "key": "supabaseAnonKey",
+      "value": "",
+      "type": "string",
+      "description": "Anon/publishable key de Supabase. Debe venir del environment seleccionado."
+    },
+    {
+      "key": "loginEmail",
+      "value": "",
+      "type": "string",
+      "description": "Email para iniciar sesión en las pruebas. Debe venir del environment seleccionado."
+    },
+    {
+      "key": "loginPassword",
+      "value": "",
+      "type": "string",
+      "description": "Contraseña de la cuenta de pruebas. Debe venir del environment seleccionado."
+    },
+    {
+      "key": "authCookie",
+      "value": "",
+      "type": "string",
+      "description": "Cookie de sesión Supabase (sb-<ref>-auth-token). Se genera automáticamente al hacer Sign In."
+    },
+    {
+      "key": "authCookieName",
+      "value": "",
+      "type": "string",
+      "description": "Nombre de la cookie Supabase generada automáticamente al hacer Sign In."
+    },
+    {
+      "key": "authCookieValue",
+      "value": "",
+      "type": "string",
+      "description": "Valor de la cookie Supabase generado automáticamente al hacer Sign In."
+    },
+    {
+      "key": "authCookieChunks",
+      "value": "",
+      "type": "string",
+      "description": "Cookies Supabase generadas automáticamente, incluyendo chunks .0/.1 cuando la sesión supera el tamaño permitido."
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string",
+      "description": "Access token de la sesión (referencia)."
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Auth (Supabase)",
+      "description": "Login y creación de usuario directamente contra Supabase Auth. La app NO expone endpoints REST de login/register; la sesión se maneja con cookies. Ejecuta 'Sign In' primero: guarda la cookie de sesión para que el resto de endpoints privados funcione.",
+      "item": [
+        {
+          "name": "Sign In (password)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response has access token\", function () {",
+                  "    const session = pm.response.json();",
+                  "    pm.expect(session).to.have.property(\"access_token\");",
+                  "});",
+                  "const session = pm.response.json();",
+                  "if (session.access_token) {",
+                  "    const supabaseUrl = pm.variables.get(\"supabaseUrl\");",
+                  "    const baseUrl = pm.variables.get(\"baseUrl\");",
+                  "    const url = new URL(supabaseUrl);",
+                  "    const ref = url.hostname.split(\".\")[0];",
+                  "    function b64url(str) {",
+                  "        const b64 = btoa(unescape(encodeURIComponent(str)));",
+                  "        return b64.replace(/\\+/g, \"-\").replace(/\\//g, \"_\").replace(/=+$/, \"\");",
+                  "    }",
+                  "    function createChunks(key, value) {",
+                  "        const maxChunkSize = 3180;",
+                  "        let encodedValue = encodeURIComponent(value);",
+                  "        if (encodedValue.length <= maxChunkSize) {",
+                  "            return [{ name: key, value }];",
+                  "        }",
+                  "        const chunks = [];",
+                  "        while (encodedValue.length > 0) {",
+                  "            let encodedChunkHead = encodedValue.slice(0, maxChunkSize);",
+                  "            const lastEscapePos = encodedChunkHead.lastIndexOf(\"%\");",
+                  "            if (lastEscapePos > maxChunkSize - 3) {",
+                  "                encodedChunkHead = encodedChunkHead.slice(0, lastEscapePos);",
+                  "            }",
+                  "            chunks.push(decodeURIComponent(encodedChunkHead));",
+                  "            encodedValue = encodedValue.slice(encodedChunkHead.length);",
+                  "        }",
+                  "        return chunks.map(function (value, index) {",
+                  "            return { name: key + \".\" + index, value };",
+                  "        });",
+                  "    }",
+                  "    const cookieName = \"sb-\" + ref + \"-auth-token\";",
+                  "    const cookieValue = \"base64-\" + b64url(JSON.stringify(session));",
+                  "    const cookieChunks = createChunks(cookieName, cookieValue);",
+                  "    const cookieHeader = cookieChunks.map(function (cookie) {",
+                  "        return cookie.name + \"=\" + cookie.value;",
+                  "    }).join(\"; \");",
+                  "    pm.collectionVariables.set(\"authCookie\", cookieHeader);",
+                  "    pm.collectionVariables.set(\"authCookieName\", cookieName);",
+                  "    pm.collectionVariables.set(\"authCookieValue\", cookieValue);",
+                  "    pm.collectionVariables.set(\"authCookieChunks\", JSON.stringify(cookieChunks));",
+                  "    pm.collectionVariables.set(\"accessToken\", session.access_token);",
+                  "    if (session.user && session.user.id) {",
+                  "        pm.collectionVariables.set(\"userId\", session.user.id);",
+                  "    }",
+                  "    const jar = pm.cookies.jar();",
+                  "    jar.clear(baseUrl, function () {",
+                  "        cookieChunks.forEach(function (cookie) {",
+                  "            jar.set(baseUrl, cookie.name, cookie.value, function (error) {",
+                  "                if (error) {",
+                  "                    console.error(\"No se pudo guardar la cookie de auth en Postman\", error);",
+                  "                }",
+                  "            });",
+                  "        });",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{supabaseAnonKey}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{supabaseAnonKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{loginEmail}}\",\n  \"password\": \"{{loginPassword}}\"\n}"
+            },
+            "url": "{{supabaseUrl}}/auth/v1/token?grant_type=password",
+            "description": "Inicia sesión con email/password en Supabase Auth. Guarda la cookie sb-<ref>-auth-token y el accessToken en variables de colección. Requiere que la cuenta exista y esté confirmada."
+          }
+        },
+        {
+          "name": "Sign Up (create user)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{supabaseAnonKey}}"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{supabaseAnonKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{loginEmail}}\",\n  \"password\": \"{{loginPassword}}\"\n}"
+            },
+            "url": "{{supabaseUrl}}/auth/v1/signup",
+            "description": "Crea un usuario en Supabase Auth. Según la configuración del proyecto, puede requerir confirmación de email antes de poder iniciar sesión."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "description": "Chequeo de conectividad con Supabase. No requiere autenticación.",
+      "item": [
+        {
+          "name": "Health - Supabase status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response is JSON\", function () {",
+                  "    pm.response.to.have.jsonBody();",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/health/supabase",
+            "description": "Comprueba la conectividad con Supabase. Público (sin autenticación). Devuelve 200, o 503 si faltan las variables de entorno de Supabase."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "description": "Operaciones de sesión: obtener el usuario actual y cerrar sesión. Requieren cookie de sesión Supabase.",
+      "item": [
+        {
+          "name": "Auth - Get current session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response has user\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property(\"user\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/auth/session",
+            "description": "Devuelve el usuario de la sesión actual. Requiere sesión Supabase (cookie). Responde 200 con { user }, 401 sin sesión y 403 si MFA pendiente."
+          },
+          "response": [
+            {
+              "name": "Sesión autenticada",
+              "originalRequest": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/auth/session"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"user\": {\n    \"id\": \"0f8fad5b-d9cb-469f-a165-70867728950e\",\n    \"email\": \"user@example.com\",\n    \"name\": \"user\"\n  }\n}"
+            },
+            {
+              "name": "Sesión no autenticada",
+              "originalRequest": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/auth/session"
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": {\n    \"code\": \"UNAUTHENTICATED\",\n    \"message\": \"Sign in to continue.\",\n    \"details\": {}\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Workspaces",
+      "description": "Operaciones de espacios de trabajo. Roles owner/editor/viewer. Archivado lógico mediante archived_at.",
+      "item": [
+        {
+          "name": "Workspaces - List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response has workspaces\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property(\"workspaces\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/workspaces",
+            "description": "Lista los workspaces con membresía activa del usuario. Requiere sesión. Roles: owner/editor/viewer. Responde 200 con { workspaces }."
+          },
+          "response": [
+            {
+              "name": "Listado de workspaces",
+              "originalRequest": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/workspaces"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"workspaces\": [\n    {\n      \"id\": \"0f8fad5b-d9cb-469f-a165-70867728950e\",\n      \"name\": \"Product Team\",\n      \"role\": \"owner\",\n      \"locationName\": null\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Workspaces - Create",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"Response has workspace\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property(\"workspace\");",
+                  "});",
+                  "pm.test(\"Save workspaceId\", function () {",
+                  "    const json = pm.response.json();",
+                  "    if (json.workspace && json.workspace.id) {",
+                  "        pm.collectionVariables.set(\"workspaceId\", json.workspace.id);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Product Team\"\n}"
+            },
+            "url": "{{baseUrl}}/api/workspaces",
+            "description": "Crea un workspace y convierte al usuario en owner. Requiere sesión. Body: { name (1-100) }. Responde 201 con { workspace }."
+          },
+          "response": [
+            {
+              "name": "Workspace creado",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Product Team\"\n}"
+                },
+                "url": "{{baseUrl}}/api/workspaces"
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"workspace\": {\n    \"id\": \"0f8fad5b-d9cb-469f-a165-70867728950e\",\n    \"name\": \"Product Team\",\n    \"role\": \"owner\"\n  }\n}"
+            },
+            {
+              "name": "Input inválido",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"\"\n}"
+                },
+                "url": "{{baseUrl}}/api/workspaces"
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": {\n    \"code\": \"BAD_REQUEST\",\n    \"message\": \"Workspace input is invalid.\",\n    \"details\": {\n      \"formErrors\": [],\n      \"fieldErrors\": {\n        \"name\": [\n          \"String must contain at least 1 character(s)\"\n        ]\n      }\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Workspaces - Get by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response has workspace\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property(\"workspace\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/workspaces/{{workspaceId}}",
+            "description": "Obtiene un workspace no archivado por ID. Requiere sesión. Path: workspaceId. Responde 200 con { workspace } o 404."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Boards",
+      "description": "Operaciones de tableros dentro de un workspace. Owner/editor crean, actualizan o archivan; viewer solo lee.",
+      "item": [
+        {
+          "name": "Boards - List by workspace",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response has boards\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property(\"boards\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/workspaces/{{workspaceId}}/boards",
+            "description": "Lista los boards activos de un workspace. Requiere sesión. Roles: owner/editor/viewer. Path: workspaceId."
+          }
+        },
+        {
+          "name": "Boards - Create",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"Response has board\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property(\"board\");",
+                  "});",
+                  "pm.test(\"Save boardId\", function () {",
+                  "    const json = pm.response.json();",
+                  "    if (json.board && json.board.id) {",
+                  "        pm.collectionVariables.set(\"boardId\", json.board.id);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"MVP Roadmap\"\n}"
+            },
+            "url": "{{baseUrl}}/api/workspaces/{{workspaceId}}/boards",
+            "description": "Crea un board en un workspace. Requiere sesión. Roles: owner/editor. Body: { title (1-100) }. Responde 201 con { board }."
+          },
+          "response": [
+            {
+              "name": "Board creado",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"MVP Roadmap\"\n}"
+                },
+                "url": "{{baseUrl}}/api/workspaces/{{workspaceId}}/boards"
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"board\": {\n    \"id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\n    \"title\": \"MVP Roadmap\",\n    \"position\": 0\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Boards - Get by ID (nested)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response has board\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property(\"board\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/boards/{{boardId}}",
+            "description": "Obtiene un board con listas y cards anidadas. Requiere sesión. Roles: owner/editor/viewer. Path: boardId. Responde 404 si no existe."
+          },
+          "response": [
+            {
+              "name": "Board con listas y cards",
+              "originalRequest": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/boards/{{boardId}}"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"board\": {\n    \"id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\n    \"workspace_id\": \"0f8fad5b-d9cb-469f-a165-70867728950e\",\n    \"title\": \"MVP Roadmap\",\n    \"lists\": [\n      {\n        \"id\": \"1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed\",\n        \"title\": \"Doing\",\n        \"position\": 1000,\n        \"cards\": [\n          {\n            \"id\": \"2c9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed\",\n            \"title\": \"Build login flow\",\n            \"description\": \"Email/password MVP auth\",\n            \"position\": 0,\n            \"list_id\": \"1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed\",\n            \"created_at\": \"2026-01-01T00:00:00.000Z\",\n            \"updated_at\": \"2026-01-01T00:00:00.000Z\"\n          }\n        ]\n      }\n    ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Boards - Update title",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response has board\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property(\"board\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Roadmap\"\n}"
+            },
+            "url": "{{baseUrl}}/api/boards/{{boardId}}",
+            "description": "Actualiza el título de un board (solo title). Requiere sesión. Roles: owner/editor. Body: { title (1-100) }."
+          },
+          "response": [
+            {
+              "name": "Board actualizado",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Updated Roadmap\"\n}"
+                },
+                "url": "{{baseUrl}}/api/boards/{{boardId}}"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"board\": {\n    \"id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\n    \"title\": \"Updated Roadmap\"\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Lists",
+      "description": "Operaciones de listas dentro de un board. Solo owner/editor pueden crear, actualizar o archivar.",
+      "item": [
+        {
+          "name": "Lists - Create",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"Response has list\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property(\"list\");",
+                  "});",
+                  "pm.test(\"Save listId\", function () {",
+                  "    const json = pm.response.json();",
+                  "    if (json.list && json.list.id) {",
+                  "        pm.collectionVariables.set(\"listId\", json.list.id);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Doing\",\n  \"position\": 1000\n}"
+            },
+            "url": "{{baseUrl}}/api/boards/{{boardId}}/lists",
+            "description": "Crea una lista en un board. Requiere sesión. Roles: owner/editor. Body: { title (1-100), position? }. Responde 201 con { list }."
+          },
+          "response": [
+            {
+              "name": "Lista creada",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Doing\",\n  \"position\": 1000\n}"
+                },
+                "url": "{{baseUrl}}/api/boards/{{boardId}}/lists"
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"list\": {\n    \"id\": \"1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed\",\n    \"title\": \"Doing\",\n    \"position\": 1000\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Lists - Update / Move",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response has list\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property(\"list\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"In Progress\",\n  \"position\": 2000\n}"
+            },
+            "url": "{{baseUrl}}/api/lists/{{listId}}",
+            "description": "Actualiza título/posición de una lista. Requiere sesión. Roles: owner/editor. Body: { title, position? }. Responde 200 con { list }."
+          },
+          "response": [
+            {
+              "name": "Lista actualizada",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"In Progress\",\n  \"position\": 2000\n}"
+                },
+                "url": "{{baseUrl}}/api/lists/{{listId}}"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"list\": {\n    \"id\": \"1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed\",\n    \"title\": \"In Progress\",\n    \"position\": 2000\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Cards",
+      "description": "Operaciones de tarjetas dentro de una lista. Solo owner/editor. Una card solo puede moverse a una lista del mismo board.",
+      "item": [
+        {
+          "name": "Cards - Create",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"Response has card\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property(\"card\");",
+                  "});",
+                  "pm.test(\"Save cardId\", function () {",
+                  "    const json = pm.response.json();",
+                  "    if (json.card && json.card.id) {",
+                  "        pm.collectionVariables.set(\"cardId\", json.card.id);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Build login flow\",\n  \"description\": \"Email/password MVP auth\"\n}"
+            },
+            "url": "{{baseUrl}}/api/lists/{{listId}}/cards",
+            "description": "Crea una card en una lista (hereda board_id de la lista). Requiere sesión. Roles: owner/editor. Body: { title (1-200), description?, assigneeId? } (assigneeId se valida pero no se usa). Responde 201 con { card }."
+          },
+          "response": [
+            {
+              "name": "Card creada",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Build login flow\",\n  \"description\": \"Email/password MVP auth\"\n}"
+                },
+                "url": "{{baseUrl}}/api/lists/{{listId}}/cards"
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"card\": {\n    \"id\": \"2c9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed\",\n    \"title\": \"Build login flow\",\n    \"description\": \"Email/password MVP auth\",\n    \"position\": 0,\n    \"list_id\": \"1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Cards - Update",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response has card\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property(\"card\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Build secure login flow\",\n  \"description\": \"Validate credentials\"\n}"
+            },
+            "url": "{{baseUrl}}/api/cards/{{cardId}}",
+            "description": "Actualiza título/descripción de una card. Requiere sesión. Roles: owner/editor. Body: { title (1-200), description? }."
+          },
+          "response": [
+            {
+              "name": "Card actualizada",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Build secure login flow\",\n  \"description\": \"Validate credentials\"\n}"
+                },
+                "url": "{{baseUrl}}/api/cards/{{cardId}}"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"card\": {\n    \"id\": \"2c9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed\",\n    \"title\": \"Build secure login flow\",\n    \"description\": \"Validate credentials\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Cards - Move",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response has card\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property(\"card\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"listId\": \"{{listId}}\",\n  \"position\": 1500\n}"
+            },
+            "url": "{{baseUrl}}/api/cards/{{cardId}}/move",
+            "description": "Mueve una card a otra lista. Requiere sesión. Roles: owner/editor. Body: { listId (uuid), position? }. Solo puede moverse a una lista del mismo board (400 si no)."
+          },
+          "response": [
+            {
+              "name": "Card movida",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"listId\": \"{{listId}}\",\n  \"position\": 1500\n}"
+                },
+                "url": "{{baseUrl}}/api/cards/{{cardId}}/move"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"card\": {\n    \"id\": \"2c9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed\",\n    \"list_id\": \"1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed\",\n    \"position\": 1500\n  }\n}"
+            },
+            {
+              "name": "Mover entre boards distintos",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"listId\": \"4d3a2b1c-0000-0000-0000-000000000000\",\n  \"position\": 1500\n}"
+                },
+                "url": "{{baseUrl}}/api/cards/{{cardId}}/move"
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": {\n    \"code\": \"BAD_REQUEST\",\n    \"message\": \"Cards can only move to lists on the same board.\",\n    \"details\": {}\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Members",
+      "description": "Gestión de miembros de un workspace. Solo owner cambia roles o elimina. Soft-delete con status=\"removed\".",
+      "item": [
+        {
+          "name": "Members - List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response has members\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property(\"members\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/workspaces/{{workspaceId}}/members",
+            "description": "Lista los miembros activos de un workspace. Requiere sesión. Roles: owner/editor/viewer (RLS). Path: workspaceId."
+          },
+          "response": [
+            {
+              "name": "Listado de miembros",
+              "originalRequest": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/workspaces/{{workspaceId}}/members"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"members\": [\n    {\n      \"user_id\": \"0f8fad5b-d9cb-469f-a165-70867728950e\",\n      \"role\": \"owner\",\n      \"status\": \"active\",\n      \"profiles\": {\n        \"id\": \"0f8fad5b-d9cb-469f-a165-70867728950e\",\n        \"email\": \"user@example.com\",\n        \"name\": \"user\"\n      }\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Members - Change role",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 409\", function () {",
+                  "    pm.expect([200, 409]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test(\"Response matches member role result\", function () {",
+                  "    const json = pm.response.json();",
+                  "    if (pm.response.code === 200) {",
+                  "        pm.expect(json).to.have.property(\"member\");",
+                  "    }",
+                  "    if (pm.response.code === 409) {",
+                  "        pm.expect(json.error.code).to.eql(\"CONFLICT\");",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"viewer\"\n}"
+            },
+            "url": "{{baseUrl}}/api/workspaces/{{workspaceId}}/members/{{userId}}",
+            "description": "Cambia el rol de un miembro. Requiere sesión. Rol: owner. Body: { role }. Responde 409 si es el último owner."
+          },
+          "response": [
+            {
+              "name": "Rol cambiado",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"role\": \"viewer\"\n}"
+                },
+                "url": "{{baseUrl}}/api/workspaces/{{workspaceId}}/members/{{userId}}"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"member\": {\n    \"user_id\": \"0f8fad5b-d9cb-469f-a165-70867728950e\",\n    \"role\": \"viewer\"\n  }\n}"
+            },
+            {
+              "name": "Último owner (conflicto)",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"role\": \"viewer\"\n}"
+                },
+                "url": "{{baseUrl}}/api/workspaces/{{workspaceId}}/members/{{userId}}"
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": {\n    \"code\": \"CONFLICT\",\n    \"message\": \"A workspace must keep at least one owner.\",\n    \"details\": {}\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Members - Remove",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 204 or 409\", function () {",
+                  "    pm.expect([204, 409]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test(\"Response matches member removal result\", function () {",
+                  "    if (pm.response.code === 409) {",
+                  "        const json = pm.response.json();",
+                  "        pm.expect(json.error.code).to.eql(\"CONFLICT\");",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/workspaces/{{workspaceId}}/members/{{userId}}",
+            "description": "Elimina un miembro (soft-delete: status=\"removed\"). Requiere sesión. Rol: owner. Responde 409 si es el último owner."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Invitations",
+      "description": "Creación y aceptación de invitaciones por email. El token se devuelve en claro; solo se guarda su hash SHA-256.",
+      "item": [
+        {
+          "name": "Invitations - Create",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"Response has invitation and token\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property(\"invitation\");",
+                  "    pm.expect(json).to.have.property(\"token\");",
+                  "});",
+                  "pm.test(\"Save invitationToken\", function () {",
+                  "    const json = pm.response.json();",
+                  "    if (json.token) {",
+                  "        pm.collectionVariables.set(\"invitationToken\", json.token);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"collaborator@example.com\",\n  \"role\": \"editor\"\n}"
+            },
+            "url": "{{baseUrl}}/api/workspaces/{{workspaceId}}/invitations",
+            "description": "Crea una invitación por email. Requiere sesión. Rol: owner. Body: { email, role }. Responde 201 con { invitation, token } (token en claro, expira a los 7 días)."
+          },
+          "response": [
+            {
+              "name": "Invitación creada",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"collaborator@example.com\",\n  \"role\": \"editor\"\n}"
+                },
+                "url": "{{baseUrl}}/api/workspaces/{{workspaceId}}/invitations"
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"invitation\": {\n    \"id\": \"9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d\",\n    \"email\": \"collaborator@example.com\",\n    \"role\": \"editor\",\n    \"expires_at\": \"2026-01-08T00:00:00.000Z\"\n  },\n  \"token\": \"example-invitation-token-do-not-commit\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Invitations - Accept",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 403\", function () {",
+                  "    pm.expect([200, 403]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test(\"Response matches invitation accept result\", function () {",
+                  "    const json = pm.response.json();",
+                  "    if (pm.response.code === 200) {",
+                  "        pm.expect(json).to.have.property(\"workspaceId\");",
+                  "    }",
+                  "    if (pm.response.code === 403) {",
+                  "        pm.expect(json.error.code).to.eql(\"FORBIDDEN\");",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/invitations/{{invitationToken}}/accept",
+            "description": "Acepta una invitación por token. Requiere sesión del invitado (su email debe coincidir). Path: token. Responde 200 con { workspaceId } o 404/403."
+          },
+          "response": [
+            {
+              "name": "Invitación aceptada",
+              "originalRequest": {
+                "method": "POST",
+                "url": "{{baseUrl}}/api/invitations/{{invitationToken}}/accept"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"workspaceId\": \"0f8fad5b-d9cb-469f-a165-70867728950e\"\n}"
+            },
+            {
+              "name": "Invitación inválida o expirada",
+              "originalRequest": {
+                "method": "POST",
+                "url": "{{baseUrl}}/api/invitations/{{invitationToken}}/accept"
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": {\n    \"code\": \"NOT_FOUND\",\n    \"message\": \"Invitation is invalid or expired.\",\n    \"details\": {}\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Location & Context",
+      "description": "Ubicación del workspace y contexto de hora/clima. El contexto puede devolver status \"unavailable\" con HTTP 200.",
+      "item": [
+        {
+          "name": "Location - Update",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response has workspace\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property(\"workspace\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"locationName\": \"Paris, France\",\n  \"latitude\": 48.8566,\n  \"longitude\": 2.3522,\n  \"timezone\": \"Europe/Paris\"\n}"
+            },
+            "url": "{{baseUrl}}/api/workspaces/{{workspaceId}}/location",
+            "description": "Actualiza la ubicación de un workspace. Requiere sesión. Rol: owner. Body: { locationName (1-120), latitude, longitude, timezone (1-80) }."
+          }
+        },
+        {
+          "name": "Context - Get time/weather",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response has context\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property(\"context\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/workspaces/{{workspaceId}}/context",
+            "description": "Obtiene contexto de hora/clima del workspace. Requiere sesión. Roles: owner/editor/viewer. Puede devolver status \"unavailable\" con HTTP 200."
+          },
+          "response": [
+            {
+              "name": "Contexto disponible",
+              "originalRequest": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/workspaces/{{workspaceId}}/context"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"context\": {\n    \"status\": \"available\",\n    \"locationName\": \"Paris, France\",\n    \"localTime\": \"2026-01-01T12:00:00\",\n    \"temperatureC\": 8.4,\n    \"windKph\": 15.2,\n    \"summary\": \"Clear sky\",\n    \"fetchedAt\": \"2026-01-01T12:00:00.000Z\"\n  }\n}"
+            },
+            {
+              "name": "Contexto no disponible (ubicación sin configurar)",
+              "originalRequest": {
+                "method": "GET",
+                "url": "{{baseUrl}}/api/workspaces/{{workspaceId}}/context"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"context\": {\n    \"status\": \"unavailable\",\n    \"message\": \"Workspace location has not been configured.\"\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "98. Cleanup (Archive)",
+      "description": "Archivado final de recursos en orden inverso para no romper el flujo principal de pruebas.",
+      "item": [
+        {
+          "name": "Cards - Archive",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 204\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/cards/{{cardId}}",
+            "description": "Archiva una card (soft-delete). Requiere sesión. Roles: owner/editor. Responde 204."
+          }
+        },
+        {
+          "name": "Lists - Archive",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 204\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/lists/{{listId}}",
+            "description": "Archiva una lista (soft-delete). Requiere sesión. Roles: owner/editor. Responde 204."
+          }
+        },
+        {
+          "name": "Boards - Archive",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 204\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/boards/{{boardId}}",
+            "description": "Archiva un board (soft-delete). Requiere sesión. Roles: owner/editor. Responde 204."
+          }
+        },
+        {
+          "name": "Workspaces - Archive",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 204\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/workspaces/{{workspaceId}}",
+            "description": "Archiva un workspace (soft-delete con archived_at). Requiere sesión. Rol: owner. Responde 204, o 403 si no es owner."
+          }
+        }
+      ]
+    },
+    {
+      "name": "99. Auth - Logout",
+      "description": "Cierre de sesión. Ejecutar al final del flujo porque invalida la cookie del owner.",
+      "item": [
+        {
+          "name": "Auth - Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 204\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/logout",
+            "description": "Cierra la sesión actual (signOut de Supabase). Requiere sesión. Responde 204. Ejecútalo al final porque invalida la sesión."
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "exec": [
+          "const baseUrl = pm.variables.get(\"baseUrl\");",
+          "const supabaseUrl = pm.variables.get(\"supabaseUrl\");",
+          "const requestUrl = pm.variables.replaceIn(pm.request.url.toString());",
+          "const supabaseAnonKey = pm.environment.get(\"supabaseAnonKey\") || pm.variables.get(\"supabaseAnonKey\");",
+          "if (supabaseUrl && requestUrl.startsWith(supabaseUrl)) {",
+          "    if (!supabaseAnonKey) {",
+          "        throw new Error(\"Falta supabaseAnonKey en el environment seleccionado de Postman.\");",
+          "    }",
+          "    pm.request.headers.upsert({ key: \"apikey\", value: supabaseAnonKey });",
+          "    pm.request.headers.upsert({ key: \"Authorization\", value: \"Bearer \" + supabaseAnonKey });",
+          "}",
+          "const authCookie = pm.collectionVariables.get(\"authCookie\");",
+          "const authCookieChunks = pm.collectionVariables.get(\"authCookieChunks\");",
+          "if (baseUrl && requestUrl.startsWith(baseUrl) && authCookie) {",
+          "    pm.request.headers.upsert({ key: \"Cookie\", value: authCookie });",
+          "    if (authCookieChunks) {",
+          "        try {",
+          "            const jar = pm.cookies.jar();",
+          "            JSON.parse(authCookieChunks).forEach(function (cookie) {",
+          "                jar.set(baseUrl, cookie.name, cookie.value, function (error) {",
+          "                    if (error) {",
+          "                        console.error(\"No se pudo aplicar la cookie de auth en Postman\", error);",
+          "                    }",
+          "                });",
+          "            });",
+          "        } catch (error) {",
+          "            console.error(\"authCookieChunks invalido\", error);",
+          "        }",
+          "    }",
+          "}"
+        ],
+        "type": "text/javascript"
+      }
+    }
+  ]
+}

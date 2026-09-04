@@ -1,0 +1,13 @@
+.DS_Store
+.env
+.env.local
+.env.*.local
+.next/
+node_modules/
+tsconfig.tsbuildinfo
+tmp/
+supabase/.temp/
+.claude/
+.swarmforge/
+.worktrees/
+swarmforge/scripts/
