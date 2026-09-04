@@ -43,8 +43,9 @@ El proyecto usa las siguientes APIs:
 | Auth-DCN | Propia (expuesta) | `https://auth-cdn.vercel.app` | Sesión Supabase (cookies) | [`app/api`](../../app/api) |
 | Supabase | Externa (consumida) | `NEXT_PUBLIC_SUPABASE_URL` | Publishable/anon key | [`lib/supabase/server.ts`](../../lib/supabase/server.ts) |
 | Open-Meteo | Externa (consumida) | `https://api.open-meteo.com` | Ninguna | [`lib/weather/provider.ts:17`](../../lib/weather/provider.ts#L17) |
+| Open-Meteo Geocoding | Externa (consumida) | `https://geocoding-api.open-meteo.com` | Ninguna | [`lib/weather/geocoding.ts:31`](../../lib/weather/geocoding.ts#L31) |
 
-**Total de endpoints: 26**
+**Total de endpoints: 27**
 
 ### 4.1 Auth-DCN (propia)
 
@@ -116,6 +117,7 @@ El proyecto usa las siguientes APIs:
 
 | Endpoint | Uso | Resultado esperado | Archivo |
 |---|---|---|---|
+| `GET /api/geocode?query={text}` | Buscar lugares por nombre (ciudad, región o país) para autocompletar. | Retornar sugerencias de lugares con coordenadas y timezone. | [`app/api/geocode/route.ts:8`](../../app/api/geocode/route.ts#L8) |
 | `PATCH /api/workspaces/{workspaceId}/location` | Actualizar la ubicación de un espacio de trabajo. | Actualizar la ubicación del workspace. | [`app/api/workspaces/[workspaceId]/location/route.ts:7`](../../app/api/workspaces/%5BworkspaceId%5D/location/route.ts#L7) |
 | `GET /api/workspaces/{workspaceId}/context` | Obtener contexto de hora y clima. | Retornar el contexto de hora y clima del workspace. | [`app/api/workspaces/[workspaceId]/context/route.ts:8`](../../app/api/workspaces/%5BworkspaceId%5D/context/route.ts#L8) |
 
@@ -132,6 +134,7 @@ El proyecto usa las siguientes APIs:
 | Recurso | Uso | Archivo |
 |---|---|---|
 | `GET /v1/forecast` | Clima por lat/long: temperatura, código de clima y viento. | [`lib/weather/provider.ts:29`](../../lib/weather/provider.ts#L29) |
+| `GET /v1/search` | Geocodificación por nombre: resuelve ciudad/región/país a lat/long y timezone. | [`lib/weather/geocoding.ts:31`](../../lib/weather/geocoding.ts#L31) |
 
 ## 5. Variables utilizadas en Postman
 
@@ -163,7 +166,7 @@ El proyecto usa las siguientes APIs:
 8. Actualizar/mover con los `PATCH` de board/list/card y `POST /api/cards/{cardId}/move`.
 9. Members (`List`, `Change role`, `Remove`) usando `workspaceId` y `userId`.
 10. Invitations (`Create` → guarda `invitationToken`, luego `Accept` con un segundo usuario).
-11. Location & Context (`Location - Update`, `Context - Get time/weather`).
+11. Location & Context (`Geocode - Search places`, `Location - Update`, `Context - Get time/weather`).
 12. Archivar en orden inverso: card → list → board → workspace.
 13. `POST /api/auth/logout` al final (invalida la sesión).
 
