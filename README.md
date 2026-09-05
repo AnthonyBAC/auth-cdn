@@ -76,10 +76,6 @@ Seed demo users with:
 pnpm seed:supabase
 ```
 
-The script requires `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`. It creates:
-
-- `owner@example.com`
-- `editor@example.com`
-- `viewer@example.com`
-
-Default password: `Password123!`. Override it with `SEED_PASSWORD`.
+The script requires `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`,
+`SEED_PASSWORD`, `SEED_OWNER_EMAIL`, `SEED_EDITOR_EMAIL`, and `SEED_VIEWER_EMAIL`.
+Configure those values through local environment variables; do not commit real credentials.

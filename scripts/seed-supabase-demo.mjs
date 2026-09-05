@@ -22,11 +22,19 @@ const supabase = createClient(url, serviceRoleKey, {
   }
 });
 
-const password = process.env.SEED_PASSWORD ?? "Password123!";
+const password = process.env.SEED_PASSWORD;
+const ownerEmail = process.env.SEED_OWNER_EMAIL;
+const editorEmail = process.env.SEED_EDITOR_EMAIL;
+const viewerEmail = process.env.SEED_VIEWER_EMAIL;
+
+if (!password || !ownerEmail || !editorEmail || !viewerEmail) {
+  throw new Error("SEED_PASSWORD, SEED_OWNER_EMAIL, SEED_EDITOR_EMAIL, and SEED_VIEWER_EMAIL are required.");
+}
+
 const users = [
-  { email: "owner@example.com", name: "Demo Owner", role: "owner" },
-  { email: "editor@example.com", name: "Demo Editor", role: "editor" },
-  { email: "viewer@example.com", name: "Demo Viewer", role: "viewer" }
+  { email: ownerEmail, name: "Demo Owner", role: "owner" },
+  { email: editorEmail, name: "Demo Editor", role: "editor" },
+  { email: viewerEmail, name: "Demo Viewer", role: "viewer" }
 ];
 
 async function findUserByEmail(email) {

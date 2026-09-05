@@ -6,6 +6,7 @@
 node_modules/
 tsconfig.tsbuildinfo
 tmp/
+supabase/.temp/
 .claude/
 .swarmforge/
 .worktrees/

@@ -40,16 +40,10 @@ export async function POST(request: Request) {
   const parsed = workspaceInput.safeParse(await request.json());
   if (!parsed.success) return apiError("BAD_REQUEST", "Workspace input is invalid.", parsed.error.flatten());
 
-  const { data: workspace, error } = await session.supabase.from("workspaces").insert({ name: parsed.data.name }).select("id, name").single();
+  const { data: workspaceId, error } = await session.supabase.rpc("create_workspace", {
+    workspace_name: parsed.data.name
+  });
   if (error) return apiError("BAD_REQUEST", error.message);
 
-  const { error: membershipError } = await session.supabase.from("memberships").insert({
-    workspace_id: workspace.id,
-    user_id: session.user.id,
-    role: "owner",
-    status: "active"
-  });
-  if (membershipError) return apiError("BAD_REQUEST", membershipError.message);
-
-  return NextResponse.json({ workspace: { ...workspace, role: "owner" } }, { status: 201 });
+  return NextResponse.json({ workspace: { id: workspaceId, name: parsed.data.name, role: "owner" } }, { status: 201 });
 }
