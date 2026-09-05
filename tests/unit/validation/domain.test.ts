@@ -11,7 +11,11 @@ describe("domain validation", () => {
     expect(() => cardInput.parse({ title: " " })).toThrow();
   });
 
-  it("validates latitude and longitude ranges", () => {
+  it("accepts a location name without coordinates", () => {
+    expect(locationInput.parse({ locationName: "Paris" }).locationName).toBe("Paris");
+  });
+
+  it("validates latitude and longitude ranges when provided", () => {
     expect(() =>
       locationInput.parse({ locationName: "Bad", latitude: 91, longitude: 0, timezone: "UTC" })
     ).toThrow();
