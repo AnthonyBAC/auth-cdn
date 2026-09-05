@@ -1400,8 +1400,50 @@
     },
     {
       "name": "Location & Context",
-      "description": "Ubicación del workspace y contexto de hora/clima. El contexto puede devolver status \"unavailable\" con HTTP 200.",
+      "description": "Búsqueda de lugares por nombre, ubicación del workspace y contexto de hora/clima. El contexto puede devolver status \"unavailable\" con HTTP 200.",
       "item": [
+        {
+          "name": "Geocode - Search places",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response has places\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property(\"places\");",
+                  "    pm.expect(json.places).to.be.an(\"array\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/geocode?query=Paris",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "geocode"
+              ],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "Paris"
+                }
+              ]
+            },
+            "description": "Busca lugares por nombre (ciudad, región o país). Requiere sesión. Devuelve sugerencias con name, latitude, longitude, timezone, country y admin1."
+          },
+          "response": []
+        },
         {
           "name": "Location - Update",
           "event": [
@@ -1431,10 +1473,10 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"locationName\": \"Paris, France\",\n  \"latitude\": 48.8566,\n  \"longitude\": 2.3522,\n  \"timezone\": \"Europe/Paris\"\n}"
+              "raw": "{\n  \"locationName\": \"Paris, France\"\n}"
             },
             "url": "{{baseUrl}}/api/workspaces/{{workspaceId}}/location",
-            "description": "Actualiza la ubicación de un workspace. Requiere sesión. Rol: owner. Body: { locationName (1-120), latitude, longitude, timezone (1-80) }."
+            "description": "Actualiza la ubicación de un workspace. Requiere sesión. Rol: owner. Body: { locationName (1-120) }. latitude, longitude y timezone son opcionales y se resuelven automáticamente por geocodificación cuando no se envían."
           }
         },
         {
