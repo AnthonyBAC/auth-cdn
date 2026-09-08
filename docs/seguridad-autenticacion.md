@@ -31,7 +31,7 @@ En este proyecto se usan:
 
 | Paquete | Uso real |
 |---|---|
-| `@supabase/supabase-js` | Cliente para Auth, MFA, consultas a Postgres/PostgREST y llamadas RPC. |
+| `@supabase/supabase-js` | Cliente para Auth, MFA, consultas a Postgres/PostgREST y llamadas RPC (Remote Procedure Call: ejecutar funciones de base de datos desde la app). |
 | `@supabase/ssr` | Cliente adaptado a cookies de sesión en navegador, servidor y middleware. |
 
 Clientes creados:
@@ -159,6 +159,8 @@ Por eso las rutas no leen manualmente el header `Authorization`; llaman a `supab
 
 Cuando TOTP está activo, no basta con email y contraseña. La sesión debe llegar a `aal2`.
 
+El **MFA también lo maneja Supabase Auth**. La app no implementa el algoritmo TOTP, no valida códigos manualmente y no guarda el secreto del autenticador. La app solo coordina el flujo: muestra el QR, recibe el código del usuario, llama al SDK de Supabase, redirige según el estado MFA y guarda el hash del código de recuperación.
+
 ### 5.2 Qué es TOTP y de dónde viene
 
 **TOTP** es un código temporal de 6 dígitos basado en el estándar RFC 6238. Lo generan apps como Google Authenticator, Microsoft Authenticator, 1Password, etc.
@@ -169,7 +171,17 @@ El proyecto **no usa una librería TOTP propia**. Usa **Supabase Auth MFA**, con
 enroll, challenge, verify, unenroll, listFactors, getAuthenticatorAssuranceLevel
 ```
 
-El secreto TOTP queda en Supabase Auth (`auth.mfa_factors`). No se guarda en cookies ni en nuestras tablas.
+El secreto TOTP queda en Supabase Auth (`auth.mfa_factors`). No se guarda en cookies ni en nuestras tablas. En nuestras tablas solo se guarda `profiles.totp_enabled` y `profiles.totp_recovery_code_hash`.
+
+| Parte del MFA | Quién la maneja |
+|---|---|
+| Crear factor TOTP | Supabase Auth |
+| Guardar secreto TOTP | Supabase Auth (`auth.mfa_factors`) |
+| Validar código de 6 dígitos | Supabase Auth |
+| Calcular AAL (`aal1`/`aal2`) | Supabase Auth |
+| Mostrar QR y formulario | La app |
+| Redirigir a `/login/mfa` | La app |
+| Código de recuperación | La app guarda solo el hash |
 
 ### 5.3 Activación en `/security`
 
@@ -333,12 +345,14 @@ Estas funciones usan `auth.uid()`, que viene del JWT de Supabase.
 
 ### 7.4 RPC especiales
 
+**RPC** significa **Remote Procedure Call**. En este proyecto es una llamada desde la app hacia una función SQL de Supabase/Postgres, por ejemplo `create_workspace()` o `accept_invitation()`.
+
 Hay dos funciones RPC `security definer` para casos donde RLS bloquearía el flujo normal:
 
-| RPC | Uso |
-|---|---|
-| `create_workspace(workspace_name)` | Crea workspace y membresía `owner` en una operación atómica. |
-| `accept_invitation(token_hash_input)` | Acepta invitación, valida email desde `auth.jwt()` y crea/actualiza membresía. |
+| RPC | Qué significa | Uso |
+|---|---|---|
+| `create_workspace(workspace_name)` | Función SQL llamada desde la app | Crea workspace y membresía `owner` en una operación atómica. |
+| `accept_invitation(token_hash_input)` | Función SQL llamada desde la app | Acepta invitación, valida email desde `auth.jwt()` y crea/actualiza membresía. |
 
 Esto evita debilitar las políticas generales.
 
@@ -403,7 +417,7 @@ No escribimos `fetch` manual para autenticación. El SDK consume la API de Supab
 | Auth | Registro, login, logout, usuario actual. |
 | Auth MFA | TOTP, factores, challenges, AAL. |
 | PostgREST | `.from(...).select/insert/update(...)` contra tablas públicas con RLS. |
-| RPC | `create_workspace()` y `accept_invitation()`. |
+| RPC (Remote Procedure Call) | Ejecuta funciones SQL: `create_workspace()` y `accept_invitation()`. |
 
 ### 8.4 APIs externas
 
@@ -458,7 +472,7 @@ GET /api/health/supabase
 | Access token | JWT firmado por Supabase. |
 | Refresh token | Guardado en la sesión/cookie y administrado por el SDK. |
 | Header auth | No usa `Authorization: Bearer`; usa cookie. |
-| MFA | Supabase Auth MFA. |
+| MFA | Supabase Auth MFA; la app solo coordina UI/redirecciones y recovery code. |
 | TOTP | Factor temporal de 6 dígitos; secreto en `auth.mfa_factors`. |
 | `getMfaState()` | Calcula si la sesión necesita pasar de `aal1` a `aal2`. |
 | API propia | Mayormente RESTful, HTTP/HTTPS, JSON, cookie auth. |
