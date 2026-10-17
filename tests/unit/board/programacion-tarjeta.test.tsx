@@ -126,4 +126,20 @@ describe("formulario de fechas y responsables", () => {
     expect(screen.queryByRole("button", { name: "Fechas y responsables" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Editar" })).not.toBeInTheDocument();
   });
+  it("evita crear dos tarjetas mientras la primera solicitud sigue en curso", async () => {
+    let completeRequest: ((value: ReturnType<typeof response>) => void) | undefined;
+    fetchMock.mockReturnValueOnce(new Promise((resolve) => { completeRequest = resolve; }));
+    render(<BoardView boardId="board" title="Tablero" canEdit members={members} timeZone="America/Santiago"
+      lists={[{ id: "lista", title: "Pendientes", position: 0, cards: [] }]} />);
+
+    fireEvent.change(screen.getByPlaceholderText("Título de la tarjeta"), { target: { value: "No duplicar" } });
+    const createButton = screen.getByRole("button", { name: "Agregar tarjeta" });
+    fireEvent.click(createButton);
+    fireEvent.click(createButton);
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(createButton).toBeDisabled();
+    completeRequest?.(response(201, { card }));
+    await waitFor(() => expect(createButton).toBeEnabled());
+  });
 });

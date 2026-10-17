@@ -3,7 +3,7 @@
 import { CalendarOutlined, DeleteOutlined, EditOutlined, PlusOutlined, SwapRightOutlined } from "@ant-design/icons";
 import { Alert, Button, Card, Form, Input, Modal, Select, Space, Tag, Typography } from "antd";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { CardSchedulingForm } from "@/components/board/programacion-tarjeta";
 import { requestJson } from "@/lib/api/peticiones";
@@ -17,8 +17,11 @@ export function BoardView({ boardId, title, lists, canEdit, members, timeZone }:
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<BoardCard | null>(null);
-
   const [scheduling, setScheduling] = useState<BoardCard | null>(null);
+  const [creatingList, setCreatingList] = useState(false);
+  const [creatingCardListId, setCreatingCardListId] = useState<string | null>(null);
+  const creatingListRef = useRef(false);
+  const creatingCardListIdsRef = useRef(new Set<string>());
 
   async function post(url: string, payload: unknown, method = "POST") {
     setError(null);
@@ -42,6 +45,30 @@ export function BoardView({ boardId, title, lists, canEdit, members, timeZone }:
     }
   }
 
+  async function createList(values: { title: string; position?: number }) {
+    if (creatingListRef.current) return;
+    creatingListRef.current = true;
+    setCreatingList(true);
+    try {
+      await post(`/api/boards/${boardId}/lists`, values);
+    } finally {
+      creatingListRef.current = false;
+      setCreatingList(false);
+    }
+  }
+
+  async function createCard(listId: string, values: { title: string; description?: string }) {
+    if (creatingCardListIdsRef.current.has(listId)) return;
+    creatingCardListIdsRef.current.add(listId);
+    setCreatingCardListId(listId);
+    try {
+      await post(`/api/lists/${listId}/cards`, values);
+    } finally {
+      creatingCardListIdsRef.current.delete(listId);
+      setCreatingCardListId((current) => current === listId ? null : current);
+    }
+  }
+
   async function reloadCard(cardId: string) {
     const response = await requestJson<{ board: { lists: BoardColumn[] } }>(`/api/boards/${boardId}`);
     const current = response?.board.lists.flatMap((list) => list.cards ?? []).find((card) => card.id === cardId);
@@ -61,11 +88,11 @@ export function BoardView({ boardId, title, lists, canEdit, members, timeZone }:
       {error ? <Alert showIcon type="error" message={error} /> : null}
       {canEdit ? (
         <Card>
-          <Form layout="inline" onFinish={(values) => post(`/api/boards/${boardId}/lists`, values)}>
+          <Form layout="inline" onFinish={createList}>
             <Form.Item name="title" rules={[{ required: true, message: "Escribe el nombre de la lista." }]} style={{ minWidth: 220 }}>
               <Input placeholder="Nombre de la lista" />
             </Form.Item>
-            <Button htmlType="submit" icon={<PlusOutlined aria-hidden="true" />} type="primary">
+            <Button htmlType="submit" icon={<PlusOutlined aria-hidden="true" />} type="primary" loading={creatingList} disabled={creatingList}>
               Agregar lista
             </Button>
           </Form>
@@ -120,14 +147,15 @@ export function BoardView({ boardId, title, lists, canEdit, members, timeZone }:
                 </Card>
               ))}
             {canEdit ? (
-              <Form layout="vertical" onFinish={(values) => post(`/api/lists/${list.id}/cards`, values)}>
+              <Form layout="vertical" onFinish={(values) => createCard(list.id, values)}>
                 <Form.Item name="title" rules={[{ required: true, message: "Escribe el título de la tarjeta." }]}>
                   <Input placeholder="Título de la tarjeta" />
                 </Form.Item>
                 <Form.Item name="description">
                   <Input.TextArea placeholder="Descripción" rows={2} />
                 </Form.Item>
-                <Button block htmlType="submit" icon={<PlusOutlined aria-hidden="true" />} type="primary">
+                <Button block htmlType="submit" icon={<PlusOutlined aria-hidden="true" />} type="primary"
+                  loading={creatingCardListId === list.id} disabled={creatingCardListId === list.id}>
                   Agregar tarjeta
                 </Button>
               </Form>
