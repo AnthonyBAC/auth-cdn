@@ -1,3 +1,6 @@
+import { Alert } from "antd";
+import { memberOptions, type MemberProfileRow } from "@/lib/cards/tipos";
+
 import { redirect } from "next/navigation";
 
 import { BoardView } from "@/components/board/board-view";
@@ -28,17 +31,21 @@ export default async function BoardPage({ params }: { params: Promise<{ boardId:
 
   const { data: board } = await supabase
     .from("boards")
-    .select("id, title, workspace_id, workspaces(id, name, location_name, latitude, longitude, timezone)")
+    .select("id, title, workspace_id, workspaces!inner(id, name, location_name, latitude, longitude, timezone)")
     .eq("id", boardId)
     .is("archived_at", null)
+    .is("workspaces.archived_at", null)
     .single();
   if (!board) redirect("/workspaces");
 
-  const [{ data: membership }, { data: lists }] = await Promise.all([
+  const [{ data: membership }, { data: lists, error: listsError }, { data: members, error: membersError }] = await Promise.all([
     supabase.from("memberships").select("role").eq("workspace_id", board.workspace_id).eq("user_id", user.id).eq("status", "active").single(),
-    supabase.from("lists").select("id, title, position, cards(id, title, description, position, list_id)").eq("board_id", boardId).is("archived_at", null).order("position")
+    supabase.from("lists").select("id, title, position, cards(id, title, description, position, list_id, created_by_user_id, due_at, notify_at, completed_at, schedule_version, card_assignees(user_id))").eq("board_id", boardId).is("archived_at", null).is("cards.archived_at", null).order("position"),
+    supabase.from("memberships").select("user_id, profiles(name, email)").eq("workspace_id", board.workspace_id).eq("status", "active")
   ]);
   if (!membership) redirect("/workspaces");
+
+  if (listsError || membersError) return <Alert type="error" showIcon message="No se pudo cargar el tablero. Inténtalo nuevamente." />;
 
   const boardWithWorkspace = board as unknown as BoardWithWorkspace;
   const workspace = Array.isArray(boardWithWorkspace.workspaces) ? boardWithWorkspace.workspaces[0] : boardWithWorkspace.workspaces;
@@ -54,10 +61,14 @@ export default async function BoardPage({ params }: { params: Promise<{ boardId:
     openMeteoProvider
   );
 
+  let timeZone = workspace?.timezone ?? "UTC";
+  try { new Intl.DateTimeFormat("es-CL", { timeZone }); } catch { timeZone = "UTC"; }
+
   return (
     <section className="grid">
       <ContextPanel context={context} />
-      <BoardView boardId={boardId} title={board.title} lists={lists ?? []} canEdit={canManageContent(membership.role as WorkspaceRole)} />
+      <BoardView boardId={boardId} title={board.title} lists={lists ?? []} canEdit={canManageContent(membership.role as WorkspaceRole)}
+        members={memberOptions((members ?? []) as MemberProfileRow[])} timeZone={timeZone} />
     </section>
   );
 }
