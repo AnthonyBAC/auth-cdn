@@ -18,7 +18,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ lis
   const { data, error } = await session.supabase
     .from("cards")
     .insert({ board_id: list.board_id, list_id: listId, title: parsed.data.title, description: parsed.data.description, position: count ?? 0 })
-    .select("id, title, description, position, list_id")
+    .select("id, title, description, position, list_id, created_by_user_id, due_at, notify_at, completed_at, schedule_version")
     .single();
   if (error) return apiError("FORBIDDEN", "You do not have permission to create cards.");
   return NextResponse.json({ card: data }, { status: 201 });

@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "eventId": "f345a124-783e-4caa-830c-8930337b535f",
+  "eventType": "TASK_REMINDER_DUE",
+  "reminderId": "d13497cd-5063-459f-9f90-9dc78293eb49",
+  "cardId": "33086fde-719d-4724-9b05-b6f6947e0c59",
+  "workspaceId": "fe962a07-38d5-4124-a67f-09e631abf5e6",
+  "scheduleVersion": 2,
+  "occurredAt": "2026-10-18T18:00:00.000Z",
+  "expiresAt": "2026-10-20T18:00:00.000Z"
+}
