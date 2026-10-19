@@ -5,6 +5,7 @@ import { Alert, Button, Card, Form, Input, Modal, Select, Space, Tag, Typography
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { BoardSummary } from "@/components/board/board-summary";
 import { CardSchedulingForm } from "@/components/board/programacion-tarjeta";
 import { requestJson } from "@/lib/api/peticiones";
 import { formatCardDate } from "@/lib/cards/fechas";
@@ -59,6 +60,7 @@ export function BoardView({ boardId, title, lists, canEdit, members, timeZone }:
         {!canEdit ? <Alert showIcon type="info" message="Tu rol permite ver el tablero, pero no modificarlo." /> : null}
       </div>
       {error ? <Alert showIcon type="error" message={error} /> : null}
+      <BoardSummary boardId={boardId} />
       {canEdit ? (
         <Card>
           <Form layout="inline" onFinish={(values) => post(`/api/boards/${boardId}/lists`, values)}>

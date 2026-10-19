@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -13,13 +16,16 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit",
-    "mq:scheduler": "node --env-file=.env.local scripts/mq-scheduler.mjs"
+    "mq:scheduler": "node --env-file=.env.local scripts/mq-scheduler.mjs",
+    "mq:resumen:respondedor": "pnpm --dir workers/mq-resumen start:respondedor",
+    "mq:resumen:puente": "pnpm --dir workers/mq-resumen start:puente"
   },
   "dependencies": {
     "@ant-design/icons": "^5.5.2",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.45.4",
     "antd": "^5.22.5",
+    "ibmmq": "2.1.9",
     "next": "^15.0.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

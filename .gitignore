@@ -11,3 +11,5 @@ supabase/.temp/
 .swarmforge/
 .worktrees/
 swarmforge/scripts/
+.vercel
+.env*

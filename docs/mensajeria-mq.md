@@ -326,3 +326,118 @@ de que el productor registre esa confirmación en Supabase.
 
 Estos ejemplos no incluyen credenciales ni aplican migraciones. Ambas ramas deben
 compartir el contrato y las migraciones existentes; no crear tablas o contratos duplicados.
+
+
+## 13. Resumen de tablero con Request/Reply
+
+Esta funcionalidad es independiente del flujo de recordatorios. No modifica migraciones,
+productor, consumidor, outbox ni cola de backout.
+
+### Arquitectura
+
+```text
+Navegador
+  -> POST /api/boards/{boardId}/summary (Next.js, sesión + MFA + membresía)
+  -> puente local HTTP (workers/mq-resumen, credenciales authproducer)
+  -> AUTHCDN.SUMMARY.REQUEST.Q
+  -> worker respondedor (credenciales authconsumer, consulta Supabase)
+  -> AUTHCDN.SUMMARY.REPLY.Q
+  -> puente (MQMO_MATCH_CORREL_ID)
+  -> Next.js -> navegador
+```
+
+El cliente nativo `ibmmq` nunca se importa desde Next.js. El puente usa `Get()` asíncrono,
+no `GetSync`, para no bloquear su hilo. Cada solicitud abre su propia conexión y su propio
+handle de respuesta; `MsgId` de la solicitud se copia a `CorrelId` de la respuesta. El
+respondedor usa transacciones MQ: el GET de la solicitud y el PUT de la respuesta se
+confirman con un único `MQCMIT`.
+
+### Contrato
+
+Solicitud (`lib/mq/resumen.ts`):
+
+```json
+{
+  "schemaVersion": 1,
+  "requestId": "11111111-1111-4111-8111-111111111111",
+  "boardId": "22222222-2222-4222-8222-222222222222",
+  "userId": "33333333-3333-4333-8333-333333333333",
+  "createdAt": "2026-10-19T12:00:00.000Z",
+  "expiresAt": "2026-10-19T12:00:15.000Z"
+}
+```
+
+Respuesta:
+
+```json
+{
+  "schemaVersion": 1,
+  "requestId": "11111111-1111-4111-8111-111111111111",
+  "boardId": "22222222-2222-4222-8222-222222222222",
+  "status": "OK",
+  "generatedAt": "2026-10-19T12:00:01.000Z",
+  "stats": { "totalActive": 12, "pending": 7, "completed": 3, "overdue": 2 }
+}
+```
+
+En error, `status` es `ERROR`, `stats` es `null` y `error` contiene un código controlado:
+`INVALID_REQUEST`, `EXPIRED`, `FORBIDDEN`, `NOT_FOUND` o `INTERNAL_ERROR`.
+
+Categorías mutuamente excluyentes sobre tarjetas activas (tarjeta, lista, tablero y
+workspace sin archivar):
+
+- Completadas: `completed_at` no nulo.
+- Vencidas: no completadas con `due_at < now`.
+- Pendientes: no completadas sin `due_at` o con `due_at >= now`.
+- `totalActive = pending + completed + overdue`.
+
+### Variables nuevas
+
+Reutiliza `MQ_QUEUE_MANAGER`, `MQ_CHANNEL`, `MQ_CONNECTION_NAME`, `MQ_TLS_*` y
+`NEXT_PUBLIC_SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`. Las credenciales no cambian:
+el puente usa `MQ_PRODUCER_USERNAME`/`MQ_PRODUCER_PASSWORD`; el respondedor usa
+`MQ_USERNAME`/`MQ_PASSWORD`.
+
+```sh
+MQ_SUMMARY_REQUEST_QUEUE=AUTHCDN.SUMMARY.REQUEST.Q
+MQ_SUMMARY_REPLY_QUEUE=AUTHCDN.SUMMARY.REPLY.Q
+MQ_SUMMARY_TIMEOUT_MS=8000
+MQ_SUMMARY_REQUEST_TTL_MS=15000
+MQ_SUMMARY_WAIT_MS=5000
+MQ_SUMMARY_INTERVAL_MS=2000
+MQ_SUMMARY_MAX_ATTEMPTS=3
+MQ_SUMMARY_REPLY_TTL_MS=60000
+MQ_SUMMARY_BRIDGE_HOST=127.0.0.1
+MQ_SUMMARY_BRIDGE_PORT=4100
+MQ_SUMMARY_BRIDGE_URL=http://127.0.0.1:4100
+MQ_SUMMARY_BRIDGE_TOKEN=<secreto-largo-compartido-por-ambos-procesos>
+MQ_SUMMARY_HTTP_TIMEOUT_MS=12000
+```
+
+`MQ_SUMMARY_BRIDGE_TOKEN` debe ser el mismo en Next.js y en el puente. No debe llevar
+prefijo `NEXT_PUBLIC_` ni llegar al navegador.
+
+### Arranque local
+
+```sh
+pnpm --dir workers/mq-resumen install
+pnpm mq:resumen:respondedor
+pnpm mq:resumen:puente
+# En otra terminal:
+pnpm dev
+```
+
+Para una sola iteración del respondedor: `pnpm --dir workers/mq-resumen start:respondedor --once`.
+
+### Prueba de integración real (requiere autorización previa)
+
+1. Confirmar que las colas existen y que los permisos son los indicados en el enunciado.
+2. Añadir las variables anteriores a `.env.local` sin commitear secretos.
+3. Arrancar respondedor y puente; revisar que ambos procesos conecten por TLS.
+4. Abrir un tablero, pulsar **Resumen del tablero** y comprobar las cuatro cifras.
+5. Repetir desde dos navegadores a la vez y verificar que cada uno recibe su respuesta.
+6. Detener el respondedor y comprobar que el endpoint devuelve timeout/error controlado.
+7. Revisar que la solicitud no se confirma si falla la publicación de la respuesta.
+
+No se han ejecutado publicaciones ni consumos reales contra IBM MQ Cloud durante el
+desarrollo de este bloque. Las pruebas actuales usan clientes MQ simulados.
