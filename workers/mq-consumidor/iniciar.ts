@@ -26,7 +26,12 @@ async function main() {
     while (!controlador.signal.aborted) {
       let resultado: ResultadoCiclo | undefined;
       try {
-        resultado = await procesarSiguiente(receptor, procesador);
+        resultado = await procesarSiguiente(
+          receptor,
+          procesador,
+          new Date(),
+          config.MQ_BACKOUT_THRESHOLD
+        );
         console.log(JSON.stringify({ proceso: "consumidor", resultado }));
         if (once && resultado === "RETRYABLE_ERROR") process.exitCode = 1;
       } catch {

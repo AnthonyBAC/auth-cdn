@@ -14,6 +14,8 @@ const base = {
   MQ_TLS_CIPHER_SPEC: "TLS_AES_256_GCM_SHA384",
   MQ_TLS_PEER_NAME: "CN=broker",
   MQ_TLS_KEY_REPOSITORY: "/certs/key",
+  MQ_BACKOUT_QUEUE: "AUTHCDN.REMINDERS.BOQ",
+  MQ_BACKOUT_THRESHOLD: "5",
 };
 
 describe("Configuración del consumidor", () => {
@@ -23,6 +25,8 @@ describe("Configuración del consumidor", () => {
     expect(config.MQ_QUEUE).toBe("AVISOS");
     expect(config.MQ_CONSUMER_WAIT_MS).toBe(5000);
     expect(config.MQ_CONSUMER_INTERVAL_MS).toBe(5000);
+    expect(config.MQ_BACKOUT_QUEUE).toBe("AUTHCDN.REMINDERS.BOQ");
+    expect(config.MQ_BACKOUT_THRESHOLD).toBe(5);
   });
 
   it("convierte los tiempos numéricos indicados como texto", () => {
@@ -41,7 +45,19 @@ describe("Configuración del consumidor", () => {
     expect(() => readConsumerConfig({ ...base, MQ_TLS_PEER_NAME: "CN=*" })).toThrow(/configuración del consumidor/);
   });
 
-  it("rechaza un CipherSpec no acordado", () => {
-    expect(() => readConsumerConfig({ ...base, MQ_TLS_CIPHER_SPEC: "ANY_TLS12_OR_HIGHER" })).toThrow(/configuración del consumidor/);
+  it("acepta ANY_TLS12_OR_HIGHER y rechaza un CipherSpec no acordado", () => {
+    const config = readConsumerConfig({ ...base, MQ_TLS_CIPHER_SPEC: "ANY_TLS12_OR_HIGHER" });
+    expect(config.MQ_TLS_CIPHER_SPEC).toBe("ANY_TLS12_OR_HIGHER");
+
+    expect(() => readConsumerConfig({ ...base, MQ_TLS_CIPHER_SPEC: "TLS_RSA_WITH_AES_256_CBC_SHA256" })).toThrow(/configuración del consumidor/);
+  });
+
+  it("exige un umbral de backout positivo", () => {
+    expect(() => readConsumerConfig({ ...base, MQ_BACKOUT_THRESHOLD: "0" })).toThrow(/configuración del consumidor/);
+    expect(() => readConsumerConfig({ ...base, MQ_BACKOUT_THRESHOLD: "-3" })).toThrow(/configuración del consumidor/);
+  });
+
+  it("exige una cola de backout distinta de la cola principal", () => {
+    expect(() => readConsumerConfig({ ...base, MQ_BACKOUT_QUEUE: base.MQ_QUEUE })).toThrow(/configuración del consumidor/);
   });
 });

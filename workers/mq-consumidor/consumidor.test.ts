@@ -17,12 +17,13 @@ const evento = {
 const vigente = new Date("2026-10-19T18:00:00Z");
 const posterior = new Date("2026-10-21T18:00:00Z");
 
-function receptorFalso(cuerpo: string | null) {
+function receptorFalso(cuerpo: string | null, backoutCount = 0) {
   const llamadas: string[] = [];
+  const boq: Array<{ motivo: string; backoutCount: number; eventId?: string }> = [];
   const receptor: ReceptorMensajes = {
     async recibir() {
       llamadas.push("recibir");
-      return cuerpo === null ? null : { cuerpo };
+      return cuerpo === null ? null : { cuerpo, backoutCount };
     },
     async confirmar() {
       llamadas.push("confirmar");
@@ -30,11 +31,19 @@ function receptorFalso(cuerpo: string | null) {
     async revertir() {
       llamadas.push("revertir");
     },
+    async moverABoq(_mensaje, diagnostico) {
+      llamadas.push("moverABoq");
+      boq.push({
+        motivo: diagnostico.motivo,
+        backoutCount: diagnostico.backoutCount,
+        eventId: diagnostico.eventId,
+      });
+    },
     async cerrar() {
       llamadas.push("cerrar");
     },
   };
-  return { receptor, llamadas };
+  return { receptor, llamadas, boq };
 }
 
 describe("Consumidor (validación y confirmación)", () => {
@@ -69,12 +78,15 @@ describe("Consumidor (validación y confirmación)", () => {
     expect(llamadas).not.toContain("confirmar");
   });
 
-  it("descarta un error permanente devuelto por el procesador y lo confirma", async () => {
-    const { receptor, llamadas } = receptorFalso(JSON.stringify(evento));
+  it("deriva a la Backout Queue un error permanente devuelto por el procesador", async () => {
+    const { receptor, llamadas, boq } = receptorFalso(JSON.stringify(evento));
     const procesar = vi.fn(async (): Promise<ResultadoProcesamiento> => "PERMANENT_ERROR");
 
-    await expect(procesarSiguiente(receptor, { procesar }, vigente)).resolves.toBe("PERMANENT_ERROR");
-    expect(llamadas).toEqual(["recibir", "confirmar"]);
+    await expect(procesarSiguiente(receptor, { procesar }, vigente)).resolves.toBe("BACKOUT");
+    expect(llamadas).toEqual(["recibir", "moverABoq"]);
+    expect(boq).toEqual([
+      { motivo: "ERROR_PERMANENTE", backoutCount: 0, eventId: evento.eventId },
+    ]);
   });
 
   it("confirma sin volver a notificar un evento ya procesado", async () => {
@@ -85,40 +97,75 @@ describe("Consumidor (validación y confirmación)", () => {
     expect(llamadas).toEqual(["recibir", "confirmar"]);
   });
 
-  it("descarta JSON inválido sin invocar al procesador", async () => {
-    const { receptor, llamadas } = receptorFalso("{no-es-json");
+  it("envía a la Backout Queue un JSON inválido sin invocar al procesador", async () => {
+    const { receptor, llamadas, boq } = receptorFalso("{no-es-json");
     const procesar = vi.fn();
 
-    await expect(procesarSiguiente(receptor, { procesar }, vigente)).resolves.toBe("DISCARDED");
+    await expect(procesarSiguiente(receptor, { procesar }, vigente)).resolves.toBe("BACKOUT");
     expect(procesar).not.toHaveBeenCalled();
-    expect(llamadas).toEqual(["recibir", "confirmar"]);
+    expect(llamadas).toEqual(["recibir", "moverABoq"]);
+    expect(boq).toEqual([{ motivo: "MENSAJE_MALFORMADO", backoutCount: 0, eventId: undefined }]);
   });
 
-  it("descarta mensajes que no cumplen el contrato", async () => {
-    const { receptor, llamadas } = receptorFalso(JSON.stringify({ ...evento, cardId: "no-es-uuid" }));
+  it("envía a la Backout Queue mensajes que no cumplen el contrato", async () => {
+    const { receptor, llamadas, boq } = receptorFalso(JSON.stringify({ ...evento, cardId: "no-es-uuid" }));
     const procesar = vi.fn();
 
-    await expect(procesarSiguiente(receptor, { procesar }, vigente)).resolves.toBe("DISCARDED");
+    await expect(procesarSiguiente(receptor, { procesar }, vigente)).resolves.toBe("BACKOUT");
     expect(procesar).not.toHaveBeenCalled();
-    expect(llamadas).toEqual(["recibir", "confirmar"]);
+    expect(llamadas).toEqual(["recibir", "moverABoq"]);
+    expect(boq[0].motivo).toBe("MENSAJE_MALFORMADO");
   });
 
-  it("descarta tipos de evento no permitidos", async () => {
-    const { receptor, llamadas } = receptorFalso(JSON.stringify({ ...evento, eventType: "TASK_DELETED" }));
+  it("envía a la Backout Queue tipos de evento no permitidos", async () => {
+    const { receptor, llamadas, boq } = receptorFalso(JSON.stringify({ ...evento, eventType: "TASK_DELETED" }));
     const procesar = vi.fn();
 
-    await expect(procesarSiguiente(receptor, { procesar }, vigente)).resolves.toBe("DISCARDED");
+    await expect(procesarSiguiente(receptor, { procesar }, vigente)).resolves.toBe("BACKOUT");
     expect(procesar).not.toHaveBeenCalled();
-    expect(llamadas).toEqual(["recibir", "confirmar"]);
+    expect(llamadas).toEqual(["recibir", "moverABoq"]);
+    expect(boq[0].motivo).toBe("MENSAJE_MALFORMADO");
   });
 
-  it("descarta mensajes expirados sin invocar al procesador", async () => {
-    const { receptor, llamadas } = receptorFalso(JSON.stringify(evento));
+  it("descarta mensajes expirados sin invocar al procesador ni enviarlos a la BOQ", async () => {
+    const { receptor, llamadas, boq } = receptorFalso(JSON.stringify(evento));
     const procesar = vi.fn();
 
     await expect(procesarSiguiente(receptor, { procesar }, posterior)).resolves.toBe("DISCARDED");
     expect(procesar).not.toHaveBeenCalled();
     expect(llamadas).toEqual(["recibir", "confirmar"]);
+    expect(boq).toEqual([]);
+  });
+
+  it("reintenta con rollback mientras no se alcanza el umbral", async () => {
+    const { receptor, llamadas, boq } = receptorFalso(JSON.stringify(evento), 2);
+    const procesar = vi.fn(async (): Promise<ResultadoProcesamiento> => "RETRYABLE_ERROR");
+
+    await expect(procesarSiguiente(receptor, { procesar }, vigente, 5)).resolves.toBe("RETRYABLE_ERROR");
+    expect(llamadas).toEqual(["recibir", "revertir"]);
+    expect(boq).toEqual([]);
+  });
+
+  it("deriva a la Backout Queue al alcanzar el umbral de reintentos", async () => {
+    const { receptor, llamadas, boq } = receptorFalso(JSON.stringify(evento), 4);
+    const procesar = vi.fn(async (): Promise<ResultadoProcesamiento> => "RETRYABLE_ERROR");
+
+    await expect(procesarSiguiente(receptor, { procesar }, vigente, 5)).resolves.toBe("BACKOUT");
+    expect(llamadas).toEqual(["recibir", "moverABoq"]);
+    expect(boq).toEqual([
+      { motivo: "REINTENTOS_AGOTADOS", backoutCount: 4, eventId: evento.eventId },
+    ]);
+  });
+
+  it("deriva a la Backout Queue cuando el procesamiento lanza al alcanzar el umbral", async () => {
+    const { receptor, llamadas, boq } = receptorFalso(JSON.stringify(evento), 4);
+    const procesar = vi.fn(async (): Promise<ResultadoProcesamiento> => {
+      throw new Error("Supabase no disponible");
+    });
+
+    await expect(procesarSiguiente(receptor, { procesar }, vigente, 5)).resolves.toBe("BACKOUT");
+    expect(llamadas).toEqual(["recibir", "moverABoq"]);
+    expect(boq[0]).toMatchObject({ motivo: "REINTENTOS_AGOTADOS", eventId: evento.eventId });
   });
 
   it("no confirma ni revierte cuando la cola está vacía", async () => {
