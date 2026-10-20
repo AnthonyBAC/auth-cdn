@@ -1,0 +1,207 @@
+{
+  "origin": "https://auth-cdn-git-feature-mq-consumidor-anthonys-projects-0d8acba7.vercel.app",
+  "records": [
+    {
+      "id": "PERM-JWT",
+      "title": "Acceso seguro antes de habilitar programación permanente",
+      "result": "PASS",
+      "kind": "LIVE_PERMANENT_AUTOMATION",
+      "at": "2026-10-20T01:27:06.207Z",
+      "evidence": {
+        "request": {
+          "method": "GET",
+          "path": "/api/notifications",
+          "authenticatedMachine": false,
+          "cookies": false
+        },
+        "status": 401,
+        "body": {
+          "error": {
+            "code": "UNAUTHENTICATED",
+            "message": "Sign in to continue.",
+            "details": {}
+          }
+        }
+      }
+    },
+    {
+      "id": "PERM-NO-SECRET",
+      "title": "Acceso seguro antes de habilitar programación permanente",
+      "result": "PASS",
+      "kind": "LIVE_PERMANENT_AUTOMATION",
+      "at": "2026-10-20T01:27:07.575Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/mq/tick",
+          "authenticatedMachine": false,
+          "cookies": false
+        },
+        "status": 401,
+        "body": {
+          "error": "UNAUTHORIZED"
+        }
+      }
+    },
+    {
+      "id": "PERM-AUTHORIZED-PREFLIGHT",
+      "title": "Acceso seguro antes de habilitar programación permanente",
+      "result": "PASS",
+      "kind": "LIVE_PERMANENT_AUTOMATION",
+      "at": "2026-10-20T01:27:12.539Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/mq/tick",
+          "authenticatedMachine": true,
+          "cookies": false
+        },
+        "status": 200,
+        "body": {
+          "published": 0,
+          "captured": 1,
+          "worked": 1,
+          "errors": 0
+        }
+      }
+    },
+    {
+      "id": "PERM-PRECONDITION",
+      "title": "Estado previo a programación permanente",
+      "result": "PASS",
+      "kind": "LIVE_PERMANENT_AUTOMATION",
+      "at": "2026-10-20T01:27:18.483Z",
+      "evidence": {
+        "health": {
+          "deliveryRetries": 0,
+          "failedPublications": 0,
+          "pendingInbox": 0,
+          "quarantined": 5,
+          "staleInbox": 0
+        },
+        "jobs": [],
+        "vaultNames": []
+      }
+    },
+    {
+      "id": "PERM-ACTIVATED",
+      "title": "Procesamiento y mantenimiento permanentes habilitados",
+      "result": "PASS",
+      "kind": "LIVE_PERMANENT_AUTOMATION",
+      "at": "2026-10-20T01:27:23.422Z",
+      "evidence": {
+        "configuredAt": "2026-10-20T01:27:22.569452+00:00",
+        "jobs": [
+          {
+            "active": true,
+            "jobid": 2,
+            "jobname": "authcdn-mq-rest-minute",
+            "schedule": "* * * * *"
+          },
+          {
+            "active": true,
+            "jobid": 3,
+            "jobname": "authcdn-mq-maintenance",
+            "schedule": "* * * * *"
+          }
+        ],
+        "vaultConfigured": 2
+      }
+    },
+    {
+      "id": "PERM-OBSERVE-6",
+      "title": "Primeras ejecuciones de los dos trabajos permanentes",
+      "result": "OBSERVATION",
+      "kind": "LIVE_PERMANENT_AUTOMATION",
+      "at": "2026-10-20T01:27:56.900Z",
+      "evidence": {
+        "health": {
+          "deliveryRetries": 0,
+          "failedPublications": 0,
+          "pendingInbox": 0,
+          "quarantined": 5,
+          "staleInbox": 0
+        },
+        "httpResponses": [],
+        "jobs": [
+          {
+            "active": true,
+            "jobid": 2,
+            "name": "authcdn-mq-rest-minute",
+            "schedule": "* * * * *"
+          },
+          {
+            "active": true,
+            "jobid": 3,
+            "name": "authcdn-mq-maintenance",
+            "schedule": "* * * * *"
+          }
+        ],
+        "maintenanceFunctionAvailable": true,
+        "runs": []
+      }
+    },
+    {
+      "id": "PERM-OBSERVE-7",
+      "title": "Primeras ejecuciones de los dos trabajos permanentes",
+      "result": "PASS",
+      "kind": "LIVE_PERMANENT_AUTOMATION",
+      "at": "2026-10-20T01:28:25.679Z",
+      "evidence": {
+        "health": {
+          "deliveryRetries": 0,
+          "failedPublications": 0,
+          "pendingInbox": 0,
+          "quarantined": 5,
+          "staleInbox": 0
+        },
+        "httpResponses": [
+          {
+            "content": "{\"published\":0,\"captured\":0,\"worked\":0,\"errors\":0}",
+            "created": "2026-10-20T01:28:00.070513+00:00",
+            "error": null,
+            "id": 4,
+            "status": 200,
+            "timedOut": false
+          }
+        ],
+        "jobs": [
+          {
+            "active": true,
+            "jobid": 2,
+            "name": "authcdn-mq-rest-minute",
+            "schedule": "* * * * *"
+          },
+          {
+            "active": true,
+            "jobid": 3,
+            "name": "authcdn-mq-maintenance",
+            "schedule": "* * * * *"
+          }
+        ],
+        "maintenanceFunctionAvailable": true,
+        "runs": [
+          {
+            "end_time": "2026-10-20T01:28:00.061587+00:00",
+            "jobid": 3,
+            "return_message": "1 row",
+            "start_time": "2026-10-20T01:28:00.053866+00:00",
+            "status": "succeeded"
+          },
+          {
+            "end_time": "2026-10-20T01:28:00.071546+00:00",
+            "jobid": 2,
+            "return_message": "1 row",
+            "start_time": "2026-10-20T01:28:00.055094+00:00",
+            "status": "succeeded"
+          }
+        ]
+      }
+    }
+  ],
+  "startedAt": "2026-10-20T01:27:18.484Z",
+  "jobIds": [
+    2,
+    3
+  ]
+}

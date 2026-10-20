@@ -1,0 +1,114 @@
+{
+  "records": [
+    {
+      "id": "CLEANUP-FAILED-TEST-OUTBOX",
+      "result": "PASS",
+      "title": "La cancelación de las programaciones de ensayo ya retiró su FAILED del circuito activo",
+      "at": "2026-10-20T04:25:34.841Z",
+      "kind": "SCOPED_TEST_CLEANUP",
+      "evidence": {
+        "rows": [
+          {
+            "attempts": 5,
+            "event_id": "7694e118-5454-4282-b14d-0dec995b28f7",
+            "last_error": "MQ_PUBLICATION_UNCONFIRMED",
+            "status": "CANCELLED"
+          }
+        ],
+        "note": "El intento adicional de limpieza no modificó filas: la limpieza de cada ronda ya había cancelado el outbox. Se conservan los cinco intentos, last_error y el aviso de alerta."
+      }
+    },
+    {
+      "id": "FINAL-CLOUD-CHECK",
+      "result": "PASS",
+      "title": "Salud y programación permanente tras retirar los fallos",
+      "at": "2026-10-20T04:25:34.843Z",
+      "kind": "LIVE_CLOUD_READ_ONLY",
+      "evidence": {
+        "activeTestReminders": 0,
+        "health": {
+          "deliveryRetries": 0,
+          "failedPublications": 0,
+          "pendingInbox": 0,
+          "quarantined": 7,
+          "staleInbox": 0
+        },
+        "jobs": [
+          {
+            "active": true,
+            "name": "authcdn-mq-rest-minute",
+            "schedule": "* * * * *"
+          },
+          {
+            "active": true,
+            "name": "authcdn-mq-maintenance",
+            "schedule": "* * * * *"
+          }
+        ],
+        "recentCronRuns": [
+          {
+            "end_time": "2026-10-20T04:25:00.079953+00:00",
+            "jobid": 3,
+            "start_time": "2026-10-20T04:25:00.0668+00:00",
+            "status": "succeeded"
+          },
+          {
+            "end_time": "2026-10-20T04:25:00.091701+00:00",
+            "jobid": 2,
+            "start_time": "2026-10-20T04:25:00.06606+00:00",
+            "status": "succeeded"
+          },
+          {
+            "end_time": "2026-10-20T04:24:00.033081+00:00",
+            "jobid": 3,
+            "start_time": "2026-10-20T04:24:00.022764+00:00",
+            "status": "succeeded"
+          },
+          {
+            "end_time": "2026-10-20T04:24:00.026206+00:00",
+            "jobid": 2,
+            "start_time": "2026-10-20T04:24:00.021538+00:00",
+            "status": "succeeded"
+          },
+          {
+            "end_time": "2026-10-20T04:23:00.03409+00:00",
+            "jobid": 3,
+            "start_time": "2026-10-20T04:23:00.023261+00:00",
+            "status": "succeeded"
+          },
+          {
+            "end_time": "2026-10-20T04:23:00.026647+00:00",
+            "jobid": 2,
+            "start_time": "2026-10-20T04:23:00.022055+00:00",
+            "status": "succeeded"
+          }
+        ],
+        "recentHttpResponses": [
+          {
+            "created": "2026-10-20T04:25:00.091708+00:00",
+            "error_msg": null,
+            "id": 181,
+            "status_code": 200,
+            "timed_out": false
+          },
+          {
+            "created": "2026-10-20T04:24:00.026413+00:00",
+            "error_msg": null,
+            "id": 180,
+            "status_code": 200,
+            "timed_out": false
+          },
+          {
+            "created": "2026-10-20T04:23:00.026641+00:00",
+            "error_msg": null,
+            "id": 179,
+            "status_code": 200,
+            "timed_out": false
+          }
+        ],
+        "temporaryFunctions": 0,
+        "temporaryTriggers": 0
+      }
+    }
+  ]
+}

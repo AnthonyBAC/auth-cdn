@@ -1,0 +1,71 @@
+{
+  "origin": "https://auth-cdn-git-feature-mq-consumidor-anthonys-projects-0d8acba7.vercel.app",
+  "runTag": "MQ-E2E-20261020004000",
+  "records": [
+    {
+      "id": "AUTH-PASSWORD",
+      "title": "Autenticación con Supabase Auth",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T01:15:01.772Z",
+      "evidence": {
+        "status": 200,
+        "projectHost": "vqeusrctsfqykzwwrucn.supabase.co"
+      }
+    },
+    {
+      "id": "AUTH-OWNER",
+      "title": "Sesión de cuenta proporcionada",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T01:15:03.758Z",
+      "evidence": {
+        "request": {
+          "method": "GET",
+          "path": "/api/auth/session",
+          "body": null
+        },
+        "status": 200,
+        "body": {
+          "user": {
+            "id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+            "email": "owner@example.com",
+            "name": "Demo Owner"
+          }
+        }
+      }
+    },
+    {
+      "id": "UI-NOTIFICATIONS",
+      "title": "Avisos efectivamente renderizados en el navegador",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T01:15:07.666Z",
+      "evidence": {
+        "status": 200,
+        "visibleItems": 8,
+        "text": "Auth DCN\nWorkspaces\nAvisos\nSupabase\nAvisos\nActualizar\nLa tarjeta \"MQ-E2E-20261020004000 cron-autonomo\" vence el 2026-10-20T01:42:46Z.\n19-10-2026, 10:14:02 p. m.\nMarcar leído\nLa tarjeta \"MQ-E2E-20261020004000 vencimiento\" está vencida.\n19-10-2026, 10:03:23 p. m.\nMarcar leído\nLa tarjeta \"MQ-E2E-20261020004000 vencimiento\" vence el 2026-10-20T01:03:20Z.\n19-10-2026, 10:02:58 p. m.\nMarcar leído\nNo se pudo entregar un recordatorio tras agotar los reintentos. Solicita revisión al responsable del tablero.\n19-10-2026, 10:01:55 p. m.\nMarcar leído\nLa tarjeta \"MQ-E2E-20261020004000 normal\" vence el 2026-10-20T01:11:08Z.\n19-10-2026, 9:51:22 p. m.\nLa tarjeta \"Prueba TASK_OVERDUE\" está vencida.\n19-10-2026, 9:49:57 p. m.\nMarcar leído\nLa tarjeta \"Prueba TASK_OVERDUE\" está vencida.\n19-10-2026, 11:44:31 a. m.\nMarcar leído\nLa tarjeta \"Prueba recordatorio MQ\" vence el 2026-10-19T03:01:46Z.\n18-10-2026, 11:49:00 p. m.\nMarcar leído"
+      }
+    },
+    {
+      "id": "UI-SUMMARY",
+      "title": "Botón de resumen ejecuta Request/Reply y muestra estadísticas",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T01:15:13.557Z",
+      "evidence": {
+        "status": 200,
+        "body": {
+          "summary": {
+            "totalActive": 8,
+            "pending": 6,
+            "completed": 1,
+            "overdue": 1
+          },
+          "requestId": "cf25cf6b-b255-4714-89cc-761610a23e12",
+          "generatedAt": "2026-10-20T01:15:10.907Z"
+        }
+      }
+    }
+  ]
+}

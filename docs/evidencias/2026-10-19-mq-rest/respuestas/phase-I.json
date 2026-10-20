@@ -1,0 +1,434 @@
+{
+  "origin": "https://auth-cdn-git-feature-mq-consumidor-anthonys-projects-0d8acba7.vercel.app",
+  "runTag": "MQ-E2E-20261020004000",
+  "records": [
+    {
+      "id": "AUTH-PASSWORD",
+      "title": "Autenticación con Supabase Auth",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T01:08:22.178Z",
+      "evidence": {
+        "status": 200,
+        "projectHost": "vqeusrctsfqykzwwrucn.supabase.co"
+      }
+    },
+    {
+      "id": "AUTH-OWNER",
+      "title": "Sesión de cuenta proporcionada",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T01:08:24.230Z",
+      "evidence": {
+        "request": {
+          "method": "GET",
+          "path": "/api/auth/session",
+          "body": null
+        },
+        "status": 200,
+        "body": {
+          "user": {
+            "id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+            "email": "owner@example.com",
+            "name": "Demo Owner"
+          }
+        }
+      }
+    },
+    {
+      "id": "CARD-version-antigua",
+      "title": "Crear tarjeta de ensayo version-antigua",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T01:08:26.938Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/lists/e573b468-11eb-4233-98f1-1cb201ff0292/cards",
+          "body": {
+            "title": "MQ-E2E-20261020004000 version-antigua",
+            "description": "Datos aislados para evidencia de mensajería REST."
+          }
+        },
+        "status": 201,
+        "body": {
+          "card": {
+            "id": "eba66877-dbae-4ea5-9076-a61702fc7ffb",
+            "title": "MQ-E2E-20261020004000 version-antigua",
+            "description": "Datos aislados para evidencia de mensajería REST.",
+            "position": 6,
+            "list_id": "e573b468-11eb-4233-98f1-1cb201ff0292",
+            "created_by_user_id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+            "due_at": null,
+            "notify_at": null,
+            "completed_at": null,
+            "schedule_version": 1
+          }
+        }
+      }
+    },
+    {
+      "id": "SCHEDULE-version-antigua",
+      "title": "Programar version-antigua",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T01:08:28.069Z",
+      "evidence": {
+        "request": {
+          "method": "PATCH",
+          "path": "/api/cards/eba66877-dbae-4ea5-9076-a61702fc7ffb/schedule",
+          "body": {
+            "expectedVersion": 1,
+            "dueAt": "2026-10-20T01:28:26.944Z",
+            "notifyAt": "2026-10-20T01:10:26.944Z",
+            "assigneeIds": []
+          }
+        },
+        "status": 200,
+        "body": {
+          "card": {
+            "id": "eba66877-dbae-4ea5-9076-a61702fc7ffb",
+            "due_at": "2026-10-20T01:28:26.944+00:00",
+            "notify_at": "2026-10-20T01:10:26.944+00:00",
+            "assignee_ids": [],
+            "completed_at": null,
+            "schedule_version": 2
+          }
+        }
+      }
+    },
+    {
+      "id": "VERSION-RESCHEDULE",
+      "title": "Reprogramación incrementa versión y cancela la anterior",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T01:08:29.629Z",
+      "evidence": {
+        "request": {
+          "method": "PATCH",
+          "path": "/api/cards/eba66877-dbae-4ea5-9076-a61702fc7ffb/schedule",
+          "body": {
+            "expectedVersion": 2,
+            "dueAt": "2026-10-20T01:38:28.309Z",
+            "notifyAt": "2026-10-20T01:11:28.309Z",
+            "assigneeIds": []
+          }
+        },
+        "status": 200,
+        "body": {
+          "card": {
+            "id": "eba66877-dbae-4ea5-9076-a61702fc7ffb",
+            "due_at": "2026-10-20T01:38:28.309+00:00",
+            "notify_at": "2026-10-20T01:11:28.309+00:00",
+            "assignee_ids": [],
+            "completed_at": null,
+            "schedule_version": 3
+          }
+        }
+      }
+    },
+    {
+      "id": "VERSION-OLD-SEND",
+      "title": "Reproducir llegada tardía de un evento de versión antigua",
+      "result": "PASS",
+      "kind": "LIVE_MQ",
+      "at": "2026-10-20T01:08:30.425Z",
+      "evidence": {
+        "request": {
+          "role": "producer",
+          "method": "POST",
+          "queue": "AUTHCDN.REMINDERS.Q",
+          "selector": {
+            "expiry": 60000
+          },
+          "body": {
+            "schemaVersion": 1,
+            "eventId": "a3df7057-0e8a-44fe-bfff-a32be8fcc13b",
+            "eventType": "TASK_REMINDER_DUE",
+            "reminderId": "631b9aa4-a6bb-4549-9fcd-bbb727d2c568",
+            "cardId": "eba66877-dbae-4ea5-9076-a61702fc7ffb",
+            "workspaceId": "443b712e-a038-45b5-bdc9-be54b9abad82",
+            "scheduleVersion": 2,
+            "occurredAt": "2026-10-20T01:08:29.631Z",
+            "expiresAt": "2026-10-20T01:28:26.944Z"
+          }
+        },
+        "status": 201,
+        "body": "",
+        "metadata": {
+          "ibm-mq-md-messageId": "ID:414d51204155544843444e514d2020203736d56a065d1d40"
+        }
+      }
+    },
+    {
+      "id": "VERSION-CLOUD",
+      "title": "Ciclo cloud de recuperación",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T01:08:36.259Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/mq/tick",
+          "body": {}
+        },
+        "status": 200,
+        "body": {
+          "published": 0,
+          "captured": 1,
+          "worked": 3,
+          "errors": 0
+        }
+      }
+    },
+    {
+      "id": "VERSION-OLD-DISCARD",
+      "title": "Evento antiguo se descarta sin generar aviso",
+      "result": "PASS",
+      "kind": "LIVE_SQL",
+      "at": "2026-10-20T01:08:37.559Z",
+      "evidence": {
+        "inbox": {
+          "status": 200,
+          "body": [
+            {
+              "id": "4d732abb-b0f1-43b7-ba41-1e08c9ffa40a",
+              "queue_name": "AUTHCDN.REMINDERS.Q",
+              "message_id": "ID:414D51204155544843444E514D2020203736D56A065D1D40",
+              "correlation_id": null,
+              "reply_to": null,
+              "body": "{\"schemaVersion\":1,\"eventId\":\"a3df7057-0e8a-44fe-bfff-a32be8fcc13b\",\"eventType\":\"TASK_REMINDER_DUE\",\"reminderId\":\"631b9aa4-a6bb-4549-9fcd-bbb727d2c568\",\"cardId\":\"eba66877-dbae-4ea5-9076-a61702fc7ffb\",\"workspaceId\":\"443b712e-a038-45b5-bdc9-be54b9abad82\",\"scheduleVersion\":2,\"occurredAt\":\"2026-10-20T01:08:29.631Z\",\"expiresAt\":\"2026-10-20T01:28:26.944Z\"}",
+              "state": "DONE",
+              "attempts": 1,
+              "output_attempts": 0,
+              "output": null,
+              "next_attempt_at": "2026-10-20T01:08:31.41774+00:00",
+              "last_error": null
+            }
+          ]
+        },
+        "reminder": {
+          "status": 200,
+          "body": [
+            {
+              "id": "631b9aa4-a6bb-4549-9fcd-bbb727d2c568",
+              "status": "CANCELLED",
+              "schedule_version": 2
+            }
+          ]
+        },
+        "notifications": {
+          "status": 200,
+          "body": []
+        }
+      }
+    },
+    {
+      "id": "NATIVE-DLQ-READ",
+      "title": "Existencia y lectura no destructiva de DLQ nativa",
+      "result": "PASS",
+      "kind": "LIVE_MQ",
+      "at": "2026-10-20T01:08:38.306Z",
+      "evidence": {
+        "status": 204,
+        "note": "No se publica ni retira de esta cola. Esto no certifica que AUTHCDNQM.DEADQ apunte a ella."
+      }
+    },
+    {
+      "id": "IBM-REST-AUTH",
+      "title": "IBM MQ REST exige credenciales además del JWT de nuestra API",
+      "result": "PASS",
+      "kind": "LIVE_MQ",
+      "at": "2026-10-20T01:08:39.014Z",
+      "evidence": {
+        "status": 401,
+        "body": {
+          "error": [
+            {
+              "msgId": "MQWB0104E",
+              "action": "Provide credentials using a client certificate, LTPA security token, or username and password via HTTP basic authentication header. On z/OS, if the mqweb server has been configured for SAF authentication, check the messages.log file for messages indicating that SAF authentication is not available. Start the Liberty angel process if it is not already running. You might need to restart the mqweb server for any changes to take effect.",
+              "completionCode": 0,
+              "reasonCode": 0,
+              "type": "rest",
+              "message": "MQWB0104E: The REST API request to 'v3/messaging/qmgr/AUTHCDNQM/queue/AUTHCDN.REMINDERS.Q/message' is not authenticated.",
+              "explanation": "The REST API request cannot be completed because credentials were omitted from the request. On z/OS, if the mqweb server has been configured for SAF authentication, this can be caused by the Liberty angel process not being active."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "CLEANUP-SCHEDULE-1aa7a690-2402-4af5-b981-00b408a7d663",
+      "title": "Cancelar únicamente programaciones futuras de ensayo",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T01:08:40.537Z",
+      "evidence": {
+        "request": {
+          "method": "PATCH",
+          "path": "/api/cards/1aa7a690-2402-4af5-b981-00b408a7d663/schedule",
+          "body": {
+            "expectedVersion": 2,
+            "dueAt": null,
+            "notifyAt": null,
+            "assigneeIds": []
+          }
+        },
+        "status": 200,
+        "body": {
+          "card": {
+            "id": "1aa7a690-2402-4af5-b981-00b408a7d663",
+            "due_at": null,
+            "notify_at": null,
+            "assignee_ids": [],
+            "completed_at": null,
+            "schedule_version": 3
+          }
+        }
+      }
+    },
+    {
+      "id": "CLEANUP-SCHEDULE-134ed31f-99e1-466a-a966-a3f27b4415cb",
+      "title": "Cancelar únicamente programaciones futuras de ensayo",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T01:08:41.625Z",
+      "evidence": {
+        "request": {
+          "method": "PATCH",
+          "path": "/api/cards/134ed31f-99e1-466a-a966-a3f27b4415cb/schedule",
+          "body": {
+            "expectedVersion": 2,
+            "dueAt": null,
+            "notifyAt": null,
+            "assigneeIds": []
+          }
+        },
+        "status": 200,
+        "body": {
+          "card": {
+            "id": "134ed31f-99e1-466a-a966-a3f27b4415cb",
+            "due_at": null,
+            "notify_at": null,
+            "assignee_ids": [],
+            "completed_at": null,
+            "schedule_version": 3
+          }
+        }
+      }
+    },
+    {
+      "id": "CLEANUP-SCHEDULE-c65fade2-7ae4-4ccb-be7d-9c43229caa2c",
+      "title": "Cancelar únicamente programaciones futuras de ensayo",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T01:08:42.713Z",
+      "evidence": {
+        "request": {
+          "method": "PATCH",
+          "path": "/api/cards/c65fade2-7ae4-4ccb-be7d-9c43229caa2c/schedule",
+          "body": {
+            "expectedVersion": 2,
+            "dueAt": null,
+            "notifyAt": null,
+            "assigneeIds": []
+          }
+        },
+        "status": 200,
+        "body": {
+          "card": {
+            "id": "c65fade2-7ae4-4ccb-be7d-9c43229caa2c",
+            "due_at": null,
+            "notify_at": null,
+            "assignee_ids": [],
+            "completed_at": null,
+            "schedule_version": 3
+          }
+        }
+      }
+    },
+    {
+      "id": "CLEANUP-SCHEDULE-eba66877-dbae-4ea5-9076-a61702fc7ffb",
+      "title": "Cancelar únicamente programaciones futuras de ensayo",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T01:08:44.249Z",
+      "evidence": {
+        "request": {
+          "method": "PATCH",
+          "path": "/api/cards/eba66877-dbae-4ea5-9076-a61702fc7ffb/schedule",
+          "body": {
+            "expectedVersion": 3,
+            "dueAt": null,
+            "notifyAt": null,
+            "assigneeIds": []
+          }
+        },
+        "status": 200,
+        "body": {
+          "card": {
+            "id": "eba66877-dbae-4ea5-9076-a61702fc7ffb",
+            "due_at": null,
+            "notify_at": null,
+            "assignee_ids": [],
+            "completed_at": null,
+            "schedule_version": 4
+          }
+        }
+      }
+    },
+    {
+      "id": "CLEANUP-PENDING",
+      "title": "El ensayo no deja recordatorios futuros activos",
+      "result": "PASS",
+      "kind": "LIVE_SQL",
+      "at": "2026-10-20T01:08:44.447Z",
+      "evidence": {
+        "status": 200,
+        "body": []
+      }
+    },
+    {
+      "id": "FINAL-HEALTH",
+      "title": "Estado operativo después de recuperar fallos y limpiar fixtures",
+      "result": "PASS",
+      "kind": "LIVE_SQL",
+      "at": "2026-10-20T01:08:44.648Z",
+      "evidence": {
+        "status": 200,
+        "body": {
+          "staleInbox": 0,
+          "quarantined": 5,
+          "pendingInbox": 0,
+          "deliveryRetries": 0,
+          "failedPublications": 0
+        }
+      }
+    },
+    {
+      "id": "FINAL-SUMMARY",
+      "title": "Resumen final sigue disponible",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T01:08:48.780Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/boards/5c52e0b4-62f0-4545-9ea3-2aa86dfe0c62/summary",
+          "body": null
+        },
+        "status": 200,
+        "body": {
+          "summary": {
+            "totalActive": 7,
+            "pending": 5,
+            "completed": 1,
+            "overdue": 1
+          },
+          "requestId": "e59ba614-588e-437e-b4ee-fceeedf5cd30",
+          "generatedAt": "2026-10-20T01:08:45.979Z"
+        }
+      }
+    }
+  ]
+}

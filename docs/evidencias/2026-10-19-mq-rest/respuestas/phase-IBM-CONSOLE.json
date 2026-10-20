@@ -1,0 +1,143 @@
+{
+  "records": [
+    {
+      "id": "IBM-CONSOLE-E2E_INJECTED_OUTPUT_FAILURE",
+      "title": "Detalle real BOQ E2E_INJECTED_OUTPUT_FAILURE",
+      "kind": "LIVE_MQ_CONSOLE",
+      "result": "PASS",
+      "at": "2026-10-20T03:35:38.228Z",
+      "evidence": {
+        "queue": "AUTHCDN.REMINDERS.BOQ",
+        "source": "Sesión Firefox iniciada manualmente por el usuario",
+        "body": {
+          "schemaVersion": 1,
+          "type": "MQ_REST_QUARANTINE",
+          "testRun": "MQ-E2E-20261020004000",
+          "inboxId": "2d63e3da-11bd-43cf-bfe6-cc3d607a5695",
+          "reason": "E2E_INJECTED_OUTPUT_FAILURE",
+          "originalBody": "{\"testRun\":\"MQ-E2E-20261020004000\",\"case\":\"lease-and-retry\",\"note\":\"Fixture SQL: no es un MsgId emitido por IBM.\"}"
+        },
+        "identifiers": "Skip to main content\nIBM\n MQ\nLogout\nHome\nManage\nLearning resources\nSettings\nToggle opening or closing the side navigation\nManage\nAUTHCDNQM\nQueues\nLocal Queue: AUTHCDN.REMINDERS.BOQ messages\nActions\nMessage details\nClose\nGeneral\nContext\nIdentifiers\nData\nMessage ID\tID:414d51204155544843444e514d2020203736d56a08ae1c40\nClose\nDownload\n",
+        "screenshot": "23-ibm-boq-e2e-injected-output-failure.png"
+      }
+    },
+    {
+      "id": "IBM-CONSOLE-PERMANENT_ERROR",
+      "title": "Detalle real BOQ PERMANENT_ERROR",
+      "kind": "LIVE_MQ_CONSOLE",
+      "result": "PASS",
+      "at": "2026-10-20T03:35:39.496Z",
+      "evidence": {
+        "queue": "AUTHCDN.REMINDERS.BOQ",
+        "source": "Sesión Firefox iniciada manualmente por el usuario",
+        "body": {
+          "schemaVersion": 1,
+          "type": "MQ_REST_QUARANTINE",
+          "inboxId": "a14133b4-0142-4ff8-a1db-c1b24af16592",
+          "sourceQueue": "AUTHCDN.REMINDERS.Q",
+          "messageId": "ID:414D51204155544843444E514D2020203736D56A0AAD1C40",
+          "reason": "PERMANENT_ERROR",
+          "attempts": 1,
+          "originalBody": "{\"cardId\":\"c65fade2-7ae4-4ccb-be7d-9c43229caa2c\",\"eventId\":\"2a4627f8-d401-440b-a4f5-611edd10fe08\",\"eventType\":\"TASK_REMINDER_DUE\",\"expiresAt\":\"2026-10-20T01:11:08.738Z\",\"occurredAt\":\"2026-10-20T00:51:21.306Z\",\"reminderId\":\"456bc06e-f5b3-4071-b7db-845da94f4835\",\"workspaceId\":\"947c7680-5f3e-4f00-85be-089590de2217\",\"schemaVersion\":1,\"scheduleVersion\":2}"
+        },
+        "identifiers": "Skip to main content\nIBM\n MQ\nLogout\nHome\nManage\nLearning resources\nSettings\nToggle opening or closing the side navigation\nManage\nAUTHCDNQM\nQueues\nLocal Queue: AUTHCDN.REMINDERS.BOQ messages\nActions\nMessage details\nClose\nGeneral\nContext\nIdentifiers\nData\nMessage ID\tID:414d51204155544843444e514d2020203736d56a0fad1c40\nClose\nDownload\n",
+        "screenshot": "23-ibm-boq-permanent-error.png"
+      }
+    },
+    {
+      "id": "IBM-CONSOLE-INVALID_REMINDER",
+      "title": "Detalle real BOQ INVALID_REMINDER",
+      "kind": "LIVE_MQ_CONSOLE",
+      "result": "PASS",
+      "at": "2026-10-20T03:35:41.040Z",
+      "evidence": {
+        "queue": "AUTHCDN.REMINDERS.BOQ",
+        "source": "Sesión Firefox iniciada manualmente por el usuario",
+        "body": {
+          "schemaVersion": 1,
+          "type": "MQ_REST_QUARANTINE",
+          "inboxId": "5766abca-8b1a-443c-8992-108913c8ade2",
+          "sourceQueue": "AUTHCDN.REMINDERS.Q",
+          "messageId": "ID:414D51204155544843444E514D2020203736D56A09AD1C40",
+          "reason": "INVALID_REMINDER",
+          "attempts": 1,
+          "originalBody": "{\"schemaVersion\":999,\"testRun\":\"MQ-E2E-20261020004000\"}"
+        },
+        "identifiers": "Skip to main content\nIBM\n MQ\nLogout\nHome\nManage\nLearning resources\nSettings\nToggle opening or closing the side navigation\nManage\nAUTHCDNQM\nQueues\nLocal Queue: AUTHCDN.REMINDERS.BOQ messages\nActions\nMessage details\nClose\nGeneral\nContext\nIdentifiers\nData\nMessage ID\tID:414d51204155544843444e514d2020203736d56a0ead1c40\nClose\nDownload\n",
+        "screenshot": "23-ibm-boq-invalid-reminder.png"
+      }
+    },
+    {
+      "id": "IBM-CONSOLE-INVALID_REPLY_DESTINATION",
+      "title": "Detalle real BOQ INVALID_REPLY_DESTINATION",
+      "kind": "LIVE_MQ_CONSOLE",
+      "result": "PASS",
+      "at": "2026-10-20T03:35:42.573Z",
+      "evidence": {
+        "queue": "AUTHCDN.REMINDERS.BOQ",
+        "source": "Sesión Firefox iniciada manualmente por el usuario",
+        "body": {
+          "schemaVersion": 1,
+          "type": "MQ_REST_QUARANTINE",
+          "inboxId": "92053757-9172-43ea-b6da-24d11ea1cb05",
+          "sourceQueue": "AUTHCDN.SUMMARY.REQUEST.Q",
+          "messageId": "ID:414D51204155544843444E514D2020203736D56A0BAD1C40",
+          "reason": "INVALID_REPLY_DESTINATION",
+          "attempts": 1,
+          "originalBody": "{\"schemaVersion\":1,\"requestId\":\"9613f1e5-bab5-45d2-97b9-0499f4b832aa\",\"boardId\":\"5c52e0b4-62f0-4545-9ea3-2aa86dfe0c62\",\"userId\":\"45e0ff79-940c-4230-bd97-bb9e0572e0f0\",\"createdAt\":\"2026-10-20T00:54:09.944Z\",\"expiresAt\":\"2026-10-20T00:55:09.944Z\"}"
+        },
+        "identifiers": "Skip to main content\nIBM\n MQ\nLogout\nHome\nManage\nLearning resources\nSettings\nToggle opening or closing the side navigation\nManage\nAUTHCDNQM\nQueues\nLocal Queue: AUTHCDN.REMINDERS.BOQ messages\nActions\nMessage details\nClose\nGeneral\nContext\nIdentifiers\nData\nMessage ID\tID:414d51204155544843444e514d2020203736d56a0dad1c40\nClose\nDownload\n",
+        "screenshot": "23-ibm-boq-invalid-reply-destination.png"
+      }
+    },
+    {
+      "id": "IBM-CONSOLE-MALFORMED_JSON",
+      "title": "Detalle real BOQ MALFORMED_JSON",
+      "kind": "LIVE_MQ_CONSOLE",
+      "result": "PASS",
+      "at": "2026-10-20T03:35:44.087Z",
+      "evidence": {
+        "queue": "AUTHCDN.REMINDERS.BOQ",
+        "source": "Sesión Firefox iniciada manualmente por el usuario",
+        "body": {
+          "schemaVersion": 1,
+          "type": "MQ_REST_QUARANTINE",
+          "inboxId": "87421194-25d4-4ecc-b6f7-662903f555c2",
+          "sourceQueue": "AUTHCDN.REMINDERS.Q",
+          "messageId": "ID:414D51204155544843444E514D2020203736D56A08AD1C40",
+          "reason": "MALFORMED_JSON",
+          "attempts": 1,
+          "originalBody": "{\"run\":\"MQ-E2E-20261020004000\",\"broken\":"
+        },
+        "identifiers": "Skip to main content\nIBM\n MQ\nLogout\nHome\nManage\nLearning resources\nSettings\nToggle opening or closing the side navigation\nManage\nAUTHCDNQM\nQueues\nLocal Queue: AUTHCDN.REMINDERS.BOQ messages\nActions\nMessage details\nClose\nGeneral\nContext\nIdentifiers\nData\nMessage ID\tID:414d51204155544843444e514d2020203736d56a0cad1c40\nClose\nDownload\n",
+        "screenshot": "23-ibm-boq-malformed-json.png"
+      }
+    },
+    {
+      "id": "IBM-CONSOLE-DLQ-EMPTY",
+      "title": "DLQ nativa vacía",
+      "at": "2026-10-20T03:35:46.356Z",
+      "kind": "LIVE_MQ_CONSOLE",
+      "result": "PASS",
+      "evidence": {
+        "queue": "DEV.DEAD.LETTER.QUEUE",
+        "visibleMessages": 0,
+        "screenshot": "24-ibm-dlq-vacia-firefox.png",
+        "note": "No prueba todavía el traslado automático por fallo nativo."
+      }
+    },
+    {
+      "id": "IBM-CONSOLE-DEADQ-CONFIRMED",
+      "title": "Asignación de DLQ nativa confirmada visualmente",
+      "at": "2026-10-20T03:35:47.403Z",
+      "kind": "LIVE_MQ_CONSOLE",
+      "result": "PASS",
+      "evidence": {
+        "queueManager": "AUTHCDNQM",
+        "property": "DEADQ",
+        "configuredValue": "DEV.DEAD.LETTER.QUEUE",
+        "screenshot": "19-ibm-config-deadq-firefox.png"
+      }
+    }
+  ]
+}

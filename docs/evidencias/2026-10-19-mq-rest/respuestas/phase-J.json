@@ -1,0 +1,113 @@
+{
+  "origin": "https://auth-cdn-git-feature-mq-consumidor-anthonys-projects-0d8acba7.vercel.app",
+  "runTag": "MQ-E2E-20261020004000",
+  "records": [
+    {
+      "id": "AUTH-PASSWORD",
+      "title": "Autenticación con Supabase Auth",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T01:12:42.138Z",
+      "evidence": {
+        "status": 200,
+        "projectHost": "vqeusrctsfqykzwwrucn.supabase.co"
+      }
+    },
+    {
+      "id": "AUTH-OWNER",
+      "title": "Sesión de cuenta proporcionada",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T01:12:44.074Z",
+      "evidence": {
+        "request": {
+          "method": "GET",
+          "path": "/api/auth/session",
+          "body": null
+        },
+        "status": 200,
+        "body": {
+          "user": {
+            "id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+            "email": "owner@example.com",
+            "name": "Demo Owner"
+          }
+        }
+      }
+    },
+    {
+      "id": "CARD-cron-autonomo",
+      "title": "Crear tarjeta de ensayo cron-autonomo",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T01:12:46.715Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/lists/e573b468-11eb-4233-98f1-1cb201ff0292/cards",
+          "body": {
+            "title": "MQ-E2E-20261020004000 cron-autonomo",
+            "description": "Datos aislados para evidencia de mensajería REST."
+          }
+        },
+        "status": 201,
+        "body": {
+          "card": {
+            "id": "bfc16927-5eba-45ca-b3af-53392778447a",
+            "title": "MQ-E2E-20261020004000 cron-autonomo",
+            "description": "Datos aislados para evidencia de mensajería REST.",
+            "position": 7,
+            "list_id": "e573b468-11eb-4233-98f1-1cb201ff0292",
+            "created_by_user_id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+            "due_at": null,
+            "notify_at": null,
+            "completed_at": null,
+            "schedule_version": 1
+          }
+        }
+      }
+    },
+    {
+      "id": "SCHEDULE-cron-autonomo",
+      "title": "Programar cron-autonomo",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T01:12:47.849Z",
+      "evidence": {
+        "request": {
+          "method": "PATCH",
+          "path": "/api/cards/bfc16927-5eba-45ca-b3af-53392778447a/schedule",
+          "body": {
+            "expectedVersion": 1,
+            "dueAt": "2026-10-20T01:42:46.718Z",
+            "notifyAt": "2026-10-20T01:12:56.718Z",
+            "assigneeIds": []
+          }
+        },
+        "status": 200,
+        "body": {
+          "card": {
+            "id": "bfc16927-5eba-45ca-b3af-53392778447a",
+            "due_at": "2026-10-20T01:42:46.718+00:00",
+            "notify_at": "2026-10-20T01:12:56.718+00:00",
+            "assignee_ids": [],
+            "completed_at": null,
+            "schedule_version": 2
+          }
+        }
+      }
+    },
+    {
+      "id": "CRON-FIXTURE",
+      "title": "Recordatorio pendiente: ninguna llamada manual a tick después de crearlo",
+      "result": "PASS",
+      "kind": "LIVE_AUTOMATION",
+      "at": "2026-10-20T01:12:47.851Z",
+      "evidence": {
+        "cardId": "bfc16927-5eba-45ca-b3af-53392778447a",
+        "scheduledAt": "2026-10-20T01:12:47.850Z",
+        "notifyAt": "2026-10-20T01:12:56.718+00:00"
+      }
+    }
+  ]
+}

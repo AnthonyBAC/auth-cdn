@@ -1,0 +1,78 @@
+{
+  "records": [
+    {
+      "id": "DLQ-ADMIN-CONSUMER",
+      "title": "Consulta administrativa de solo lectura DISPLAY QMGR DEADQ",
+      "at": "2026-10-20T01:27:47.482Z",
+      "kind": "LIVE_MQ_ADMIN_READONLY",
+      "result": "LIMITED",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/admin/action/qmgr/AUTHCDNQM/mqsc",
+          "role": "consumer",
+          "body": {
+            "type": "runCommand",
+            "parameters": {
+              "command": "DISPLAY QMGR DEADQ"
+            }
+          },
+          "readOnlyCommand": true
+        },
+        "status": 403,
+        "body": {
+          "error": [
+            {
+              "msgId": "MQWB0118E",
+              "action": "Obtain the necessary authorization to perform the operation and resubmit the request. Check queue name resolution, and consult the queue manager error logs for further details.",
+              "completionCode": 2,
+              "reasonCode": 2035,
+              "type": "rest",
+              "message": "MQWB0118E: Not authorized to open 'SYSTEM.ADMIN.COMMAND.QUEUE'.",
+              "explanation": "The authenticated principal is not authorized to perform the requested REST API operation."
+            }
+          ]
+        },
+        "configuredDeadq": null,
+        "note": "Solo DISPLAY: no cambia la configuración de IBM ni envía o retira mensajes de negocio."
+      }
+    },
+    {
+      "id": "DLQ-ADMIN-PRODUCER",
+      "title": "Consulta administrativa de solo lectura DISPLAY QMGR DEADQ",
+      "at": "2026-10-20T01:27:47.752Z",
+      "kind": "LIVE_MQ_ADMIN_READONLY",
+      "result": "LIMITED",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/admin/action/qmgr/AUTHCDNQM/mqsc",
+          "role": "producer",
+          "body": {
+            "type": "runCommand",
+            "parameters": {
+              "command": "DISPLAY QMGR DEADQ"
+            }
+          },
+          "readOnlyCommand": true
+        },
+        "status": 403,
+        "body": {
+          "error": [
+            {
+              "msgId": "MQWB0118E",
+              "action": "Obtain the necessary authorization to perform the operation and resubmit the request. Check queue name resolution, and consult the queue manager error logs for further details.",
+              "completionCode": 2,
+              "reasonCode": 2035,
+              "type": "rest",
+              "message": "MQWB0118E: Not authorized to open 'SYSTEM.ADMIN.COMMAND.QUEUE'.",
+              "explanation": "The authenticated principal is not authorized to perform the requested REST API operation."
+            }
+          ]
+        },
+        "configuredDeadq": null,
+        "note": "Solo DISPLAY: no cambia la configuración de IBM ni envía o retira mensajes de negocio."
+      }
+    }
+  ]
+}

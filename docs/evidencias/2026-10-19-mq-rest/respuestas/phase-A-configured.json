@@ -1,0 +1,391 @@
+{
+  "origin": "https://auth-cdn-git-feature-mq-consumidor-anthonys-projects-0d8acba7.vercel.app",
+  "runTag": "MQ-E2E-20261020004000",
+  "records": [
+    {
+      "id": "AUTH-PASSWORD",
+      "title": "Autenticación con Supabase Auth",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T00:49:38.356Z",
+      "evidence": {
+        "status": 200,
+        "projectHost": "vqeusrctsfqykzwwrucn.supabase.co"
+      }
+    },
+    {
+      "id": "AUTH-OWNER",
+      "title": "Sesión de cuenta proporcionada",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T00:49:40.473Z",
+      "evidence": {
+        "request": {
+          "method": "GET",
+          "path": "/api/auth/session",
+          "body": null
+        },
+        "status": 200,
+        "body": {
+          "user": {
+            "id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+            "email": "owner@example.com",
+            "name": "Demo Owner"
+          }
+        }
+      }
+    },
+    {
+      "id": "VALIDATION-DATES",
+      "title": "Rechazar aviso posterior al vencimiento",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T00:49:42.533Z",
+      "evidence": {
+        "request": {
+          "method": "PATCH",
+          "path": "/api/cards/c65fade2-7ae4-4ccb-be7d-9c43229caa2c/schedule",
+          "body": {
+            "expectedVersion": 1,
+            "dueAt": "2026-10-20T00:59:41.527Z",
+            "notifyAt": "2026-10-20T01:01:21.527Z",
+            "assigneeIds": []
+          }
+        },
+        "status": 400,
+        "body": {
+          "error": {
+            "code": "BAD_REQUEST",
+            "message": "Revisa los datos de la tarjeta.",
+            "details": {
+              "formErrors": [],
+              "fieldErrors": {
+                "notifyAt": [
+                  "El aviso debe ser anterior al vencimiento."
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "VALIDATION-ID",
+      "title": "Rechazar boardId inválido",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T00:49:43.783Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/boards/not-a-uuid/summary",
+          "body": null
+        },
+        "status": 400,
+        "body": {
+          "error": {
+            "code": "BAD_REQUEST",
+            "message": "Board id is invalid.",
+            "details": {}
+          }
+        }
+      }
+    },
+    {
+      "id": "AUTH-UNKNOWN-BOARD",
+      "title": "Rechazar tablero inexistente",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T00:49:44.917Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/boards/9769ac59-1e5e-4fdc-8429-5b738825f7e6/summary",
+          "body": null
+        },
+        "status": 404,
+        "body": {
+          "error": {
+            "code": "NOT_FOUND",
+            "message": "Board not found.",
+            "details": {}
+          }
+        }
+      }
+    },
+    {
+      "id": "AUTH-TAMPERED",
+      "title": "JWT manipulado no entrega avisos",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T00:49:45.471Z",
+      "evidence": {
+        "request": {
+          "method": "GET",
+          "path": "/api/notifications",
+          "body": null
+        },
+        "status": 401,
+        "body": {
+          "error": {
+            "code": "UNAUTHENTICATED",
+            "message": "Sign in to continue.",
+            "details": {}
+          }
+        }
+      }
+    },
+    {
+      "id": "SUMMARY-5c52e0b4-62f0-4545-9ea3-2aa86dfe0c62",
+      "title": "Request/Reply de resumen",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T00:49:49.511Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/boards/5c52e0b4-62f0-4545-9ea3-2aa86dfe0c62/summary",
+          "body": null
+        },
+        "status": 200,
+        "body": {
+          "summary": {
+            "totalActive": 3,
+            "pending": 3,
+            "completed": 0,
+            "overdue": 0
+          },
+          "requestId": "ff224fd3-8447-43af-846c-a6e99c2d3d3c",
+          "generatedAt": "2026-10-20T00:49:46.985Z"
+        }
+      }
+    },
+    {
+      "id": "SUMMARY-5a84c92c-f774-4613-90b6-b37d7a79ec04",
+      "title": "Request/Reply de resumen",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T00:49:52.819Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/boards/5a84c92c-f774-4613-90b6-b37d7a79ec04/summary",
+          "body": null
+        },
+        "status": 200,
+        "body": {
+          "summary": {
+            "totalActive": 0,
+            "pending": 0,
+            "completed": 0,
+            "overdue": 0
+          },
+          "requestId": "f1bdb7f5-2e6b-4306-a45f-6f5b3de6d6b2",
+          "generatedAt": "2026-10-20T00:49:50.341Z"
+        }
+      }
+    },
+    {
+      "id": "SUMMARY-CONCURRENT",
+      "title": "Dos solicitudes simultáneas con requestId distintos",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T00:49:56.132Z",
+      "evidence": [
+        {
+          "request": {
+            "method": "POST",
+            "path": "/api/boards/5c52e0b4-62f0-4545-9ea3-2aa86dfe0c62/summary",
+            "body": null
+          },
+          "status": 200,
+          "body": {
+            "summary": {
+              "totalActive": 3,
+              "pending": 3,
+              "completed": 0,
+              "overdue": 0
+            },
+            "requestId": "2a126144-da81-4319-a8ad-145ce48ea3c4",
+            "generatedAt": "2026-10-20T00:49:53.524Z"
+          }
+        },
+        {
+          "request": {
+            "method": "POST",
+            "path": "/api/boards/5a84c92c-f774-4613-90b6-b37d7a79ec04/summary",
+            "body": null
+          },
+          "status": 200,
+          "body": {
+            "summary": {
+              "totalActive": 0,
+              "pending": 0,
+              "completed": 0,
+              "overdue": 0
+            },
+            "requestId": "c254fd28-693c-4d60-baa0-0900a792dbdf",
+            "generatedAt": "2026-10-20T00:49:53.963Z"
+          }
+        }
+      ]
+    },
+    {
+      "id": "CRON-CONFIG",
+      "title": "Ciclo protegido con secreto local",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T00:50:01.292Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/mq/tick",
+          "body": {}
+        },
+        "status": 200,
+        "body": {
+          "published": 1,
+          "captured": 1,
+          "worked": 5,
+          "errors": 0
+        }
+      }
+    },
+    {
+      "id": "SUMMARY-SQL-TRACE",
+      "title": "Traza de solicitudes y respuestas de los tableros de ensayo",
+      "result": "PASS",
+      "kind": "LIVE_SQL",
+      "at": "2026-10-20T00:50:01.832Z",
+      "evidence": {
+        "status": 200,
+        "body": [
+          {
+            "id": "b61c942d-62ae-4631-a6a9-e495f4823b34",
+            "queue_name": "AUTHCDN.SUMMARY.REPLY.Q",
+            "message_id": "ID:414D51204155544843444E514D2020203736D56A156A1C40",
+            "correlation_id": "ID:414D51204155544843444E514D2020203736D56A136A1C40",
+            "reply_to": null,
+            "state": "DONE",
+            "attempts": 1,
+            "output_attempts": 0,
+            "body": "{\"schemaVersion\":1,\"requestId\":\"c254fd28-693c-4d60-baa0-0900a792dbdf\",\"boardId\":\"5a84c92c-f774-4613-90b6-b37d7a79ec04\",\"generatedAt\":\"2026-10-20T00:49:53.963Z\",\"status\":\"OK\",\"stats\":{\"totalActive\":0,\"pending\":0,\"completed\":0,\"overdue\":0}}",
+            "output": null,
+            "created_at": "2026-10-20T00:49:54.290631+00:00"
+          },
+          {
+            "id": "a9f18544-a5f7-488e-bd06-2d25fcaea80c",
+            "queue_name": "AUTHCDN.SUMMARY.REPLY.Q",
+            "message_id": "ID:414D51204155544843444E514D2020203736D56A146A1C40",
+            "correlation_id": "ID:414D51204155544843444E514D2020203736D56A126A1C40",
+            "reply_to": null,
+            "state": "DONE",
+            "attempts": 1,
+            "output_attempts": 0,
+            "body": "{\"schemaVersion\":1,\"requestId\":\"2a126144-da81-4319-a8ad-145ce48ea3c4\",\"boardId\":\"5c52e0b4-62f0-4545-9ea3-2aa86dfe0c62\",\"generatedAt\":\"2026-10-20T00:49:53.524Z\",\"status\":\"OK\",\"stats\":{\"totalActive\":3,\"pending\":3,\"completed\":0,\"overdue\":0}}",
+            "output": null,
+            "created_at": "2026-10-20T00:49:54.043914+00:00"
+          },
+          {
+            "id": "18200de9-fddc-4b77-bbea-5891a359a7a8",
+            "queue_name": "AUTHCDN.SUMMARY.REQUEST.Q",
+            "message_id": "ID:414D51204155544843444E514D2020203736D56A136A1C40",
+            "correlation_id": null,
+            "reply_to": "AUTHCDN.SUMMARY.REPLY.Q@AUTHCDNQM",
+            "state": "DONE",
+            "attempts": 1,
+            "output_attempts": 1,
+            "body": "{\"schemaVersion\":1,\"requestId\":\"c254fd28-693c-4d60-baa0-0900a792dbdf\",\"boardId\":\"5a84c92c-f774-4613-90b6-b37d7a79ec04\",\"userId\":\"45e0ff79-940c-4230-bd97-bb9e0572e0f0\",\"createdAt\":\"2026-10-20T00:49:53.103Z\",\"expiresAt\":\"2026-10-20T00:50:23.103Z\"}",
+            "output": {
+              "body": "{\"schemaVersion\":1,\"requestId\":\"c254fd28-693c-4d60-baa0-0900a792dbdf\",\"boardId\":\"5a84c92c-f774-4613-90b6-b37d7a79ec04\",\"generatedAt\":\"2026-10-20T00:49:53.963Z\",\"status\":\"OK\",\"stats\":{\"totalActive\":0,\"pending\":0,\"completed\":0,\"overdue\":0}}",
+              "queue": "AUTHCDN.SUMMARY.REPLY.Q",
+              "expiresAt": "2026-10-20T00:50:53.963Z",
+              "correlationId": "ID:414D51204155544843444E514D2020203736D56A136A1C40"
+            },
+            "created_at": "2026-10-20T00:49:53.221116+00:00"
+          },
+          {
+            "id": "76ae4d38-cd9c-47b1-b320-566ce0301b1f",
+            "queue_name": "AUTHCDN.SUMMARY.REQUEST.Q",
+            "message_id": "ID:414D51204155544843444E514D2020203736D56A126A1C40",
+            "correlation_id": null,
+            "reply_to": "AUTHCDN.SUMMARY.REPLY.Q@AUTHCDNQM",
+            "state": "DONE",
+            "attempts": 1,
+            "output_attempts": 1,
+            "body": "{\"schemaVersion\":1,\"requestId\":\"2a126144-da81-4319-a8ad-145ce48ea3c4\",\"boardId\":\"5c52e0b4-62f0-4545-9ea3-2aa86dfe0c62\",\"userId\":\"45e0ff79-940c-4230-bd97-bb9e0572e0f0\",\"createdAt\":\"2026-10-20T00:49:52.720Z\",\"expiresAt\":\"2026-10-20T00:50:22.720Z\"}",
+            "output": {
+              "body": "{\"schemaVersion\":1,\"requestId\":\"2a126144-da81-4319-a8ad-145ce48ea3c4\",\"boardId\":\"5c52e0b4-62f0-4545-9ea3-2aa86dfe0c62\",\"generatedAt\":\"2026-10-20T00:49:53.524Z\",\"status\":\"OK\",\"stats\":{\"totalActive\":3,\"pending\":3,\"completed\":0,\"overdue\":0}}",
+              "queue": "AUTHCDN.SUMMARY.REPLY.Q",
+              "expiresAt": "2026-10-20T00:50:53.524Z",
+              "correlationId": "ID:414D51204155544843444E514D2020203736D56A126A1C40"
+            },
+            "created_at": "2026-10-20T00:49:52.840421+00:00"
+          },
+          {
+            "id": "95d51ae7-397c-4c2a-931f-08c1b2e01159",
+            "queue_name": "AUTHCDN.SUMMARY.REPLY.Q",
+            "message_id": "ID:414D51204155544843444E514D2020203736D56A116A1C40",
+            "correlation_id": "ID:414D51204155544843444E514D2020203736D56A106A1C40",
+            "reply_to": null,
+            "state": "DONE",
+            "attempts": 1,
+            "output_attempts": 0,
+            "body": "{\"schemaVersion\":1,\"requestId\":\"f1bdb7f5-2e6b-4306-a45f-6f5b3de6d6b2\",\"boardId\":\"5a84c92c-f774-4613-90b6-b37d7a79ec04\",\"generatedAt\":\"2026-10-20T00:49:50.341Z\",\"status\":\"OK\",\"stats\":{\"totalActive\":0,\"pending\":0,\"completed\":0,\"overdue\":0}}",
+            "output": null,
+            "created_at": "2026-10-20T00:49:50.71831+00:00"
+          },
+          {
+            "id": "25216ec4-5b72-46c1-a245-ba968ea5392d",
+            "queue_name": "AUTHCDN.SUMMARY.REQUEST.Q",
+            "message_id": "ID:414D51204155544843444E514D2020203736D56A106A1C40",
+            "correlation_id": null,
+            "reply_to": "AUTHCDN.SUMMARY.REPLY.Q@AUTHCDNQM",
+            "state": "DONE",
+            "attempts": 1,
+            "output_attempts": 1,
+            "body": "{\"schemaVersion\":1,\"requestId\":\"f1bdb7f5-2e6b-4306-a45f-6f5b3de6d6b2\",\"boardId\":\"5a84c92c-f774-4613-90b6-b37d7a79ec04\",\"userId\":\"45e0ff79-940c-4230-bd97-bb9e0572e0f0\",\"createdAt\":\"2026-10-20T00:49:49.675Z\",\"expiresAt\":\"2026-10-20T00:50:19.675Z\"}",
+            "output": {
+              "body": "{\"schemaVersion\":1,\"requestId\":\"f1bdb7f5-2e6b-4306-a45f-6f5b3de6d6b2\",\"boardId\":\"5a84c92c-f774-4613-90b6-b37d7a79ec04\",\"generatedAt\":\"2026-10-20T00:49:50.341Z\",\"status\":\"OK\",\"stats\":{\"totalActive\":0,\"pending\":0,\"completed\":0,\"overdue\":0}}",
+              "queue": "AUTHCDN.SUMMARY.REPLY.Q",
+              "expiresAt": "2026-10-20T00:50:50.341Z",
+              "correlationId": "ID:414D51204155544843444E514D2020203736D56A106A1C40"
+            },
+            "created_at": "2026-10-20T00:49:49.784075+00:00"
+          },
+          {
+            "id": "aa748a00-5d44-4ac4-919c-9ece4ddcc62d",
+            "queue_name": "AUTHCDN.SUMMARY.REPLY.Q",
+            "message_id": "ID:414D51204155544843444E514D2020203736D56A0F6A1C40",
+            "correlation_id": "ID:414D51204155544843444E514D2020203736D56A0E6A1C40",
+            "reply_to": null,
+            "state": "DONE",
+            "attempts": 1,
+            "output_attempts": 0,
+            "body": "{\"schemaVersion\":1,\"requestId\":\"ff224fd3-8447-43af-846c-a6e99c2d3d3c\",\"boardId\":\"5c52e0b4-62f0-4545-9ea3-2aa86dfe0c62\",\"generatedAt\":\"2026-10-20T00:49:46.985Z\",\"status\":\"OK\",\"stats\":{\"totalActive\":3,\"pending\":3,\"completed\":0,\"overdue\":0}}",
+            "output": null,
+            "created_at": "2026-10-20T00:49:47.308335+00:00"
+          },
+          {
+            "id": "499c307b-cd4d-429a-9541-58325a4b99f1",
+            "queue_name": "AUTHCDN.SUMMARY.REQUEST.Q",
+            "message_id": "ID:414D51204155544843444E514D2020203736D56A0E6A1C40",
+            "correlation_id": null,
+            "reply_to": "AUTHCDN.SUMMARY.REPLY.Q@AUTHCDNQM",
+            "state": "DONE",
+            "attempts": 1,
+            "output_attempts": 1,
+            "body": "{\"schemaVersion\":1,\"requestId\":\"ff224fd3-8447-43af-846c-a6e99c2d3d3c\",\"boardId\":\"5c52e0b4-62f0-4545-9ea3-2aa86dfe0c62\",\"userId\":\"45e0ff79-940c-4230-bd97-bb9e0572e0f0\",\"createdAt\":\"2026-10-20T00:49:45.861Z\",\"expiresAt\":\"2026-10-20T00:50:15.861Z\"}",
+            "output": {
+              "body": "{\"schemaVersion\":1,\"requestId\":\"ff224fd3-8447-43af-846c-a6e99c2d3d3c\",\"boardId\":\"5c52e0b4-62f0-4545-9ea3-2aa86dfe0c62\",\"generatedAt\":\"2026-10-20T00:49:46.985Z\",\"status\":\"OK\",\"stats\":{\"totalActive\":3,\"pending\":3,\"completed\":0,\"overdue\":0}}",
+              "queue": "AUTHCDN.SUMMARY.REPLY.Q",
+              "expiresAt": "2026-10-20T00:50:46.985Z",
+              "correlationId": "ID:414D51204155544843444E514D2020203736D56A0E6A1C40"
+            },
+            "created_at": "2026-10-20T00:49:46.272551+00:00"
+          }
+        ]
+      }
+    }
+  ]
+}

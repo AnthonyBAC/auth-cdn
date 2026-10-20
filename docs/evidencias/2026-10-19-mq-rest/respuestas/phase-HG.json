@@ -1,0 +1,138 @@
+{
+  "origin": "https://auth-cdn-git-feature-mq-consumidor-anthonys-projects-0d8acba7.vercel.app",
+  "runTag": "MQ-E2E-20261020004000",
+  "records": [
+    {
+      "id": "AUTH-PASSWORD",
+      "title": "Autenticación con Supabase Auth",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T01:04:27.289Z",
+      "evidence": {
+        "status": 200,
+        "projectHost": "vqeusrctsfqykzwwrucn.supabase.co"
+      }
+    },
+    {
+      "id": "AUTH-OWNER",
+      "title": "Sesión de cuenta proporcionada",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T01:04:29.220Z",
+      "evidence": {
+        "request": {
+          "method": "GET",
+          "path": "/api/auth/session",
+          "body": null
+        },
+        "status": 200,
+        "body": {
+          "user": {
+            "id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+            "email": "owner@example.com",
+            "name": "Demo Owner"
+          }
+        }
+      }
+    },
+    {
+      "id": "UI-NOTIFICATIONS",
+      "title": "Avisos efectivamente renderizados en el navegador",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T01:04:33.529Z",
+      "evidence": {
+        "status": 200,
+        "visibleItems": 7,
+        "text": "Auth DCN\nWorkspaces\nAvisos\nSupabase\nAvisos\nActualizar\nLa tarjeta \"MQ-E2E-20261020004000 vencimiento\" está vencida.\n19-10-2026, 10:03:23 p. m.\nMarcar leído\nLa tarjeta \"MQ-E2E-20261020004000 vencimiento\" vence el 2026-10-20T01:03:20Z.\n19-10-2026, 10:02:58 p. m.\nMarcar leído\nNo se pudo entregar un recordatorio tras agotar los reintentos. Solicita revisión al responsable del tablero.\n19-10-2026, 10:01:55 p. m.\nMarcar leído\nLa tarjeta \"MQ-E2E-20261020004000 normal\" vence el 2026-10-20T01:11:08Z.\n19-10-2026, 9:51:22 p. m.\nLa tarjeta \"Prueba TASK_OVERDUE\" está vencida.\n19-10-2026, 9:49:57 p. m.\nMarcar leído\nLa tarjeta \"Prueba TASK_OVERDUE\" está vencida.\n19-10-2026, 11:44:31 a. m.\nMarcar leído\nLa tarjeta \"Prueba recordatorio MQ\" vence el 2026-10-19T03:01:46Z.\n18-10-2026, 11:49:00 p. m.\nMarcar leído"
+      }
+    },
+    {
+      "id": "UI-SUMMARY",
+      "title": "Botón de resumen ejecuta Request/Reply y muestra estadísticas",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T01:04:39.023Z",
+      "evidence": {
+        "status": 200,
+        "body": {
+          "summary": {
+            "totalActive": 6,
+            "pending": 4,
+            "completed": 1,
+            "overdue": 1
+          },
+          "requestId": "016430b3-238e-4db3-a0d8-dcd5bc32490d",
+          "generatedAt": "2026-10-20T01:04:36.676Z"
+        }
+      }
+    },
+    {
+      "id": "AUTOMATION-without-vercel-session",
+      "title": "Invocación servidor a servidor: without-vercel-session",
+      "result": "BLOCKED",
+      "kind": "LIVE_AUTOMATION_PREFLIGHT",
+      "at": "2026-10-20T01:04:41.438Z",
+      "evidence": {
+        "status": 401,
+        "body": {
+          "error": {
+            "code": "401",
+            "message": "Protected deployment"
+          },
+          "mcp": "With an authorized Vercel MCP connection (https://mcp.vercel.com), call web_fetch_vercel_url with url set to the full deployment URL.",
+          "access": "vercel curl <deployment-url>",
+          "protection": {
+            "vercel_auth_enabled": true,
+            "vercel_auth_callback": "https://vercel.com/sso-api?url=https%3A%2F%2Fauth-cdn-git-feature-mq-consumidor-anthonys-projects-0d8acba7.vercel.app%2Fapi%2Fmq%2Ftick&nonce=776fba134b296837631f1a1cd1c7c0e9fde4a8ff70716e7a20346d351f0166bf",
+            "auto_vercel_auth_redirect": true,
+            "password_enabled": false
+          },
+          "message": "Protected by Vercel Authentication"
+        },
+        "location": null,
+        "note": "No se envían cookies de navegador ni JWT de usuario. El secreto de Cron sí se envía; el enlace compartible se omite de la evidencia."
+      }
+    },
+    {
+      "id": "AUTOMATION-share-token-header",
+      "title": "Invocación servidor a servidor: share-token-header",
+      "result": "BLOCKED",
+      "kind": "LIVE_AUTOMATION_PREFLIGHT",
+      "at": "2026-10-20T01:04:41.628Z",
+      "evidence": {
+        "status": 401,
+        "body": {
+          "protection": {
+            "password_enabled": false,
+            "vercel_auth_enabled": true,
+            "vercel_auth_callback": "https://vercel.com/sso-api?url=https%3A%2F%2Fauth-cdn-git-feature-mq-consumidor-anthonys-projects-0d8acba7.vercel.app%2Fapi%2Fmq%2Ftick&nonce=a4a02f6c33f762ae3de1291e4609504000763e7be2a1b0d2f1cdde6e9bc647a3",
+            "auto_vercel_auth_redirect": true
+          },
+          "mcp": "With an authorized Vercel MCP connection (https://mcp.vercel.com), call web_fetch_vercel_url with url set to the full deployment URL.",
+          "error": {
+            "code": "401",
+            "message": "Protected deployment"
+          },
+          "message": "Protected by Vercel Authentication",
+          "access": "vercel curl <deployment-url>"
+        },
+        "location": null,
+        "note": "No se envían cookies de navegador ni JWT de usuario. El secreto de Cron sí se envía; el enlace compartible se omite de la evidencia."
+      }
+    },
+    {
+      "id": "AUTOMATION-share-token-query",
+      "title": "Invocación servidor a servidor: share-token-query",
+      "result": "BLOCKED",
+      "kind": "LIVE_AUTOMATION_PREFLIGHT",
+      "at": "2026-10-20T01:04:41.702Z",
+      "evidence": {
+        "status": 307,
+        "body": "Redirecting...\n",
+        "location": "https://auth-cdn-git-feature-mq-consumidor-anthonys-projects-0d8acba7.vercel.app/api/mq/tick",
+        "note": "No se envían cookies de navegador ni JWT de usuario. El secreto de Cron sí se envía; el enlace compartible se omite de la evidencia."
+      }
+    }
+  ]
+}

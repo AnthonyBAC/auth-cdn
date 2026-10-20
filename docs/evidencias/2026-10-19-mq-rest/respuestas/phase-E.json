@@ -1,0 +1,426 @@
+{
+  "origin": "https://auth-cdn-git-feature-mq-consumidor-anthonys-projects-0d8acba7.vercel.app",
+  "runTag": "MQ-E2E-20261020004000",
+  "records": [
+    {
+      "id": "AUTH-PASSWORD",
+      "title": "Autenticación con Supabase Auth",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T01:01:43.811Z",
+      "evidence": {
+        "status": 200,
+        "projectHost": "vqeusrctsfqykzwwrucn.supabase.co"
+      }
+    },
+    {
+      "id": "AUTH-OWNER",
+      "title": "Sesión de cuenta proporcionada",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T01:01:45.766Z",
+      "evidence": {
+        "request": {
+          "method": "GET",
+          "path": "/api/auth/session",
+          "body": null
+        },
+        "status": 200,
+        "body": {
+          "user": {
+            "id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+            "email": "owner@example.com",
+            "name": "Demo Owner"
+          }
+        }
+      }
+    },
+    {
+      "id": "MAINTENANCE-SAFETY",
+      "title": "Precondición: mantenimiento no afectará registros ajenos",
+      "result": "PASS",
+      "kind": "LIVE_SQL",
+      "at": "2026-10-20T01:01:47.353Z",
+      "evidence": {
+        "counts": [
+          {
+            "status": 200,
+            "count": 0
+          },
+          {
+            "status": 200,
+            "count": 0
+          },
+          {
+            "status": 200,
+            "count": 0
+          },
+          {
+            "status": 200,
+            "count": 0
+          }
+        ],
+        "note": "Se exige ausencia de candidatos previos a purga, fallos o expiración; si hay alguno se omite esta prueba."
+      }
+    },
+    {
+      "id": "RETENTION-PREPARE",
+      "title": "Antigüedad de 40 días simulada solo en tres registros propios",
+      "result": "PASS",
+      "kind": "LIVE_SQL_FIXTURE",
+      "at": "2026-10-20T01:01:49.362Z",
+      "evidence": {
+        "policy": [
+          {
+            "id": "9230ad25-f5f1-4a1d-934c-96d4556bc750",
+            "messageId": "ID:8CBA4722349AE1FCC2FBB156A361773C5EFACC9EF1ECB5D2",
+            "name": "old-done"
+          },
+          {
+            "id": "a9fee66d-ceb9-4ffc-b67e-33da8ef86eba",
+            "messageId": "ID:13F8504792B3E4DEC9E341D96A4419B420F1709473C036BB",
+            "name": "old-pending"
+          },
+          {
+            "id": "eb747938-e7a9-43b4-8619-73fa05205568",
+            "messageId": "ID:96BD200966EE6F827768CD13161F4D1D2CBBE9DDCC78A70D",
+            "name": "old-quarantine"
+          }
+        ],
+        "note": "Inyección de fechas de ensayo en la base real; no son 40 días de observación transcurridos."
+      }
+    },
+    {
+      "id": "CARD-alerta",
+      "title": "Crear tarjeta de ensayo alerta",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T01:01:51.222Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/lists/e573b468-11eb-4233-98f1-1cb201ff0292/cards",
+          "body": {
+            "title": "MQ-E2E-20261020004000 alerta",
+            "description": "Datos aislados para evidencia de mensajería REST."
+          }
+        },
+        "status": 201,
+        "body": {
+          "card": {
+            "id": "1aa7a690-2402-4af5-b981-00b408a7d663",
+            "title": "MQ-E2E-20261020004000 alerta",
+            "description": "Datos aislados para evidencia de mensajería REST.",
+            "position": 3,
+            "list_id": "e573b468-11eb-4233-98f1-1cb201ff0292",
+            "created_by_user_id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+            "due_at": null,
+            "notify_at": null,
+            "completed_at": null,
+            "schedule_version": 1
+          }
+        }
+      }
+    },
+    {
+      "id": "SCHEDULE-alerta",
+      "title": "Programar alerta",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T01:01:52.559Z",
+      "evidence": {
+        "request": {
+          "method": "PATCH",
+          "path": "/api/cards/1aa7a690-2402-4af5-b981-00b408a7d663/schedule",
+          "body": {
+            "expectedVersion": 1,
+            "dueAt": "2026-10-20T01:21:51.225Z",
+            "notifyAt": "2026-10-20T01:03:51.225Z",
+            "assigneeIds": []
+          }
+        },
+        "status": 200,
+        "body": {
+          "card": {
+            "id": "1aa7a690-2402-4af5-b981-00b408a7d663",
+            "due_at": "2026-10-20T01:21:51.225+00:00",
+            "notify_at": "2026-10-20T01:03:51.225+00:00",
+            "assignee_ids": [],
+            "completed_at": null,
+            "schedule_version": 2
+          }
+        }
+      }
+    },
+    {
+      "id": "CARD-expiracion-sql",
+      "title": "Crear tarjeta de ensayo expiracion-sql",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T01:01:54.020Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/lists/e573b468-11eb-4233-98f1-1cb201ff0292/cards",
+          "body": {
+            "title": "MQ-E2E-20261020004000 expiracion-sql",
+            "description": "Datos aislados para evidencia de mensajería REST."
+          }
+        },
+        "status": 201,
+        "body": {
+          "card": {
+            "id": "134ed31f-99e1-466a-a966-a3f27b4415cb",
+            "title": "MQ-E2E-20261020004000 expiracion-sql",
+            "description": "Datos aislados para evidencia de mensajería REST.",
+            "position": 4,
+            "list_id": "e573b468-11eb-4233-98f1-1cb201ff0292",
+            "created_by_user_id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+            "due_at": null,
+            "notify_at": null,
+            "completed_at": null,
+            "schedule_version": 1
+          }
+        }
+      }
+    },
+    {
+      "id": "SCHEDULE-expiracion-sql",
+      "title": "Programar expiracion-sql",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T01:01:55.126Z",
+      "evidence": {
+        "request": {
+          "method": "PATCH",
+          "path": "/api/cards/134ed31f-99e1-466a-a966-a3f27b4415cb/schedule",
+          "body": {
+            "expectedVersion": 1,
+            "dueAt": "2026-10-20T01:21:54.023Z",
+            "notifyAt": "2026-10-20T01:03:54.023Z",
+            "assigneeIds": []
+          }
+        },
+        "status": 200,
+        "body": {
+          "card": {
+            "id": "134ed31f-99e1-466a-a966-a3f27b4415cb",
+            "due_at": "2026-10-20T01:21:54.023+00:00",
+            "notify_at": "2026-10-20T01:03:54.023+00:00",
+            "assignee_ids": [],
+            "completed_at": null,
+            "schedule_version": 2
+          }
+        }
+      }
+    },
+    {
+      "id": "MAINTENANCE-FIXTURES",
+      "title": "Preparar FAILED y expiración para funciones de mantenimiento",
+      "result": "PASS",
+      "kind": "LIVE_SQL_FIXTURE",
+      "at": "2026-10-20T01:01:56.150Z",
+      "evidence": {
+        "alert": {
+          "status": 201,
+          "body": [
+            {
+              "event_id": "fcc3cfca-9326-4152-ba10-f38ec9a7be44",
+              "reminder_id": "13234ecb-6fcd-4cfb-b4d1-0f7e561a6f9e",
+              "payload": {
+                "cardId": "1aa7a690-2402-4af5-b981-00b408a7d663",
+                "eventId": "fcc3cfca-9326-4152-ba10-f38ec9a7be44",
+                "eventType": "TASK_REMINDER_DUE",
+                "expiresAt": "2026-10-20T01:21:51.225Z",
+                "occurredAt": "2026-10-20T00:58:55.337Z",
+                "reminderId": "13234ecb-6fcd-4cfb-b4d1-0f7e561a6f9e",
+                "workspaceId": "443b712e-a038-45b5-bdc9-be54b9abad82",
+                "schemaVersion": 1,
+                "scheduleVersion": 2
+              },
+              "status": "FAILED",
+              "attempts": 5,
+              "next_attempt_at": "2026-10-20T01:01:54.279893+00:00",
+              "lock_token": "[REDACTED]",
+              "locked_until": null,
+              "last_error": "E2E_MAX_ATTEMPTS",
+              "created_at": "2026-10-20T01:01:54.279893+00:00",
+              "updated_at": "2026-10-20T01:01:54.279893+00:00",
+              "published_at": null
+            }
+          ]
+        },
+        "expired": {
+          "status": 201,
+          "body": [
+            {
+              "event_id": "5106d3d9-27a2-478c-b2fa-f4487d1896c3",
+              "reminder_id": "d216680e-867e-4d05-82d5-341c9cf5fb6e",
+              "payload": {
+                "cardId": "134ed31f-99e1-466a-a966-a3f27b4415cb",
+                "eventId": "5106d3d9-27a2-478c-b2fa-f4487d1896c3",
+                "eventType": "TASK_REMINDER_DUE",
+                "expiresAt": "2026-10-20T01:00:55.742Z",
+                "occurredAt": "2026-10-20T00:58:55.966Z",
+                "reminderId": "d216680e-867e-4d05-82d5-341c9cf5fb6e",
+                "workspaceId": "443b712e-a038-45b5-bdc9-be54b9abad82",
+                "schemaVersion": 1,
+                "scheduleVersion": 2
+              },
+              "status": "PUBLISHED",
+              "attempts": 0,
+              "next_attempt_at": "2026-10-20T01:01:54.897928+00:00",
+              "lock_token": "[REDACTED]",
+              "locked_until": null,
+              "last_error": null,
+              "created_at": "2026-10-20T01:01:54.897928+00:00",
+              "updated_at": "2026-10-20T01:01:54.897928+00:00",
+              "published_at": "2026-10-20T01:01:55.966+00:00"
+            }
+          ]
+        },
+        "note": "Estados inyectados solo en tarjetas de ensayo. No representan cinco publicaciones fallidas reales ni una publicación MQ de este fixture."
+      }
+    },
+    {
+      "id": "MAINTENANCE-EXECUTE",
+      "title": "Ejecutar mantenimiento con candidatos exclusivos del ensayo",
+      "result": "PASS",
+      "kind": "LIVE_SQL_FIXTURE",
+      "at": "2026-10-20T01:01:56.322Z",
+      "evidence": {
+        "status": 200,
+        "body": {
+          "purgedInbox": 1,
+          "expiredCards": 1,
+          "purgedOutbox": 0,
+          "failureAlerts": 1
+        }
+      }
+    },
+    {
+      "id": "RETENTION-RESULT",
+      "title": "Purga DONE antiguo y conserva pendiente y cuarentena",
+      "result": "PASS",
+      "kind": "LIVE_SQL_FIXTURE",
+      "at": "2026-10-20T01:01:56.553Z",
+      "evidence": {
+        "status": 200,
+        "body": [
+          {
+            "id": "eb747938-e7a9-43b4-8619-73fa05205568",
+            "state": "DONE",
+            "created_at": "2026-09-10T01:01:48.983+00:00",
+            "completed_at": "2026-09-10T01:01:48.983+00:00",
+            "output": {
+              "body": "{\"testRun\":\"MQ-E2E-20261020004000\"}",
+              "queue": "AUTHCDN.REMINDERS.BOQ",
+              "purpose": "QUARANTINE"
+            }
+          },
+          {
+            "id": "a9fee66d-ceb9-4ffc-b67e-33da8ef86eba",
+            "state": "PENDING",
+            "created_at": "2026-09-10T01:01:48.406+00:00",
+            "completed_at": null,
+            "output": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "EXPIRY-RECONCILIATION",
+      "title": "SQL marca EXPIRED y conserva hecho PUBLISHED",
+      "result": "PASS",
+      "kind": "LIVE_SQL_FIXTURE",
+      "at": "2026-10-20T01:01:56.911Z",
+      "evidence": {
+        "reminder": {
+          "status": 200,
+          "body": [
+            {
+              "id": "d216680e-867e-4d05-82d5-341c9cf5fb6e",
+              "status": "EXPIRED",
+              "expires_at": "2026-10-20T01:00:55.742+00:00"
+            }
+          ]
+        },
+        "outbox": {
+          "status": 200,
+          "body": [
+            {
+              "event_id": "5106d3d9-27a2-478c-b2fa-f4487d1896c3",
+              "status": "PUBLISHED",
+              "published_at": "2026-10-20T01:01:55.966+00:00"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "ALERT-DELIVERY",
+      "title": "Fallo agotado genera alerta bajo JWT sin duplicación",
+      "result": "PASS",
+      "kind": "LIVE_SQL_FIXTURE",
+      "at": "2026-10-20T01:01:59.335Z",
+      "evidence": {
+        "first": {
+          "status": 200,
+          "body": {
+            "notifications": [
+              {
+                "id": "25f6608b-cb48-4721-916f-c83a76a4b336",
+                "card_id": "1aa7a690-2402-4af5-b981-00b408a7d663",
+                "message": "No se pudo entregar un recordatorio tras agotar los reintentos. Solicita revisión al responsable del tablero.",
+                "created_at": "2026-10-20T01:01:55.075413+00:00",
+                "read_at": null
+              }
+            ]
+          }
+        },
+        "repeatMaintenance": {
+          "status": 200,
+          "body": {
+            "purgedInbox": 0,
+            "expiredCards": 0,
+            "purgedOutbox": 0,
+            "failureAlerts": 0
+          }
+        },
+        "second": {
+          "status": 200,
+          "body": {
+            "notifications": [
+              {
+                "id": "25f6608b-cb48-4721-916f-c83a76a4b336",
+                "card_id": "1aa7a690-2402-4af5-b981-00b408a7d663",
+                "message": "No se pudo entregar un recordatorio tras agotar los reintentos. Solicita revisión al responsable del tablero.",
+                "created_at": "2026-10-20T01:01:55.075413+00:00",
+                "read_at": null
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "MAINTENANCE-CLEANUP",
+      "title": "Retirar solo estados técnicos artificiales del ensayo",
+      "result": "PASS",
+      "kind": "LIVE_SQL_FIXTURE",
+      "at": "2026-10-20T01:02:03.053Z",
+      "evidence": {
+        "policyIds": [
+          "9230ad25-f5f1-4a1d-934c-96d4556bc750",
+          "a9fee66d-ceb9-4ffc-b67e-33da8ef86eba",
+          "eb747938-e7a9-43b4-8619-73fa05205568"
+        ],
+        "outboxEventIds": [
+          "fcc3cfca-9326-4152-ba10-f38ec9a7be44",
+          "5106d3d9-27a2-478c-b2fa-f4487d1896c3"
+        ],
+        "note": "Se conserva la alerta visible para las capturas."
+      }
+    }
+  ]
+}

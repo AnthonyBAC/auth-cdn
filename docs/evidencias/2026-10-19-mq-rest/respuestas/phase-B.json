@@ -1,0 +1,367 @@
+{
+  "origin": "https://auth-cdn-git-feature-mq-consumidor-anthonys-projects-0d8acba7.vercel.app",
+  "runTag": "MQ-E2E-20261020004000",
+  "records": [
+    {
+      "id": "AUTH-PASSWORD",
+      "title": "Autenticación con Supabase Auth",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T00:51:05.827Z",
+      "evidence": {
+        "status": 200,
+        "projectHost": "vqeusrctsfqykzwwrucn.supabase.co"
+      }
+    },
+    {
+      "id": "AUTH-OWNER",
+      "title": "Sesión de cuenta proporcionada",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T00:51:07.686Z",
+      "evidence": {
+        "request": {
+          "method": "GET",
+          "path": "/api/auth/session",
+          "body": null
+        },
+        "status": 200,
+        "body": {
+          "user": {
+            "id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+            "email": "owner@example.com",
+            "name": "Demo Owner"
+          }
+        }
+      }
+    },
+    {
+      "id": "SCHEDULE-normal",
+      "title": "Programar normal",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T00:51:09.853Z",
+      "evidence": {
+        "request": {
+          "method": "PATCH",
+          "path": "/api/cards/c65fade2-7ae4-4ccb-be7d-9c43229caa2c/schedule",
+          "body": {
+            "expectedVersion": 1,
+            "dueAt": "2026-10-20T01:11:08.738Z",
+            "notifyAt": "2026-10-20T00:51:14.738Z",
+            "assigneeIds": []
+          }
+        },
+        "status": 200,
+        "body": {
+          "card": {
+            "id": "c65fade2-7ae4-4ccb-be7d-9c43229caa2c",
+            "due_at": "2026-10-20T01:11:08.738+00:00",
+            "notify_at": "2026-10-20T00:51:14.738+00:00",
+            "assignee_ids": [],
+            "completed_at": null,
+            "schedule_version": 2
+          }
+        }
+      }
+    },
+    {
+      "id": "SCHEDULE-completar",
+      "title": "Programar completar",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T00:51:11.184Z",
+      "evidence": {
+        "request": {
+          "method": "PATCH",
+          "path": "/api/cards/76807d3a-e01c-4607-a895-df6bf59887b7/schedule",
+          "body": {
+            "expectedVersion": 1,
+            "dueAt": "2026-10-20T01:11:09.854Z",
+            "notifyAt": "2026-10-20T00:51:15.854Z",
+            "assigneeIds": []
+          }
+        },
+        "status": 200,
+        "body": {
+          "card": {
+            "id": "76807d3a-e01c-4607-a895-df6bf59887b7",
+            "due_at": "2026-10-20T01:11:09.854+00:00",
+            "notify_at": "2026-10-20T00:51:15.854+00:00",
+            "assignee_ids": [],
+            "completed_at": null,
+            "schedule_version": 2
+          }
+        }
+      }
+    },
+    {
+      "id": "SCHEDULE-cancelar",
+      "title": "Programar cancelar",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T00:51:12.286Z",
+      "evidence": {
+        "request": {
+          "method": "PATCH",
+          "path": "/api/cards/194b233c-158a-45bd-b77f-cb42adfea1b7/schedule",
+          "body": {
+            "expectedVersion": 1,
+            "dueAt": "2026-10-20T01:11:11.185Z",
+            "notifyAt": "2026-10-20T00:51:17.185Z",
+            "assigneeIds": []
+          }
+        },
+        "status": 200,
+        "body": {
+          "card": {
+            "id": "194b233c-158a-45bd-b77f-cb42adfea1b7",
+            "due_at": "2026-10-20T01:11:11.185+00:00",
+            "notify_at": "2026-10-20T00:51:17.185+00:00",
+            "assignee_ids": [],
+            "completed_at": null,
+            "schedule_version": 2
+          }
+        }
+      }
+    },
+    {
+      "id": "COMPLETE-BEFORE-PUBLISH",
+      "title": "Completar antes del aviso",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T00:51:13.395Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/cards/76807d3a-e01c-4607-a895-df6bf59887b7/complete",
+          "body": {
+            "expectedVersion": 2
+          }
+        },
+        "status": 200,
+        "body": {
+          "card": {
+            "id": "76807d3a-e01c-4607-a895-df6bf59887b7",
+            "due_at": "2026-10-20T01:11:09.854+00:00",
+            "notify_at": "2026-10-20T00:51:15.854+00:00",
+            "completed_at": "2026-10-20T00:51:12.057187+00:00",
+            "schedule_version": 3
+          }
+        }
+      }
+    },
+    {
+      "id": "CANCEL-SCHEDULE",
+      "title": "Cancelar programación antes del aviso",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T00:51:14.487Z",
+      "evidence": {
+        "request": {
+          "method": "PATCH",
+          "path": "/api/cards/194b233c-158a-45bd-b77f-cb42adfea1b7/schedule",
+          "body": {
+            "expectedVersion": 2,
+            "dueAt": null,
+            "notifyAt": null,
+            "assigneeIds": []
+          }
+        },
+        "status": 200,
+        "body": {
+          "card": {
+            "id": "194b233c-158a-45bd-b77f-cb42adfea1b7",
+            "due_at": null,
+            "notify_at": null,
+            "assignee_ids": [],
+            "completed_at": null,
+            "schedule_version": 3
+          }
+        }
+      }
+    },
+    {
+      "id": "TICK-0",
+      "title": "Procesar ciclo cloud 0",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T00:51:26.372Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/mq/tick",
+          "body": {}
+        },
+        "status": 200,
+        "body": {
+          "published": 1,
+          "captured": 1,
+          "worked": 1,
+          "errors": 0
+        }
+      }
+    },
+    {
+      "id": "TICK-1",
+      "title": "Procesar ciclo cloud 1",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T00:51:30.945Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/mq/tick",
+          "body": {}
+        },
+        "status": 200,
+        "body": {
+          "published": 0,
+          "captured": 0,
+          "worked": 0,
+          "errors": 0
+        }
+      }
+    },
+    {
+      "id": "TICK-2",
+      "title": "Procesar ciclo cloud 2",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T00:51:34.849Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/mq/tick",
+          "body": {}
+        },
+        "status": 200,
+        "body": {
+          "published": 0,
+          "captured": 0,
+          "worked": 0,
+          "errors": 0
+        }
+      }
+    },
+    {
+      "id": "REMINDERS-STATE",
+      "title": "Estados de recordatorios en Supabase",
+      "result": "PASS",
+      "kind": "LIVE_SQL",
+      "at": "2026-10-20T00:51:35.087Z",
+      "evidence": {
+        "status": 200,
+        "body": [
+          {
+            "id": "58de68e2-983d-4ea9-a037-e7a5cf9bf1c5",
+            "card_id": "194b233c-158a-45bd-b77f-cb42adfea1b7",
+            "kind": "TASK_REMINDER_DUE",
+            "status": "CANCELLED",
+            "schedule_version": 2,
+            "notify_at": "2026-10-20T00:51:17.185+00:00",
+            "expires_at": "2026-10-20T01:11:11.185+00:00",
+            "processed_at": null
+          },
+          {
+            "id": "ee2e977b-ee58-4756-a5b4-493a4c153297",
+            "card_id": "194b233c-158a-45bd-b77f-cb42adfea1b7",
+            "kind": "TASK_OVERDUE",
+            "status": "CANCELLED",
+            "schedule_version": 2,
+            "notify_at": "2026-10-20T01:11:11.185+00:00",
+            "expires_at": "2026-10-21T01:11:11.185+00:00",
+            "processed_at": null
+          },
+          {
+            "id": "66b106ca-3272-45df-80a9-621bcd11eb01",
+            "card_id": "76807d3a-e01c-4607-a895-df6bf59887b7",
+            "kind": "TASK_REMINDER_DUE",
+            "status": "CANCELLED",
+            "schedule_version": 2,
+            "notify_at": "2026-10-20T00:51:15.854+00:00",
+            "expires_at": "2026-10-20T01:11:09.854+00:00",
+            "processed_at": null
+          },
+          {
+            "id": "6d96e05b-5ca4-4ee2-96ad-4d72afa6ab1a",
+            "card_id": "76807d3a-e01c-4607-a895-df6bf59887b7",
+            "kind": "TASK_OVERDUE",
+            "status": "CANCELLED",
+            "schedule_version": 2,
+            "notify_at": "2026-10-20T01:11:09.854+00:00",
+            "expires_at": "2026-10-21T01:11:09.854+00:00",
+            "processed_at": null
+          },
+          {
+            "id": "b5aecf37-3658-4b1f-9b88-36942dff5284",
+            "card_id": "c65fade2-7ae4-4ccb-be7d-9c43229caa2c",
+            "kind": "TASK_OVERDUE",
+            "status": "SCHEDULED",
+            "schedule_version": 2,
+            "notify_at": "2026-10-20T01:11:08.738+00:00",
+            "expires_at": "2026-10-21T01:11:08.738+00:00",
+            "processed_at": null
+          },
+          {
+            "id": "456bc06e-f5b3-4071-b7db-845da94f4835",
+            "card_id": "c65fade2-7ae4-4ccb-be7d-9c43229caa2c",
+            "kind": "TASK_REMINDER_DUE",
+            "status": "PROCESSED",
+            "schedule_version": 2,
+            "notify_at": "2026-10-20T00:51:14.738+00:00",
+            "expires_at": "2026-10-20T01:11:08.738+00:00",
+            "processed_at": "2026-10-20T00:51:22.24936+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "id": "NOTIFICATIONS-DELIVERY",
+      "title": "Avisos visibles bajo JWT después del procesamiento",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T00:51:36.479Z",
+      "evidence": {
+        "request": {
+          "method": "GET",
+          "path": "/api/notifications",
+          "body": null
+        },
+        "status": 200,
+        "body": {
+          "notifications": [
+            {
+              "id": "c54d9158-b6b2-4576-b479-dcaa8c7897b9",
+              "card_id": "c65fade2-7ae4-4ccb-be7d-9c43229caa2c",
+              "message": "La tarjeta \"MQ-E2E-20261020004000 normal\" vence el 2026-10-20T01:11:08Z.",
+              "created_at": "2026-10-20T00:51:22.247911+00:00",
+              "read_at": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "NOTIFICATIONS-READ",
+      "title": "Marcar aviso propio como leído",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T00:51:37.613Z",
+      "evidence": {
+        "request": {
+          "method": "PATCH",
+          "path": "/api/notifications/c54d9158-b6b2-4576-b479-dcaa8c7897b9",
+          "body": null
+        },
+        "status": 200,
+        "body": {
+          "notification": {
+            "id": "c54d9158-b6b2-4576-b479-dcaa8c7897b9",
+            "read_at": "2026-10-20T00:51:36.192+00:00"
+          }
+        }
+      }
+    }
+  ]
+}

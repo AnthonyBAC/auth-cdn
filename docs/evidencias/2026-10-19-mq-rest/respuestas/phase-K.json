@@ -1,0 +1,153 @@
+{
+  "origin": "https://auth-cdn-git-feature-mq-consumidor-anthonys-projects-0d8acba7.vercel.app",
+  "runTag": "MQ-E2E-20261020004000",
+  "records": [
+    {
+      "id": "AUTH-PASSWORD",
+      "title": "Autenticación con Supabase Auth",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T01:14:36.183Z",
+      "evidence": {
+        "status": 200,
+        "projectHost": "vqeusrctsfqykzwwrucn.supabase.co"
+      }
+    },
+    {
+      "id": "AUTH-OWNER",
+      "title": "Sesión de cuenta proporcionada",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T01:14:38.082Z",
+      "evidence": {
+        "request": {
+          "method": "GET",
+          "path": "/api/auth/session",
+          "body": null
+        },
+        "status": 200,
+        "body": {
+          "user": {
+            "id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+            "email": "owner@example.com",
+            "name": "Demo Owner"
+          }
+        }
+      }
+    },
+    {
+      "id": "CRON-DELIVERY",
+      "title": "Aviso entregado por Supabase Cron sin tick manual",
+      "result": "PASS",
+      "kind": "LIVE_AUTOMATION",
+      "at": "2026-10-20T01:14:40.323Z",
+      "evidence": {
+        "scheduledAt": "2026-10-20T01:12:47.850Z",
+        "notifications": {
+          "status": 200,
+          "body": [
+            {
+              "id": "4911bd42-4520-4bdb-b927-097be3edc993",
+              "event_id": "b72c8bb8-6085-4360-9e9b-e0540a6cef03",
+              "message": "La tarjeta \"MQ-E2E-20261020004000 cron-autonomo\" vence el 2026-10-20T01:42:46Z.",
+              "created_at": "2026-10-20T01:14:02.933951+00:00"
+            }
+          ]
+        },
+        "reminders": {
+          "status": 200,
+          "body": [
+            {
+              "id": "66606d73-0dcd-4f5e-91d0-1dd481c232ea",
+              "kind": "TASK_OVERDUE",
+              "status": "SCHEDULED",
+              "processed_at": null
+            },
+            {
+              "id": "267b7df0-f8c1-477d-9ff5-43ef0a5b3504",
+              "kind": "TASK_REMINDER_DUE",
+              "status": "PROCESSED",
+              "processed_at": "2026-10-20T01:14:02.935677+00:00"
+            }
+          ]
+        },
+        "outbox": {
+          "status": 200,
+          "body": [
+            {
+              "event_id": "b72c8bb8-6085-4360-9e9b-e0540a6cef03",
+              "status": "PUBLISHED",
+              "published_at": "2026-10-20T01:14:02.18504+00:00",
+              "payload": {
+                "cardId": "bfc16927-5eba-45ca-b3af-53392778447a",
+                "eventId": "b72c8bb8-6085-4360-9e9b-e0540a6cef03",
+                "eventType": "TASK_REMINDER_DUE",
+                "expiresAt": "2026-10-20T01:42:46.718Z",
+                "occurredAt": "2026-10-20T01:14:01.182Z",
+                "reminderId": "267b7df0-f8c1-477d-9ff5-43ef0a5b3504",
+                "workspaceId": "443b712e-a038-45b5-bdc9-be54b9abad82",
+                "schemaVersion": 1,
+                "scheduleVersion": 2
+              }
+            }
+          ]
+        },
+        "inbox": {
+          "status": 200,
+          "body": [
+            {
+              "id": "d60a867a-bb56-42d8-b37b-c33b5be88291",
+              "message_id": "ID:414D51204155544843444E514D2020203736D56A06861D40",
+              "state": "DONE",
+              "attempts": 1,
+              "body": "{\"schemaVersion\":1,\"eventId\":\"b72c8bb8-6085-4360-9e9b-e0540a6cef03\",\"eventType\":\"TASK_REMINDER_DUE\",\"reminderId\":\"267b7df0-f8c1-477d-9ff5-43ef0a5b3504\",\"cardId\":\"bfc16927-5eba-45ca-b3af-53392778447a\",\"workspaceId\":\"443b712e-a038-45b5-bdc9-be54b9abad82\",\"scheduleVersion\":2,\"occurredAt\":\"2026-10-20T01:14:01.182Z\",\"expiresAt\":\"2026-10-20T01:42:46.718Z\"}",
+              "created_at": "2026-10-20T01:14:02.330116+00:00",
+              "completed_at": "2026-10-20T01:14:03.086691+00:00"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "CRON-FIXTURE-CLEANUP",
+      "title": "Cancelar vencimiento futuro solo de la tarjeta de Cron",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T01:14:42.326Z",
+      "evidence": {
+        "request": {
+          "method": "PATCH",
+          "path": "/api/cards/bfc16927-5eba-45ca-b3af-53392778447a/schedule",
+          "body": {
+            "expectedVersion": 2,
+            "dueAt": null,
+            "notifyAt": null,
+            "assigneeIds": []
+          }
+        },
+        "status": 200,
+        "body": {
+          "card": {
+            "id": "bfc16927-5eba-45ca-b3af-53392778447a",
+            "due_at": null,
+            "notify_at": null,
+            "assignee_ids": [],
+            "completed_at": null,
+            "schedule_version": 3
+          }
+        }
+      }
+    },
+    {
+      "id": "CRON-NO-PENDING",
+      "title": "Tarjeta de Cron sin programaciones activas",
+      "result": "PASS",
+      "kind": "LIVE_SQL",
+      "at": "2026-10-20T01:14:42.546Z",
+      "evidence": {
+        "status": 200,
+        "body": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,2147 @@
+<!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>35 casos · IBM MQ REST</title><style>body{font:17px/1.65 "Segoe UI",Arial,sans-serif;color:#14253b;background:#f1f4f8;margin:0}main{max-width:1200px;margin:35px auto;background:white;padding:48px;border-radius:15px}h1{font-size:34px;line-height:1.2}h2{font-size:26px;line-height:1.3;color:#173752}a{color:#146497}code{background:#edf1f6;padding:2px 5px;overflow-wrap:anywhere}section{padding:35px 0;border-top:2px solid #dce5ee;scroll-margin-top:20px}figure{margin:25px 0}img{display:block;width:100%;height:auto;border:1px solid #cad5e3}figcaption{font-size:14px;color:#526780}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#102134;color:#edf4fb;padding:25px;font:14px/1.5 Consolas,monospace}summary{cursor:pointer;font-weight:600;padding:12px;background:#edf3f8}li{margin-bottom:5px}.notice{padding:20px;border-left:5px solid #348d6b;background:#eef8f1}footer{margin:40px 0;color:#526780}@media(max-width:800px){main{padding:20px;margin:0}h1{font-size:27px}}@media print{body{background:white}main{margin:0;padding:0}details{display:block}section{break-before:page}img{max-height:260mm;object-fit:contain}}</style><main><p><strong>Documento principal:</strong> <a href="requisitos-ev2-pruebas-y-resultados.html">Los diez requisitos de la EV2, con su prueba y resultado</a>. Esta página es el anexo de 35 subpruebas.</p><h1>Pruebas de IBM MQ REST con evidencias</h1><p>Rondas del 19 y 20 de octubre de 2026 · America/Santiago (UTC−03). Rama feature/mq-consumidor.</p><p class="notice"><strong>35 casos documentados.</strong> Cada caso explica su recorrido, resultado y límites. Incluye JWT y permisos, flujo asíncrono, Request/Reply, confirmaciones HTTP, idempotencia, recuperación, reintentos, BOQ, DLQ nativa, TTL, retención, alertas y Cron permanente.</p><p>Las imágenes “Respuesta registrada” son vistas generadas de los JSON guardados. Las fotografías reales están identificadas por separado. No se afirma haber probado todos los fallos posibles de los proveedores. Las pruebas de antigüedad y determinados errores usan fixtures acotados, tal como se indica en cada caso.</p><p><a href="casos-mq-rest-con-imagenes.md">Documento Markdown completo</a> · <a href="informe-pruebas-mq-rest.md">Historial de respuestas</a> · <a href="cron-permanente-y-dlq.md">Cron permanente y DLQ</a></p><h2 id="indice">Índice</h2><ol><li><a href="#C01">C01 · JWT válido, JWT alterado y ausencia de sesión</a></li><li><a href="#C02">C02 · MFA: contraseña sola y segundo factor verificado</a></li><li><a href="#C03">C03 · Permisos: miembro ajeno, viewer y membresía retirada</a></li><li><a href="#C04">C04 · Recepción de avisos aislada por usuario</a></li><li><a href="#C05">C05 · Separación entre usuario, Cron y credenciales de IBM</a></li><li><a href="#C06">C06 · Validación de fechas e identificadores</a></li><li><a href="#C07">C07 · IBM MQ como broker y envío persistente REST</a></li><li><a href="#C08">C08 · Recordatorio asíncrono de extremo a extremo</a></li><li><a href="#C09">C09 · Completar o cancelar antes del envío</a></li><li><a href="#C10">C10 · Aviso preventivo y aviso de vencimiento</a></li><li><a href="#C11">C11 · Marcar un aviso propio como leído</a></li><li><a href="#C12">C12 · Request/Reply síncrono y solicitudes simultáneas</a></li><li><a href="#C13">C13 · Request/Reply: tiempo de espera agotado y recuperación</a></li><li><a href="#C14">C14 · ACK y retirada segura: capturar antes de DELETE</a></li><li><a href="#C15">C15 · Idempotencia ante mensajes repetidos</a></li><li><a href="#C16">C16 · Recuperación después de una pausa entre captura y procesamiento</a></li><li><a href="#C17">C17 · Durabilidad ante interrupción real del procesamiento SQL</a></li><li><a href="#C18">C18 · Concurrencia y recuperación de una reserva vencida</a></li><li><a href="#C19">C19 · Colisión de MsgId con cuerpo diferente</a></li><li><a href="#C20">C20 · Evento atrasado de una versión anterior</a></li><li><a href="#C21">C21 · BOQ: JSON mal formado</a></li><li><a href="#C22">C22 · BOQ: contrato de recordatorio inválido</a></li><li><a href="#C23">C23 · BOQ: error permanente de correspondencia</a></li><li><a href="#C24">C24 · BOQ: ReplyTo fuera de la lista permitida</a></li><li><a href="#C25">C25 · Consumidor: cinco fallos y paso a BOQ</a></li><li><a href="#C26">C26 · Salida a BOQ: cinco fallos conservan el cuerpo y recuperación posterior</a></li><li><a href="#C27">C27 · Productor: cinco intentos reales hasta FAILED</a></li><li><a href="#C28">C28 · Alerta efectiva después de agotar los reintentos</a></li><li><a href="#C29">C29 · TTL de IBM: expiración sin consumidor</a></li><li><a href="#C30">C30 · Reconciliación SQL de mensajes expirados</a></li><li><a href="#C31">C31 · Retención de registros técnicos terminados</a></li><li><a href="#C32">C32 · Supabase Cron autónomo y programación permanente</a></li><li><a href="#C33">C33 · DLQ nativa asignada al queue manager</a></li><li><a href="#C34">C34 · DLQ nativa: entrega automática rechazada por cola llena</a></li><li><a href="#C35">C35 · Limpieza del ensayo y estado final</a></li></ol><section id="C01"><h2>C01 · JWT válido, JWT alterado y ausencia de sesión</h2><p><strong>Cómo funciona y cómo se probó.</strong> El usuario inicia sesión en Supabase; Vercel valida su JWT antes de consultar avisos o producir solicitudes MQ.</p><p><strong>Resultado observado.</strong> Sesión válida: 200. JWT alterado y lectura sin sesión: 401.</p><figure><img loading="lazy" src="capturas/respuesta-c01.png" alt="Respuesta registrada C01"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;request&quot;: {
+    &quot;method&quot;: &quot;GET&quot;,
+    &quot;path&quot;: &quot;/api/auth/session&quot;,
+    &quot;body&quot;: null
+  },
+  &quot;status&quot;: 200,
+  &quot;body&quot;: {
+    &quot;user&quot;: {
+      &quot;id&quot;: &quot;45e0ff79-940c-4230-bd97-bb9e0572e0f0&quot;,
+      &quot;email&quot;: &quot;owner@example.com&quot;,
+      &quot;name&quot;: &quot;Demo Owner&quot;
+    }
+  }
+}</pre><pre>{
+  &quot;request&quot;: {
+    &quot;method&quot;: &quot;GET&quot;,
+    &quot;path&quot;: &quot;/api/notifications&quot;,
+    &quot;body&quot;: null
+  },
+  &quot;status&quot;: 401,
+  &quot;body&quot;: {
+    &quot;error&quot;: {
+      &quot;code&quot;: &quot;UNAUTHENTICATED&quot;,
+      &quot;message&quot;: &quot;Sign in to continue.&quot;,
+      &quot;details&quot;: {}
+    }
+  }
+}</pre><pre>{
+  &quot;request&quot;: {
+    &quot;method&quot;: &quot;GET&quot;,
+    &quot;path&quot;: &quot;/api/notifications&quot;,
+    &quot;authenticatedMachine&quot;: false,
+    &quot;cookies&quot;: false
+  },
+  &quot;status&quot;: 401,
+  &quot;body&quot;: {
+    &quot;error&quot;: {
+      &quot;code&quot;: &quot;UNAUTHENTICATED&quot;,
+      &quot;message&quot;: &quot;Sign in to continue.&quot;,
+      &quot;details&quot;: {}
+    }
+  }
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C02"><h2>C02 · MFA: contraseña sola y segundo factor verificado</h2><p><strong>Cómo funciona y cómo se probó.</strong> Una identidad desechable con TOTP activo entra primero con AAL1 y luego completa el desafío. No se cambia el MFA del owner.</p><p><strong>Resultado observado.</strong> AAL1 con MFA activo: 403; tras verificar el segundo factor, AAL2: 200.</p><figure><img loading="lazy" src="capturas/respuesta-c02.png" alt="Respuesta registrada C02"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;request&quot;: {
+    &quot;method&quot;: &quot;GET&quot;,
+    &quot;path&quot;: &quot;/api/auth/session&quot;,
+    &quot;body&quot;: null
+  },
+  &quot;status&quot;: 403,
+  &quot;body&quot;: {
+    &quot;error&quot;: {
+      &quot;code&quot;: &quot;FORBIDDEN&quot;,
+      &quot;message&quot;: &quot;Complete the two-factor challenge to continue.&quot;,
+      &quot;details&quot;: {
+        &quot;aal&quot;: &quot;aal1&quot;
+      }
+    }
+  }
+}</pre><pre>{
+  &quot;request&quot;: {
+    &quot;method&quot;: &quot;GET&quot;,
+    &quot;path&quot;: &quot;/api/auth/session&quot;,
+    &quot;body&quot;: null
+  },
+  &quot;status&quot;: 200,
+  &quot;body&quot;: {
+    &quot;user&quot;: {
+      &quot;id&quot;: &quot;ff0c9e9e-7ce3-4e28-97bd-07a398fcf25d&quot;,
+      &quot;email&quot;: &quot;mq-e2e-6be488bd1ca5@example.com&quot;,
+      &quot;name&quot;: &quot;MQ-E2E-20261020004000 seguridad&quot;
+    }
+  }
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C03"><h2>C03 · Permisos: miembro ajeno, viewer y membresía retirada</h2><p><strong>Cómo funciona y cómo se probó.</strong> Se consulta el mismo tablero con otra identidad, con rol viewer y después de revocar la membresía. Los permisos se comprueban en cada petición.</p><p><strong>Resultado observado.</strong> Ajeno y revocado: 404. Viewer puede leer (200), pero no programar (403).</p><figure><img loading="lazy" src="capturas/respuesta-c03.png" alt="Respuesta registrada C03"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;request&quot;: {
+    &quot;method&quot;: &quot;POST&quot;,
+    &quot;path&quot;: &quot;/api/boards/5c52e0b4-62f0-4545-9ea3-2aa86dfe0c62/summary&quot;,
+    &quot;body&quot;: null
+  },
+  &quot;status&quot;: 404,
+  &quot;body&quot;: {
+    &quot;error&quot;: {
+      &quot;code&quot;: &quot;NOT_FOUND&quot;,
+      &quot;message&quot;: &quot;Board not found.&quot;,
+      &quot;details&quot;: {}
+    }
+  }
+}</pre><pre>{
+  &quot;request&quot;: {
+    &quot;method&quot;: &quot;PATCH&quot;,
+    &quot;path&quot;: &quot;/api/cards/c65fade2-7ae4-4ccb-be7d-9c43229caa2c/schedule&quot;,
+    &quot;body&quot;: {
+      &quot;expectedVersion&quot;: 2,
+      &quot;dueAt&quot;: &quot;2026-10-20T01:19:03.465Z&quot;,
+      &quot;notifyAt&quot;: &quot;2026-10-20T01:00:03.465Z&quot;,
+      &quot;assigneeIds&quot;: []
+    }
+  },
+  &quot;status&quot;: 403,
+  &quot;body&quot;: {
+    &quot;error&quot;: {
+      &quot;code&quot;: &quot;FORBIDDEN&quot;,
+      &quot;message&quot;: &quot;No puedes realizar esta operación sobre la tarjeta.&quot;,
+      &quot;details&quot;: {}
+    }
+  }
+}</pre><pre>{
+  &quot;status&quot;: 200,
+  &quot;boardId&quot;: &quot;5c52e0b4-62f0-4545-9ea3-2aa86dfe0c62&quot;
+}</pre><pre>{
+  &quot;request&quot;: {
+    &quot;method&quot;: &quot;POST&quot;,
+    &quot;path&quot;: &quot;/api/boards/5c52e0b4-62f0-4545-9ea3-2aa86dfe0c62/summary&quot;,
+    &quot;body&quot;: null
+  },
+  &quot;status&quot;: 404,
+  &quot;body&quot;: {
+    &quot;error&quot;: {
+      &quot;code&quot;: &quot;NOT_FOUND&quot;,
+      &quot;message&quot;: &quot;Board not found.&quot;,
+      &quot;details&quot;: {}
+    }
+  }
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C04"><h2>C04 · Recepción de avisos aislada por usuario</h2><p><strong>Cómo funciona y cómo se probó.</strong> La API de avisos aplica la identidad de la sesión; se intenta leer y marcar como leído un aviso perteneciente al owner desde otra cuenta.</p><p><strong>Resultado observado.</strong> La otra cuenta no recibe avisos del owner; modificar el aviso ajeno devuelve 404.</p><figure><img loading="lazy" src="capturas/respuesta-c04.png" alt="Respuesta registrada C04"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;request&quot;: {
+    &quot;method&quot;: &quot;GET&quot;,
+    &quot;path&quot;: &quot;/api/notifications&quot;,
+    &quot;body&quot;: null
+  },
+  &quot;status&quot;: 200,
+  &quot;body&quot;: {
+    &quot;notifications&quot;: []
+  }
+}</pre><pre>{
+  &quot;request&quot;: {
+    &quot;method&quot;: &quot;PATCH&quot;,
+    &quot;path&quot;: &quot;/api/notifications/c54d9158-b6b2-4576-b479-dcaa8c7897b9&quot;,
+    &quot;body&quot;: null
+  },
+  &quot;status&quot;: 404,
+  &quot;body&quot;: {
+    &quot;error&quot;: {
+      &quot;code&quot;: &quot;NOT_FOUND&quot;,
+      &quot;message&quot;: &quot;Notification not found.&quot;,
+      &quot;details&quot;: {}
+    }
+  }
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C05"><h2>C05 · Separación entre usuario, Cron y credenciales de IBM</h2><p><strong>Cómo funciona y cómo se probó.</strong> El JWT del usuario protege sus operaciones. Cron usa un secreto de máquina en Vault. Solo el servidor posee las credenciales IBM; las tablas y RPC técnicas rechazan el JWT de usuario.</p><p><strong>Resultado observado.</strong> Sin secreto o con solo JWT de owner: tick 401. Secreto correcto: 200. IBM sin sus credenciales: 401. Inbox y RPC internos: denegados.</p><figure><img loading="lazy" src="capturas/respuesta-c05.png" alt="Respuesta registrada C05"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;request&quot;: {
+    &quot;method&quot;: &quot;POST&quot;,
+    &quot;path&quot;: &quot;/api/mq/tick&quot;,
+    &quot;body&quot;: {}
+  },
+  &quot;status&quot;: 401,
+  &quot;body&quot;: {
+    &quot;error&quot;: &quot;UNAUTHORIZED&quot;
+  }
+}</pre><pre>{
+  &quot;error&quot;: {
+    &quot;code&quot;: &quot;42501&quot;,
+    &quot;message&quot;: &quot;permission denied for table mq_rest_inbox&quot;
+  }
+}</pre><pre>{
+  &quot;error&quot;: {
+    &quot;code&quot;: &quot;42501&quot;,
+    &quot;message&quot;: &quot;permission denied for function mq_rest_claim&quot;
+  }
+}</pre><pre>{
+  &quot;request&quot;: {
+    &quot;method&quot;: &quot;POST&quot;,
+    &quot;path&quot;: &quot;/api/mq/tick&quot;,
+    &quot;authenticatedMachine&quot;: false,
+    &quot;cookies&quot;: false
+  },
+  &quot;status&quot;: 401,
+  &quot;body&quot;: {
+    &quot;error&quot;: &quot;UNAUTHORIZED&quot;
+  }
+}</pre><pre>{
+  &quot;request&quot;: {
+    &quot;method&quot;: &quot;POST&quot;,
+    &quot;path&quot;: &quot;/api/mq/tick&quot;,
+    &quot;authenticatedMachine&quot;: true,
+    &quot;cookies&quot;: false
+  },
+  &quot;status&quot;: 200,
+  &quot;body&quot;: {
+    &quot;published&quot;: 0,
+    &quot;captured&quot;: 0,
+    &quot;worked&quot;: 1,
+    &quot;errors&quot;: 0
+  }
+}</pre><pre>{
+  &quot;status&quot;: 401,
+  &quot;body&quot;: {
+    &quot;error&quot;: [
+      {
+        &quot;msgId&quot;: &quot;MQWB0104E&quot;,
+        &quot;action&quot;: &quot;Provide credentials using a client certificate, LTPA security token, or username and password via HTTP basic authentication header. On z/OS, if the mqweb server has been configured for SAF authentication, check the messages.log file for messages indicating that SAF authentication is not available. Start the Liberty angel process if it is not already running. You might need to restart the mqweb server for any changes to take effect.&quot;,
+        &quot;completionCode&quot;: 0,
+        &quot;reasonCode&quot;: 0,
+        &quot;type&quot;: &quot;rest&quot;,
+        &quot;message&quot;: &quot;MQWB0104E: The REST API request to &#x27;v3/messaging/qmgr/AUTHCDNQM/queue/AUTHCDN.REMINDERS.Q/message&#x27; is not authenticated.&quot;,
+        &quot;explanation&quot;: &quot;The REST API request cannot be completed because credentials were omitted from the request. On z/OS, if the mqweb server has been configured for SAF authentication, this can be caused by the Liberty angel process not being active.&quot;
+      }
+    ]
+  }
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C06"><h2>C06 · Validación de fechas e identificadores</h2><p><strong>Cómo funciona y cómo se probó.</strong> La API valida boardId y la relación notifyAt/dueAt antes de aceptar una programación.</p><p><strong>Resultado observado.</strong> Fechas incoherentes e identificador inválido: 400. Tablero inexistente: 404.</p><figure><img loading="lazy" src="capturas/respuesta-c06.png" alt="Respuesta registrada C06"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;request&quot;: {
+    &quot;method&quot;: &quot;PATCH&quot;,
+    &quot;path&quot;: &quot;/api/cards/c65fade2-7ae4-4ccb-be7d-9c43229caa2c/schedule&quot;,
+    &quot;body&quot;: {
+      &quot;expectedVersion&quot;: 1,
+      &quot;dueAt&quot;: &quot;2026-10-20T00:59:41.527Z&quot;,
+      &quot;notifyAt&quot;: &quot;2026-10-20T01:01:21.527Z&quot;,
+      &quot;assigneeIds&quot;: []
+    }
+  },
+  &quot;status&quot;: 400,
+  &quot;body&quot;: {
+    &quot;error&quot;: {
+      &quot;code&quot;: &quot;BAD_REQUEST&quot;,
+      &quot;message&quot;: &quot;Revisa los datos de la tarjeta.&quot;,
+      &quot;details&quot;: {
+        &quot;formErrors&quot;: [],
+        &quot;fieldErrors&quot;: {
+          &quot;notifyAt&quot;: [
+            &quot;El aviso debe ser anterior al vencimiento.&quot;
+          ]
+        }
+      }
+    }
+  }
+}</pre><pre>{
+  &quot;request&quot;: {
+    &quot;method&quot;: &quot;POST&quot;,
+    &quot;path&quot;: &quot;/api/boards/not-a-uuid/summary&quot;,
+    &quot;body&quot;: null
+  },
+  &quot;status&quot;: 400,
+  &quot;body&quot;: {
+    &quot;error&quot;: {
+      &quot;code&quot;: &quot;BAD_REQUEST&quot;,
+      &quot;message&quot;: &quot;Board id is invalid.&quot;,
+      &quot;details&quot;: {}
+    }
+  }
+}</pre><pre>{
+  &quot;request&quot;: {
+    &quot;method&quot;: &quot;POST&quot;,
+    &quot;path&quot;: &quot;/api/boards/9769ac59-1e5e-4fdc-8429-5b738825f7e6/summary&quot;,
+    &quot;body&quot;: null
+  },
+  &quot;status&quot;: 404,
+  &quot;body&quot;: {
+    &quot;error&quot;: {
+      &quot;code&quot;: &quot;NOT_FOUND&quot;,
+      &quot;message&quot;: &quot;Board not found.&quot;,
+      &quot;details&quot;: {}
+    }
+  }
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C07"><h2>C07 · IBM MQ como broker y envío persistente REST</h2><p><strong>Cómo funciona y cómo se probó.</strong> Vercel publica por HTTPS con la identidad productora. IBM asigna un MsgId. Una lectura GET de ese MsgId permite comprobar el mensaje sin retirarlo.</p><p><strong>Resultado observado.</strong> POST 201 y MsgId de IBM; GET 200 con persistence=persistent.</p><p><strong>Alcance.</strong> La foto muestra otro mensaje persistente de la BOQ del mismo ensayo; la respuesta REST identifica exactamente el MsgId de la cola principal. No se afirma un reinicio del queue manager.</p><figure><img loading="lazy" src="capturas/respuesta-c07.png" alt="Respuesta registrada C07"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><figure><img loading="lazy" src="capturas/22-ibm-boq-persistencia.png" alt="Captura real — IBM MQ como broker y envío persistente REST"><figcaption>Captura real de la aplicación o de IBM MQ Console.</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;request&quot;: {
+    &quot;role&quot;: &quot;producer&quot;,
+    &quot;method&quot;: &quot;POST&quot;,
+    &quot;queue&quot;: &quot;AUTHCDN.REMINDERS.Q&quot;,
+    &quot;selector&quot;: {},
+    &quot;body&quot;: {
+      &quot;cardId&quot;: &quot;c65fade2-7ae4-4ccb-be7d-9c43229caa2c&quot;,
+      &quot;eventId&quot;: &quot;2a4627f8-d401-440b-a4f5-611edd10fe08&quot;,
+      &quot;eventType&quot;: &quot;TASK_REMINDER_DUE&quot;,
+      &quot;expiresAt&quot;: &quot;2026-10-20T01:11:08.738Z&quot;,
+      &quot;occurredAt&quot;: &quot;2026-10-20T00:51:21.306Z&quot;,
+      &quot;reminderId&quot;: &quot;456bc06e-f5b3-4071-b7db-845da94f4835&quot;,
+      &quot;workspaceId&quot;: &quot;443b712e-a038-45b5-bdc9-be54b9abad82&quot;,
+      &quot;schemaVersion&quot;: 1,
+      &quot;scheduleVersion&quot;: 2
+    }
+  },
+  &quot;status&quot;: 201,
+  &quot;body&quot;: &quot;&quot;,
+  &quot;metadata&quot;: {
+    &quot;ibm-mq-md-messageId&quot;: &quot;ID:414d51204155544843444e514d2020203736d56a06ad1c40&quot;
+  }
+}</pre><pre>{
+  &quot;request&quot;: {
+    &quot;role&quot;: &quot;consumer&quot;,
+    &quot;method&quot;: &quot;GET&quot;,
+    &quot;queue&quot;: &quot;AUTHCDN.REMINDERS.Q&quot;,
+    &quot;selector&quot;: {
+      &quot;id&quot;: &quot;ID:414d51204155544843444e514d2020203736d56a06ad1c40&quot;
+    },
+    &quot;body&quot;: null
+  },
+  &quot;status&quot;: 200,
+  &quot;body&quot;: {
+    &quot;cardId&quot;: &quot;c65fade2-7ae4-4ccb-be7d-9c43229caa2c&quot;,
+    &quot;eventId&quot;: &quot;2a4627f8-d401-440b-a4f5-611edd10fe08&quot;,
+    &quot;eventType&quot;: &quot;TASK_REMINDER_DUE&quot;,
+    &quot;expiresAt&quot;: &quot;2026-10-20T01:11:08.738Z&quot;,
+    &quot;occurredAt&quot;: &quot;2026-10-20T00:51:21.306Z&quot;,
+    &quot;reminderId&quot;: &quot;456bc06e-f5b3-4071-b7db-845da94f4835&quot;,
+    &quot;workspaceId&quot;: &quot;443b712e-a038-45b5-bdc9-be54b9abad82&quot;,
+    &quot;schemaVersion&quot;: 1,
+    &quot;scheduleVersion&quot;: 2
+  },
+  &quot;metadata&quot;: {
+    &quot;ibm-mq-md-messageId&quot;: &quot;ID:414d51204155544843444e514d2020203736d56a06ad1c40&quot;,
+    &quot;ibm-mq-md-persistence&quot;: &quot;persistent&quot;,
+    &quot;ibm-mq-md-expiry&quot;: &quot;unlimited&quot;
+  }
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C08"><h2>C08 · Recordatorio asíncrono de extremo a extremo</h2><p><strong>Cómo funciona y cómo se probó.</strong> PATCH con JWT programa la tarjeta en Supabase. Al llegar notifyAt, el productor crea/publica el outbox; Vercel captura y procesa el evento; el usuario lo recibe en GET /api/notifications.</p><p><strong>Resultado observado.</strong> Programación 200, tick 200 y un aviso normal. La confirmación de programar no significa que ya haya un mensaje pendiente en MQ.</p><figure><img loading="lazy" src="capturas/respuesta-c08.png" alt="Respuesta registrada C08"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><figure><img loading="lazy" src="capturas/13-avisos-cargados.png" alt="Captura real — Recordatorio asíncrono de extremo a extremo"><figcaption>Captura real de la aplicación o de IBM MQ Console.</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;request&quot;: {
+    &quot;method&quot;: &quot;PATCH&quot;,
+    &quot;path&quot;: &quot;/api/cards/c65fade2-7ae4-4ccb-be7d-9c43229caa2c/schedule&quot;,
+    &quot;body&quot;: {
+      &quot;expectedVersion&quot;: 1,
+      &quot;dueAt&quot;: &quot;2026-10-20T01:11:08.738Z&quot;,
+      &quot;notifyAt&quot;: &quot;2026-10-20T00:51:14.738Z&quot;,
+      &quot;assigneeIds&quot;: []
+    }
+  },
+  &quot;status&quot;: 200,
+  &quot;body&quot;: {
+    &quot;card&quot;: {
+      &quot;id&quot;: &quot;c65fade2-7ae4-4ccb-be7d-9c43229caa2c&quot;,
+      &quot;due_at&quot;: &quot;2026-10-20T01:11:08.738+00:00&quot;,
+      &quot;notify_at&quot;: &quot;2026-10-20T00:51:14.738+00:00&quot;,
+      &quot;assignee_ids&quot;: [],
+      &quot;completed_at&quot;: null,
+      &quot;schedule_version&quot;: 2
+    }
+  }
+}</pre><pre>{
+  &quot;request&quot;: {
+    &quot;method&quot;: &quot;POST&quot;,
+    &quot;path&quot;: &quot;/api/mq/tick&quot;,
+    &quot;body&quot;: {}
+  },
+  &quot;status&quot;: 200,
+  &quot;body&quot;: {
+    &quot;published&quot;: 1,
+    &quot;captured&quot;: 1,
+    &quot;worked&quot;: 1,
+    &quot;errors&quot;: 0
+  }
+}</pre><pre>{
+  &quot;request&quot;: {
+    &quot;method&quot;: &quot;GET&quot;,
+    &quot;path&quot;: &quot;/api/notifications&quot;,
+    &quot;body&quot;: null
+  },
+  &quot;status&quot;: 200,
+  &quot;body&quot;: {
+    &quot;notifications&quot;: [
+      {
+        &quot;id&quot;: &quot;c54d9158-b6b2-4576-b479-dcaa8c7897b9&quot;,
+        &quot;card_id&quot;: &quot;c65fade2-7ae4-4ccb-be7d-9c43229caa2c&quot;,
+        &quot;message&quot;: &quot;La tarjeta \&quot;MQ-E2E-20261020004000 normal\&quot; vence el 2026-10-20T01:11:08Z.&quot;,
+        &quot;created_at&quot;: &quot;2026-10-20T00:51:22.247911+00:00&quot;,
+        &quot;read_at&quot;: null
+      }
+    ]
+  }
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C09"><h2>C09 · Completar o cancelar antes del envío</h2><p><strong>Cómo funciona y cómo se probó.</strong> Se completan o desprograman tarjetas antes de notifyAt. La programación se invalida y las posteriores lecturas no muestran sus avisos.</p><p><strong>Resultado observado.</strong> Las APIs aceptan el cambio; los recordatorios quedan cancelados y no hay avisos de esas tarjetas.</p><figure><img loading="lazy" src="capturas/respuesta-c09.png" alt="Respuesta registrada C09"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;request&quot;: {
+    &quot;method&quot;: &quot;POST&quot;,
+    &quot;path&quot;: &quot;/api/cards/76807d3a-e01c-4607-a895-df6bf59887b7/complete&quot;,
+    &quot;body&quot;: {
+      &quot;expectedVersion&quot;: 2
+    }
+  },
+  &quot;status&quot;: 200,
+  &quot;body&quot;: {
+    &quot;card&quot;: {
+      &quot;id&quot;: &quot;76807d3a-e01c-4607-a895-df6bf59887b7&quot;,
+      &quot;due_at&quot;: &quot;2026-10-20T01:11:09.854+00:00&quot;,
+      &quot;notify_at&quot;: &quot;2026-10-20T00:51:15.854+00:00&quot;,
+      &quot;completed_at&quot;: &quot;2026-10-20T00:51:12.057187+00:00&quot;,
+      &quot;schedule_version&quot;: 3
+    }
+  }
+}</pre><pre>{
+  &quot;request&quot;: {
+    &quot;method&quot;: &quot;PATCH&quot;,
+    &quot;path&quot;: &quot;/api/cards/194b233c-158a-45bd-b77f-cb42adfea1b7/schedule&quot;,
+    &quot;body&quot;: {
+      &quot;expectedVersion&quot;: 2,
+      &quot;dueAt&quot;: null,
+      &quot;notifyAt&quot;: null,
+      &quot;assigneeIds&quot;: []
+    }
+  },
+  &quot;status&quot;: 200,
+  &quot;body&quot;: {
+    &quot;card&quot;: {
+      &quot;id&quot;: &quot;194b233c-158a-45bd-b77f-cb42adfea1b7&quot;,
+      &quot;due_at&quot;: null,
+      &quot;notify_at&quot;: null,
+      &quot;assignee_ids&quot;: [],
+      &quot;completed_at&quot;: null,
+      &quot;schedule_version&quot;: 3
+    }
+  }
+}</pre><pre>{
+  &quot;status&quot;: 200,
+  &quot;body&quot;: [
+    {
+      &quot;id&quot;: &quot;58de68e2-983d-4ea9-a037-e7a5cf9bf1c5&quot;,
+      &quot;card_id&quot;: &quot;194b233c-158a-45bd-b77f-cb42adfea1b7&quot;,
+      &quot;kind&quot;: &quot;TASK_REMINDER_DUE&quot;,
+      &quot;status&quot;: &quot;CANCELLED&quot;,
+      &quot;schedule_version&quot;: 2,
+      &quot;notify_at&quot;: &quot;2026-10-20T00:51:17.185+00:00&quot;,
+      &quot;expires_at&quot;: &quot;2026-10-20T01:11:11.185+00:00&quot;,
+      &quot;processed_at&quot;: null
+    },
+    {
+      &quot;id&quot;: &quot;ee2e977b-ee58-4756-a5b4-493a4c153297&quot;,
+      &quot;card_id&quot;: &quot;194b233c-158a-45bd-b77f-cb42adfea1b7&quot;,
+      &quot;kind&quot;: &quot;TASK_OVERDUE&quot;,
+      &quot;status&quot;: &quot;CANCELLED&quot;,
+      &quot;schedule_version&quot;: 2,
+      &quot;notify_at&quot;: &quot;2026-10-20T01:11:11.185+00:00&quot;,
+      &quot;expires_at&quot;: &quot;2026-10-21T01:11:11.185+00:00&quot;,
+      &quot;processed_at&quot;: null
+    },
+    {
+      &quot;id&quot;: &quot;66b106ca-3272-45df-80a9-621bcd11eb01&quot;,
+      &quot;card_id&quot;: &quot;76807d3a-e01c-4607-a895-df6bf59887b7&quot;,
+      &quot;kind&quot;: &quot;TASK_REMINDER_DUE&quot;,
+      &quot;status&quot;: &quot;CANCELLED&quot;,
+      &quot;schedule_version&quot;: 2,
+      &quot;notify_at&quot;: &quot;2026-10-20T00:51:15.854+00:00&quot;,
+      &quot;expires_at&quot;: &quot;2026-10-20T01:11:09.854+00:00&quot;,
+      &quot;processed_at&quot;: null
+    },
+    {
+      &quot;id&quot;: &quot;6d96e05b-5ca4-4ee2-96ad-4d72afa6ab1a&quot;,
+      &quot;card_id&quot;: &quot;76807d3a-e01c-4607-a895-df6bf59887b7&quot;,
+      &quot;kind&quot;: &quot;TASK_OVERDUE&quot;,
+      &quot;status&quot;: &quot;CANCELLED&quot;,
+      &quot;schedule_version&quot;: 2,
+      &quot;notify_at&quot;: &quot;2026-10-20T01:11:09.854+00:00&quot;,
+      &quot;expires_at&quot;: &quot;2026-10-21T01:11:09.854+00:00&quot;,
+      &quot;processed_at&quot;: null
+    },
+    {
+      &quot;id&quot;: &quot;b5aecf37-3658-4b1f-9b88-36942dff5284&quot;,
+      &quot;card_id&quot;: &quot;c65fade2-7ae4-4ccb-be7d-9c43229caa2c&quot;,
+      &quot;kind&quot;: &quot;TASK_OVERDUE&quot;,
+      &quot;status&quot;: &quot;SCHEDULED&quot;,
+      &quot;schedule_version&quot;: 2,
+      &quot;notify_at&quot;: &quot;2026-10-20T01:11:08.738+00:00&quot;,
+      &quot;expires_at&quot;: &quot;2026-10-21T01:11:08.738+00:00&quot;,
+      &quot;processed_at&quot;: null
+    },
+    {
+      &quot;id&quot;: &quot;456bc06e-f5b3-4071-b7db-845da94f4835&quot;,
+      &quot;card_id&quot;: &quot;c65fade2-7ae4-4ccb-be7d-9c43229caa2c&quot;,
+      &quot;kind&quot;: &quot;TASK_REMINDER_DUE&quot;,
+      &quot;status&quot;: &quot;PROCESSED&quot;,
+      &quot;schedule_version&quot;: 2,
+      &quot;notify_at&quot;: &quot;2026-10-20T00:51:14.738+00:00&quot;,
+      &quot;expires_at&quot;: &quot;2026-10-20T01:11:08.738+00:00&quot;,
+      &quot;processed_at&quot;: &quot;2026-10-20T00:51:22.24936+00:00&quot;
+    }
+  ]
+}</pre><pre>{
+  &quot;request&quot;: {
+    &quot;method&quot;: &quot;GET&quot;,
+    &quot;path&quot;: &quot;/api/notifications&quot;,
+    &quot;body&quot;: null
+  },
+  &quot;status&quot;: 200,
+  &quot;body&quot;: {
+    &quot;notifications&quot;: [
+      {
+        &quot;id&quot;: &quot;c54d9158-b6b2-4576-b479-dcaa8c7897b9&quot;,
+        &quot;card_id&quot;: &quot;c65fade2-7ae4-4ccb-be7d-9c43229caa2c&quot;,
+        &quot;message&quot;: &quot;La tarjeta \&quot;MQ-E2E-20261020004000 normal\&quot; vence el 2026-10-20T01:11:08Z.&quot;,
+        &quot;created_at&quot;: &quot;2026-10-20T00:51:22.247911+00:00&quot;,
+        &quot;read_at&quot;: null
+      }
+    ]
+  }
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C10"><h2>C10 · Aviso preventivo y aviso de vencimiento</h2><p><strong>Cómo funciona y cómo se probó.</strong> Se programa una tarjeta con un vencimiento cercano y se espera al reloj real. Cada tipo de evento tiene su propia identidad.</p><p><strong>Resultado observado.</strong> Un aviso preventivo y un aviso de tarjeta vencida; ambos recordatorios PROCESSED y sin duplicados.</p><figure><img loading="lazy" src="capturas/respuesta-c10.png" alt="Respuesta registrada C10"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><figure><img loading="lazy" src="capturas/13-avisos-cargados.png" alt="Captura real — Aviso preventivo y aviso de vencimiento"><figcaption>Captura real de la aplicación o de IBM MQ Console.</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;status&quot;: 200,
+  &quot;body&quot;: [
+    {
+      &quot;id&quot;: &quot;9b61c9f9-bf72-4bf7-b04e-c1fb15d37ac2&quot;,
+      &quot;event_id&quot;: &quot;5cf092fc-07ff-4b93-9094-12179368b93b&quot;,
+      &quot;message&quot;: &quot;La tarjeta \&quot;MQ-E2E-20261020004000 vencimiento\&quot; vence el 2026-10-20T01:03:20Z.&quot;,
+      &quot;created_at&quot;: &quot;2026-10-20T01:02:58.666063+00:00&quot;
+    }
+  ]
+}</pre><pre>{
+  &quot;notifications&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: [
+      {
+        &quot;id&quot;: &quot;9b61c9f9-bf72-4bf7-b04e-c1fb15d37ac2&quot;,
+        &quot;event_id&quot;: &quot;5cf092fc-07ff-4b93-9094-12179368b93b&quot;,
+        &quot;message&quot;: &quot;La tarjeta \&quot;MQ-E2E-20261020004000 vencimiento\&quot; vence el 2026-10-20T01:03:20Z.&quot;,
+        &quot;created_at&quot;: &quot;2026-10-20T01:02:58.666063+00:00&quot;
+      },
+      {
+        &quot;id&quot;: &quot;b844a3ae-2014-44a8-9e0d-436e50d2586a&quot;,
+        &quot;event_id&quot;: &quot;65980e1c-f51b-43ba-aa4d-040f49025cfd&quot;,
+        &quot;message&quot;: &quot;La tarjeta \&quot;MQ-E2E-20261020004000 vencimiento\&quot; está vencida.&quot;,
+        &quot;created_at&quot;: &quot;2026-10-20T01:03:23.398854+00:00&quot;
+      }
+    ]
+  },
+  &quot;reminders&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: [
+      {
+        &quot;id&quot;: &quot;bc28bf9b-4c39-42e0-aa92-6e8d764db8b8&quot;,
+        &quot;kind&quot;: &quot;TASK_REMINDER_DUE&quot;,
+        &quot;status&quot;: &quot;PROCESSED&quot;,
+        &quot;due_at&quot;: &quot;2026-10-20T01:03:20.267+00:00&quot;,
+        &quot;expires_at&quot;: &quot;2026-10-20T01:03:20.267+00:00&quot;,
+        &quot;processed_at&quot;: &quot;2026-10-20T01:02:58.66763+00:00&quot;
+      },
+      {
+        &quot;id&quot;: &quot;306f9a11-2fd1-461f-8b3e-2655f94b4581&quot;,
+        &quot;kind&quot;: &quot;TASK_OVERDUE&quot;,
+        &quot;status&quot;: &quot;PROCESSED&quot;,
+        &quot;due_at&quot;: &quot;2026-10-20T01:03:20.267+00:00&quot;,
+        &quot;expires_at&quot;: &quot;2026-10-21T01:03:20.267+00:00&quot;,
+        &quot;processed_at&quot;: &quot;2026-10-20T01:03:23.400196+00:00&quot;
+      }
+    ]
+  }
+}</pre><pre>{
+  &quot;request&quot;: {
+    &quot;method&quot;: &quot;POST&quot;,
+    &quot;path&quot;: &quot;/api/boards/5c52e0b4-62f0-4545-9ea3-2aa86dfe0c62/summary&quot;,
+    &quot;body&quot;: null
+  },
+  &quot;status&quot;: 200,
+  &quot;body&quot;: {
+    &quot;summary&quot;: {
+      &quot;totalActive&quot;: 6,
+      &quot;pending&quot;: 4,
+      &quot;completed&quot;: 1,
+      &quot;overdue&quot;: 1
+    },
+    &quot;requestId&quot;: &quot;e45adba4-5d0e-4ac0-ae7a-1aed778e05ee&quot;,
+    &quot;generatedAt&quot;: &quot;2026-10-20T01:03:29.056Z&quot;
+  }
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C11"><h2>C11 · Marcar un aviso propio como leído</h2><p><strong>Cómo funciona y cómo se probó.</strong> El usuario recibe el aviso mediante GET autenticado y envía PATCH a su identificador.</p><p><strong>Resultado observado.</strong> PATCH 200; la lectura se asocia al aviso del usuario.</p><figure><img loading="lazy" src="capturas/respuesta-c11.png" alt="Respuesta registrada C11"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;request&quot;: {
+    &quot;method&quot;: &quot;PATCH&quot;,
+    &quot;path&quot;: &quot;/api/notifications/c54d9158-b6b2-4576-b479-dcaa8c7897b9&quot;,
+    &quot;body&quot;: null
+  },
+  &quot;status&quot;: 200,
+  &quot;body&quot;: {
+    &quot;notification&quot;: {
+      &quot;id&quot;: &quot;c54d9158-b6b2-4576-b479-dcaa8c7897b9&quot;,
+      &quot;read_at&quot;: &quot;2026-10-20T00:51:36.192+00:00&quot;
+    }
+  }
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C12"><h2>C12 · Request/Reply síncrono y solicitudes simultáneas</h2><p><strong>Cómo funciona y cómo se probó.</strong> POST del usuario publica en SUMMARY.REQUEST.Q. El responder cloud publica en SUMMARY.REPLY.Q con CorrelId igual al MsgId de la solicitud. La API espera la respuesta de su requestId.</p><p><strong>Resultado observado.</strong> Dos tableros y dos solicitudes simultáneas reciben 200, con requestId distintos y estadísticas correlacionadas.</p><p><strong>Alcance.</strong> La foto corresponde a la ronda inicial con ocho tarjetas. Los conteos cambian al crear nuevas tarjetas de ensayo; se debe comparar cada respuesta con su fecha.</p><figure><img loading="lazy" src="capturas/respuesta-c12.png" alt="Respuesta registrada C12"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><figure><img loading="lazy" src="capturas/14-resumen-cargado.png" alt="Captura real — Request/Reply síncrono y solicitudes simultáneas"><figcaption>Captura real de la aplicación o de IBM MQ Console.</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;request&quot;: {
+    &quot;method&quot;: &quot;POST&quot;,
+    &quot;path&quot;: &quot;/api/boards/5c52e0b4-62f0-4545-9ea3-2aa86dfe0c62/summary&quot;,
+    &quot;body&quot;: null
+  },
+  &quot;status&quot;: 200,
+  &quot;body&quot;: {
+    &quot;summary&quot;: {
+      &quot;totalActive&quot;: 3,
+      &quot;pending&quot;: 3,
+      &quot;completed&quot;: 0,
+      &quot;overdue&quot;: 0
+    },
+    &quot;requestId&quot;: &quot;ff224fd3-8447-43af-846c-a6e99c2d3d3c&quot;,
+    &quot;generatedAt&quot;: &quot;2026-10-20T00:49:46.985Z&quot;
+  }
+}</pre><pre>{
+  &quot;request&quot;: {
+    &quot;method&quot;: &quot;POST&quot;,
+    &quot;path&quot;: &quot;/api/boards/5a84c92c-f774-4613-90b6-b37d7a79ec04/summary&quot;,
+    &quot;body&quot;: null
+  },
+  &quot;status&quot;: 200,
+  &quot;body&quot;: {
+    &quot;summary&quot;: {
+      &quot;totalActive&quot;: 0,
+      &quot;pending&quot;: 0,
+      &quot;completed&quot;: 0,
+      &quot;overdue&quot;: 0
+    },
+    &quot;requestId&quot;: &quot;f1bdb7f5-2e6b-4306-a45f-6f5b3de6d6b2&quot;,
+    &quot;generatedAt&quot;: &quot;2026-10-20T00:49:50.341Z&quot;
+  }
+}</pre><pre>[
+  {
+    &quot;request&quot;: {
+      &quot;method&quot;: &quot;POST&quot;,
+      &quot;path&quot;: &quot;/api/boards/5c52e0b4-62f0-4545-9ea3-2aa86dfe0c62/summary&quot;,
+      &quot;body&quot;: null
+    },
+    &quot;status&quot;: 200,
+    &quot;body&quot;: {
+      &quot;summary&quot;: {
+        &quot;totalActive&quot;: 3,
+        &quot;pending&quot;: 3,
+        &quot;completed&quot;: 0,
+        &quot;overdue&quot;: 0
+      },
+      &quot;requestId&quot;: &quot;2a126144-da81-4319-a8ad-145ce48ea3c4&quot;,
+      &quot;generatedAt&quot;: &quot;2026-10-20T00:49:53.524Z&quot;
+    }
+  },
+  {
+    &quot;request&quot;: {
+      &quot;method&quot;: &quot;POST&quot;,
+      &quot;path&quot;: &quot;/api/boards/5a84c92c-f774-4613-90b6-b37d7a79ec04/summary&quot;,
+      &quot;body&quot;: null
+    },
+    &quot;status&quot;: 200,
+    &quot;body&quot;: {
+      &quot;summary&quot;: {
+        &quot;totalActive&quot;: 0,
+        &quot;pending&quot;: 0,
+        &quot;completed&quot;: 0,
+        &quot;overdue&quot;: 0
+      },
+      &quot;requestId&quot;: &quot;c254fd28-693c-4d60-baa0-0900a792dbdf&quot;,
+      &quot;generatedAt&quot;: &quot;2026-10-20T00:49:53.963Z&quot;
+    }
+  }
+]</pre><pre>{
+  &quot;status&quot;: 200,
+  &quot;body&quot;: [
+    {
+      &quot;id&quot;: &quot;b61c942d-62ae-4631-a6a9-e495f4823b34&quot;,
+      &quot;queue_name&quot;: &quot;AUTHCDN.SUMMARY.REPLY.Q&quot;,
+      &quot;message_id&quot;: &quot;ID:414D51204155544843444E514D2020203736D56A156A1C40&quot;,
+      &quot;correlation_id&quot;: &quot;ID:414D51204155544843444E514D2020203736D56A136A1C40&quot;,
+      &quot;reply_to&quot;: null,
+      &quot;state&quot;: &quot;DONE&quot;,
+      &quot;attempts&quot;: 1,
+      &quot;output_attempts&quot;: 0,
+      &quot;body&quot;: &quot;{\&quot;schemaVersion\&quot;:1,\&quot;requestId\&quot;:\&quot;c254fd28-693c-4d60-baa0-0900a792dbdf\&quot;,\&quot;boardId\&quot;:\&quot;5a84c92c-f774-4613-90b6-b37d7a79ec04\&quot;,\&quot;generatedAt\&quot;:\&quot;2026-10-20T00:49:53.963Z\&quot;,\&quot;status\&quot;:\&quot;OK\&quot;,\&quot;stats\&quot;:{\&quot;totalActive\&quot;:0,\&quot;pending\&quot;:0,\&quot;completed\&quot;:0,\&quot;overdue\&quot;:0}}&quot;,
+      &quot;output&quot;: null,
+      &quot;created_at&quot;: &quot;2026-10-20T00:49:54.290631+00:00&quot;
+    },
+    {
+      &quot;id&quot;: &quot;a9f18544-a5f7-488e-bd06-2d25fcaea80c&quot;,
+      &quot;queue_name&quot;: &quot;AUTHCDN.SUMMARY.REPLY.Q&quot;,
+      &quot;message_id&quot;: &quot;ID:414D51204155544843444E514D2020203736D56A146A1C40&quot;,
+      &quot;correlation_id&quot;: &quot;ID:414D51204155544843444E514D2020203736D56A126A1C40&quot;,
+      &quot;reply_to&quot;: null,
+      &quot;state&quot;: &quot;DONE&quot;,
+      &quot;attempts&quot;: 1,
+      &quot;output_attempts&quot;: 0,
+      &quot;body&quot;: &quot;{\&quot;schemaVersion\&quot;:1,\&quot;requestId\&quot;:\&quot;2a126144-da81-4319-a8ad-145ce48ea3c4\&quot;,\&quot;boardId\&quot;:\&quot;5c52e0b4-62f0-4545-9ea3-2aa86dfe0c62\&quot;,\&quot;generatedAt\&quot;:\&quot;2026-10-20T00:49:53.524Z\&quot;,\&quot;status\&quot;:\&quot;OK\&quot;,\&quot;stats\&quot;:{\&quot;totalActive\&quot;:3,\&quot;pending\&quot;:3,\&quot;completed\&quot;:0,\&quot;overdue\&quot;:0}}&quot;,
+      &quot;output&quot;: null,
+      &quot;created_at&quot;: &quot;2026-10-20T00:49:54.043914+00:00&quot;
+    },
+    {
+      &quot;id&quot;: &quot;18200de9-fddc-4b77-bbea-5891a359a7a8&quot;,
+      &quot;queue_name&quot;: &quot;AUTHCDN.SUMMARY.REQUEST.Q&quot;,
+      &quot;message_id&quot;: &quot;ID:414D51204155544843444E514D2020203736D56A136A1C40&quot;,
+      &quot;correlation_id&quot;: null,
+      &quot;reply_to&quot;: &quot;AUTHCDN.SUMMARY.REPLY.Q@AUTHCDNQM&quot;,
+      &quot;state&quot;: &quot;DONE&quot;,
+      &quot;attempts&quot;: 1,
+      &quot;output_attempts&quot;: 1,
+      &quot;body&quot;: &quot;{\&quot;schemaVersion\&quot;:1,\&quot;requestId\&quot;:\&quot;c254fd28-693c-4d60-baa0-0900a792dbdf\&quot;,\&quot;boardId\&quot;:\&quot;5a84c92c-f774-4613-90b6-b37d7a79ec04\&quot;,\&quot;userId\&quot;:\&quot;45e0ff79-940c-4230-bd97-bb9e0572e0f0\&quot;,\&quot;createdAt\&quot;:\&quot;2026-10-20T00:49:53.103Z\&quot;,\&quot;expiresAt\&quot;:\&quot;2026-10-20T00:50:23.103Z\&quot;}&quot;,
+      &quot;output&quot;: {
+        &quot;body&quot;: &quot;{\&quot;schemaVersion\&quot;:1,\&quot;requestId\&quot;:\&quot;c254fd28-693c-4d60-baa0-0900a792dbdf\&quot;,\&quot;boardId\&quot;:\&quot;5a84c92c-f774-4613-90b6-b37d7a79ec04\&quot;,\&quot;generatedAt\&quot;:\&quot;2026-10-20T00:49:53.963Z\&quot;,\&quot;status\&quot;:\&quot;OK\&quot;,\&quot;stats\&quot;:{\&quot;totalActive\&quot;:0,\&quot;pending\&quot;:0,\&quot;completed\&quot;:0,\&quot;overdue\&quot;:0}}&quot;,
+        &quot;queue&quot;: &quot;AUTHCDN.SUMMARY.REPLY.Q&quot;,
+        &quot;expiresAt&quot;: &quot;2026-10-20T00:50:53.963Z&quot;,
+        &quot;correlationId&quot;: &quot;ID:414D51204155544843444E514D2020203736D56A136A1C40&quot;
+      },
+      &quot;created_at&quot;: &quot;2026-10-20T00:49:53.221116+00:00&quot;
+    },
+    {
+      &quot;id&quot;: &quot;76ae4d38-cd9c-47b1-b320-566ce0301b1f&quot;,
+      &quot;queue_name&quot;: &quot;AUTHCDN.SUMMARY.REQUEST.Q&quot;,
+      &quot;message_id&quot;: &quot;ID:414D51204155544843444E514D2020203736D56A126A1C40&quot;,
+      &quot;correlation_id&quot;: null,
+      &quot;reply_to&quot;: &quot;AUTHCDN.SUMMARY.REPLY.Q@AUTHCDNQM&quot;,
+      &quot;state&quot;: &quot;DONE&quot;,
+      &quot;attempts&quot;: 1,
+      &quot;output_attempts&quot;: 1,
+      &quot;body&quot;: &quot;{\&quot;schemaVersion\&quot;:1,\&quot;requestId\&quot;:\&quot;2a126144-da81-4319-a8ad-145ce48ea3c4\&quot;,\&quot;boardId\&quot;:\&quot;5c52e0b4-62f0-4545-9ea3-2aa86dfe0c62\&quot;,\&quot;userId\&quot;:\&quot;45e0ff79-940c-4230-bd97-bb9e0572e0f0\&quot;,\&quot;createdAt\&quot;:\&quot;2026-10-20T00:49:52.720Z\&quot;,\&quot;expiresAt\&quot;:\&quot;2026-10-20T00:50:22.720Z\&quot;}&quot;,
+      &quot;output&quot;: {
+        &quot;body&quot;: &quot;{\&quot;schemaVersion\&quot;:1,\&quot;requestId\&quot;:\&quot;2a126144-da81-4319-a8ad-145ce48ea3c4\&quot;,\&quot;boardId\&quot;:\&quot;5c52e0b4-62f0-4545-9ea3-2aa86dfe0c62\&quot;,\&quot;generatedAt\&quot;:\&quot;2026-10-20T00:49:53.524Z\&quot;,\&quot;status\&quot;:\&quot;OK\&quot;,\&quot;stats\&quot;:{\&quot;totalActive\&quot;:3,\&quot;pending\&quot;:3,\&quot;completed\&quot;:0,\&quot;overdue\&quot;:0}}&quot;,
+        &quot;queue&quot;: &quot;AUTHCDN.SUMMARY.REPLY.Q&quot;,
+        &quot;expiresAt&quot;: &quot;2026-10-20T00:50:53.524Z&quot;,
+        &quot;correlationId&quot;: &quot;ID:414D51204155544843444E514D2020203736D56A126A1C40&quot;
+      },
+      &quot;created_at&quot;: &quot;2026-10-20T00:49:52.840421+00:00&quot;
+    },
+    {
+      &quot;id&quot;: &quot;95d51ae7-397c-4c2a-931f-08c1b2e01159&quot;,
+      &quot;queue_name&quot;: &quot;AUTHCDN.SUMMARY.REPLY.Q&quot;,
+      &quot;message_id&quot;: &quot;ID:414D51204155544843444E514D2020203736D56A116A1C40&quot;,
+      &quot;correlation_id&quot;: &quot;ID:414D51204155544843444E514D2020203736D56A106A1C40&quot;,
+      &quot;reply_to&quot;: null,
+      &quot;state&quot;: &quot;DONE&quot;,
+      &quot;attempts&quot;: 1,
+      &quot;output_attempts&quot;: 0,
+      &quot;body&quot;: &quot;{\&quot;schemaVersion\&quot;:1,\&quot;requestId\&quot;:\&quot;f1bdb7f5-2e6b-4306-a45f-6f5b3de6d6b2\&quot;,\&quot;boardId\&quot;:\&quot;5a84c92c-f774-4613-90b6-b37d7a79ec04\&quot;,\&quot;generatedAt\&quot;:\&quot;2026-10-20T00:49:50.341Z\&quot;,\&quot;status\&quot;:\&quot;OK\&quot;,\&quot;stats\&quot;:{\&quot;totalActive\&quot;:0,\&quot;pending\&quot;:0,\&quot;completed\&quot;:0,\&quot;overdue\&quot;:0}}&quot;,
+      &quot;output&quot;: null,
+      &quot;created_at&quot;: &quot;2026-10-20T00:49:50.71831+00:00&quot;
+    },
+    {
+      &quot;id&quot;: &quot;25216ec4-5b72-46c1-a245-ba968ea5392d&quot;,
+      &quot;queue_name&quot;: &quot;AUTHCDN.SUMMARY.REQUEST.Q&quot;,
+      &quot;message_id&quot;: &quot;ID:414D51204155544843444E514D2020203736D56A106A1C40&quot;,
+      &quot;correlation_id&quot;: null,
+      &quot;reply_to&quot;: &quot;AUTHCDN.SUMMARY.REPLY.Q@AUTHCDNQM&quot;,
+      &quot;state&quot;: &quot;DONE&quot;,
+      &quot;attempts&quot;: 1,
+      &quot;output_attempts&quot;: 1,
+      &quot;body&quot;: &quot;{\&quot;schemaVersion\&quot;:1,\&quot;requestId\&quot;:\&quot;f1bdb7f5-2e6b-4306-a45f-6f5b3de6d6b2\&quot;,\&quot;boardId\&quot;:\&quot;5a84c92c-f774-4613-90b6-b37d7a79ec04\&quot;,\&quot;userId\&quot;:\&quot;45e0ff79-940c-4230-bd97-bb9e0572e0f0\&quot;,\&quot;createdAt\&quot;:\&quot;2026-10-20T00:49:49.675Z\&quot;,\&quot;expiresAt\&quot;:\&quot;2026-10-20T00:50:19.675Z\&quot;}&quot;,
+      &quot;output&quot;: {
+        &quot;body&quot;: &quot;{\&quot;schemaVersion\&quot;:1,\&quot;requestId\&quot;:\&quot;f1bdb7f5-2e6b-4306-a45f-6f5b3de6d6b2\&quot;,\&quot;boardId\&quot;:\&quot;5a84c92c-f774-4613-90b6-b37d7a79ec04\&quot;,\&quot;generatedAt\&quot;:\&quot;2026-10-20T00:49:50.341Z\&quot;,\&quot;status\&quot;:\&quot;OK\&quot;,\&quot;stats\&quot;:{\&quot;totalActive\&quot;:0,\&quot;pending\&quot;:0,\&quot;completed\&quot;:0,\&quot;overdue\&quot;:0}}&quot;,
+        &quot;queue&quot;: &quot;AUTHCDN.SUMMARY.REPLY.Q&quot;,
+        &quot;expiresAt&quot;: &quot;2026-10-20T00:50:50.341Z&quot;,
+        &quot;correlationId&quot;: &quot;ID:414D51204155544843444E514D2020203736D56A106A1C40&quot;
+      },
+      &quot;created_at&quot;: &quot;2026-10-20T00:49:49.784075+00:00&quot;
+    },
+    {
+      &quot;id&quot;: &quot;aa748a00-5d44-4ac4-919c-9ece4ddcc62d&quot;,
+      &quot;queue_name&quot;: &quot;AUTHCDN.SUMMARY.REPLY.Q&quot;,
+      &quot;message_id&quot;: &quot;ID:414D51204155544843444E514D2020203736D56A0F6A1C40&quot;,
+      &quot;correlation_id&quot;: &quot;ID:414D51204155544843444E514D2020203736D56A0E6A1C40&quot;,
+      &quot;reply_to&quot;: null,
+      &quot;state&quot;: &quot;DONE&quot;,
+      &quot;attempts&quot;: 1,
+      &quot;output_attempts&quot;: 0,
+      &quot;body&quot;: &quot;{\&quot;schemaVersion\&quot;:1,\&quot;requestId\&quot;:\&quot;ff224fd3-8447-43af-846c-a6e99c2d3d3c\&quot;,\&quot;boardId\&quot;:\&quot;5c52e0b4-62f0-4545-9ea3-2aa86dfe0c62\&quot;,\&quot;generatedAt\&quot;:\&quot;2026-10-20T00:49:46.985Z\&quot;,\&quot;status\&quot;:\&quot;OK\&quot;,\&quot;stats\&quot;:{\&quot;totalActive\&quot;:3,\&quot;pending\&quot;:3,\&quot;completed\&quot;:0,\&quot;overdue\&quot;:0}}&quot;,
+      &quot;output&quot;: null,
+      &quot;created_at&quot;: &quot;2026-10-20T00:49:47.308335+00:00&quot;
+    },
+    {
+      &quot;id&quot;: &quot;499c307b-cd4d-429a-9541-58325a4b99f1&quot;,
+      &quot;queue_name&quot;: &quot;AUTHCDN.SUMMARY.REQUEST.Q&quot;,
+      &quot;message_id&quot;: &quot;ID:414D51204155544843444E514D2020203736D56A0E6A1C40&quot;,
+      &quot;correlation_id&quot;: null,
+      &quot;reply_to&quot;: &quot;AUTHCDN.SUMMARY.REPLY.Q@AUTHCDNQM&quot;,
+      &quot;state&quot;: &quot;DONE&quot;,
+      &quot;attempts&quot;: 1,
+      &quot;output_attempts&quot;: 1,
+      &quot;body&quot;: &quot;{\&quot;schemaVersion\&quot;:1,\&quot;requestId\&quot;:\&quot;ff224fd3-8447-43af-846c-a6e99c2d3d3c\&quot;,\&quot;boardId\&quot;:\&quot;5c52e0b4-62f0-4545-9ea3-2aa86dfe0c62\&quot;,\&quot;userId\&quot;:\&quot;45e0ff79-940c-4230-bd97-bb9e0572e0f0\&quot;,\&quot;createdAt\&quot;:\&quot;2026-10-20T00:49:45.861Z\&quot;,\&quot;expiresAt\&quot;:\&quot;2026-10-20T00:50:15.861Z\&quot;}&quot;,
+      &quot;output&quot;: {
+        &quot;body&quot;: &quot;{\&quot;schemaVersion\&quot;:1,\&quot;requestId\&quot;:\&quot;ff224fd3-8447-43af-846c-a6e99c2d3d3c\&quot;,\&quot;boardId\&quot;:\&quot;5c52e0b4-62f0-4545-9ea3-2aa86dfe0c62\&quot;,\&quot;generatedAt\&quot;:\&quot;2026-10-20T00:49:46.985Z\&quot;,\&quot;status\&quot;:\&quot;OK\&quot;,\&quot;stats\&quot;:{\&quot;totalActive\&quot;:3,\&quot;pending\&quot;:3,\&quot;completed\&quot;:0,\&quot;overdue\&quot;:0}}&quot;,
+        &quot;queue&quot;: &quot;AUTHCDN.SUMMARY.REPLY.Q&quot;,
+        &quot;expiresAt&quot;: &quot;2026-10-20T00:50:46.985Z&quot;,
+        &quot;correlationId&quot;: &quot;ID:414D51204155544843444E514D2020203736D56A0E6A1C40&quot;
+      },
+      &quot;created_at&quot;: &quot;2026-10-20T00:49:46.272551+00:00&quot;
+    }
+  ]
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C13"><h2>C13 · Request/Reply: tiempo de espera agotado y recuperación</h2><p><strong>Cómo funciona y cómo se probó.</strong> Se demora solo la captura de solicitudes del segundo tablero de ensayo. La API agota su espera, conserva la solicitud durable y luego vuelve a responder al retirar la demora.</p><p><strong>Resultado observado.</strong> 504 GATEWAY_TIMEOUT real, solicitud PENDING y una nueva petición posterior 200.</p><p><strong>Alcance.</strong> La espera medida de extremo a extremo fue 28.520 ms en esta ronda; incluye trabajo previo y red. Se provocó una demora acotada en SQL, no una caída general de IBM ni de Vercel.</p><figure><img loading="lazy" src="capturas/respuesta-c13.png" alt="Respuesta registrada C13"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;request&quot;: {
+    &quot;method&quot;: &quot;POST&quot;,
+    &quot;path&quot;: &quot;/api/boards/5a84c92c-f774-4613-90b6-b37d7a79ec04/summary&quot;,
+    &quot;body&quot;: null
+  },
+  &quot;elapsedMs&quot;: 28520,
+  &quot;status&quot;: 504,
+  &quot;body&quot;: {
+    &quot;error&quot;: {
+      &quot;code&quot;: &quot;GATEWAY_TIMEOUT&quot;,
+      &quot;message&quot;: &quot;El resumen superó el tiempo de espera.&quot;,
+      &quot;details&quot;: {
+        &quot;code&quot;: &quot;GATEWAY_TIMEOUT&quot;
+      }
+    }
+  }
+}</pre><pre>{
+  &quot;status&quot;: 200,
+  &quot;body&quot;: [
+    {
+      &quot;id&quot;: &quot;dbe71a69-d4d0-4961-bfb0-c8af07511feb&quot;,
+      &quot;message_id&quot;: &quot;ID:414D51204155544843444E514D2020203736D56A0C491E40&quot;,
+      &quot;body&quot;: &quot;{\&quot;schemaVersion\&quot;:1,\&quot;requestId\&quot;:\&quot;40c18ed8-05d2-4edb-a37b-4737001198c5\&quot;,\&quot;boardId\&quot;:\&quot;5a84c92c-f774-4613-90b6-b37d7a79ec04\&quot;,\&quot;userId\&quot;:\&quot;45e0ff79-940c-4230-bd97-bb9e0572e0f0\&quot;,\&quot;createdAt\&quot;:\&quot;2026-10-20T03:44:43.196Z\&quot;,\&quot;expiresAt\&quot;:\&quot;2026-10-20T03:45:13.196Z\&quot;}&quot;,
+      &quot;state&quot;: &quot;PENDING&quot;,
+      &quot;attempts&quot;: 0,
+      &quot;next_attempt_at&quot;: &quot;2026-10-20T03:46:13.370258+00:00&quot;
+    }
+  ]
+}</pre><pre>{
+  &quot;request&quot;: {
+    &quot;method&quot;: &quot;POST&quot;,
+    &quot;path&quot;: &quot;/api/boards/5a84c92c-f774-4613-90b6-b37d7a79ec04/summary&quot;,
+    &quot;body&quot;: null
+  },
+  &quot;elapsedMs&quot;: 3650,
+  &quot;status&quot;: 200,
+  &quot;body&quot;: {
+    &quot;summary&quot;: {
+      &quot;totalActive&quot;: 0,
+      &quot;pending&quot;: 0,
+      &quot;completed&quot;: 0,
+      &quot;overdue&quot;: 0
+    },
+    &quot;requestId&quot;: &quot;5dfafc03-802b-44a0-8ff7-7ca6dc7c5e4e&quot;,
+    &quot;generatedAt&quot;: &quot;2026-10-20T03:45:18.793Z&quot;
+  }
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C14"><h2>C14 · ACK y retirada segura: capturar antes de DELETE</h2><p><strong>Cómo funciona y cómo se probó.</strong> GET examina el mensaje; mq_rest_capture guarda su cuerpo en Supabase; después DELETE retira exclusivamente el MsgId capturado. Si la ejecución se detiene, otra invocación encuentra el trabajo en inbox.</p><p><strong>Resultado observado.</strong> Captura durable confirmada; DELETE 200 devuelve el mensaje retirado; inbox sigue PENDING hasta recuperarse.</p><p><strong>Alcance.</strong> Son confirmaciones HTTP y persistencia de aplicación. REST no ofrece una transacción distribuida MQ/Supabase ni se presentan estas operaciones como MQCMIT/MQBACK. Ante una respuesta ambigua se admite reentrega y la idempotencia limita sus efectos.</p><figure><img loading="lazy" src="capturas/respuesta-c14.png" alt="Respuesta registrada C14"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;read&quot;: {
+    &quot;request&quot;: {
+      &quot;role&quot;: &quot;consumer&quot;,
+      &quot;method&quot;: &quot;GET&quot;,
+      &quot;queue&quot;: &quot;AUTHCDN.REMINDERS.Q&quot;,
+      &quot;selector&quot;: {
+        &quot;id&quot;: &quot;ID:414d51204155544843444e514d2020203736d56a10ad1c40&quot;
+      },
+      &quot;body&quot;: null
+    },
+    &quot;status&quot;: 200,
+    &quot;body&quot;: {
+      &quot;cardId&quot;: &quot;c65fade2-7ae4-4ccb-be7d-9c43229caa2c&quot;,
+      &quot;eventId&quot;: &quot;2a4627f8-d401-440b-a4f5-611edd10fe08&quot;,
+      &quot;eventType&quot;: &quot;TASK_REMINDER_DUE&quot;,
+      &quot;expiresAt&quot;: &quot;2026-10-20T01:11:08.738Z&quot;,
+      &quot;occurredAt&quot;: &quot;2026-10-20T00:51:21.306Z&quot;,
+      &quot;reminderId&quot;: &quot;456bc06e-f5b3-4071-b7db-845da94f4835&quot;,
+      &quot;workspaceId&quot;: &quot;443b712e-a038-45b5-bdc9-be54b9abad82&quot;,
+      &quot;schemaVersion&quot;: 1,
+      &quot;scheduleVersion&quot;: 2
+    },
+    &quot;metadata&quot;: {
+      &quot;ibm-mq-md-messageId&quot;: &quot;ID:414d51204155544843444e514d2020203736d56a10ad1c40&quot;,
+      &quot;ibm-mq-md-persistence&quot;: &quot;persistent&quot;,
+      &quot;ibm-mq-md-expiry&quot;: &quot;unlimited&quot;
+    }
+  },
+  &quot;captured&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: &quot;cb89c973-cac0-4cd0-bf32-17f49eb9ecc5&quot;
+  }
+}</pre><pre>{
+  &quot;removed&quot;: {
+    &quot;request&quot;: {
+      &quot;role&quot;: &quot;consumer&quot;,
+      &quot;method&quot;: &quot;DELETE&quot;,
+      &quot;queue&quot;: &quot;AUTHCDN.REMINDERS.Q&quot;,
+      &quot;selector&quot;: {
+        &quot;id&quot;: &quot;ID:414d51204155544843444e514d2020203736d56a10ad1c40&quot;
+      },
+      &quot;body&quot;: null
+    },
+    &quot;status&quot;: 200,
+    &quot;body&quot;: {
+      &quot;cardId&quot;: &quot;c65fade2-7ae4-4ccb-be7d-9c43229caa2c&quot;,
+      &quot;eventId&quot;: &quot;2a4627f8-d401-440b-a4f5-611edd10fe08&quot;,
+      &quot;eventType&quot;: &quot;TASK_REMINDER_DUE&quot;,
+      &quot;expiresAt&quot;: &quot;2026-10-20T01:11:08.738Z&quot;,
+      &quot;occurredAt&quot;: &quot;2026-10-20T00:51:21.306Z&quot;,
+      &quot;reminderId&quot;: &quot;456bc06e-f5b3-4071-b7db-845da94f4835&quot;,
+      &quot;workspaceId&quot;: &quot;443b712e-a038-45b5-bdc9-be54b9abad82&quot;,
+      &quot;schemaVersion&quot;: 1,
+      &quot;scheduleVersion&quot;: 2
+    },
+    &quot;metadata&quot;: {
+      &quot;ibm-mq-md-messageId&quot;: &quot;ID:414d51204155544843444e514d2020203736d56a10ad1c40&quot;,
+      &quot;ibm-mq-md-persistence&quot;: &quot;persistent&quot;,
+      &quot;ibm-mq-md-expiry&quot;: &quot;unlimited&quot;
+    }
+  },
+  &quot;pending&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: [
+      {
+        &quot;id&quot;: &quot;cb89c973-cac0-4cd0-bf32-17f49eb9ecc5&quot;,
+        &quot;queue_name&quot;: &quot;AUTHCDN.REMINDERS.Q&quot;,
+        &quot;message_id&quot;: &quot;ID:414d51204155544843444e514d2020203736d56a10ad1c40&quot;,
+        &quot;correlation_id&quot;: null,
+        &quot;reply_to&quot;: null,
+        &quot;body&quot;: &quot;{\&quot;cardId\&quot;:\&quot;c65fade2-7ae4-4ccb-be7d-9c43229caa2c\&quot;,\&quot;eventId\&quot;:\&quot;2a4627f8-d401-440b-a4f5-611edd10fe08\&quot;,\&quot;eventType\&quot;:\&quot;TASK_REMINDER_DUE\&quot;,\&quot;expiresAt\&quot;:\&quot;2026-10-20T01:11:08.738Z\&quot;,\&quot;occurredAt\&quot;:\&quot;2026-10-20T00:51:21.306Z\&quot;,\&quot;reminderId\&quot;:\&quot;456bc06e-f5b3-4071-b7db-845da94f4835\&quot;,\&quot;workspaceId\&quot;:\&quot;443b712e-a038-45b5-bdc9-be54b9abad82\&quot;,\&quot;schemaVersion\&quot;:1,\&quot;scheduleVersion\&quot;:2}&quot;,
+        &quot;state&quot;: &quot;PENDING&quot;,
+        &quot;attempts&quot;: 0,
+        &quot;output_attempts&quot;: 0,
+        &quot;output&quot;: null,
+        &quot;next_attempt_at&quot;: &quot;2026-10-20T00:54:22.609284+00:00&quot;,
+        &quot;last_error&quot;: null
+      }
+    ]
+  }
+}</pre><pre>{
+  &quot;request&quot;: {
+    &quot;role&quot;: &quot;consumer&quot;,
+    &quot;method&quot;: &quot;GET&quot;,
+    &quot;queue&quot;: &quot;AUTHCDN.REMINDERS.Q&quot;,
+    &quot;selector&quot;: {
+      &quot;id&quot;: &quot;ID:414d51204155544843444e514d2020203736d56a10ad1c40&quot;
+    },
+    &quot;body&quot;: null
+  },
+  &quot;status&quot;: 204,
+  &quot;body&quot;: &quot;&quot;,
+  &quot;metadata&quot;: {}
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C15"><h2>C15 · Idempotencia ante mensajes repetidos</h2><p><strong>Cómo funciona y cómo se probó.</strong> Se publican dos mensajes con MsgId distintos para el mismo eventId y se procesan ambos. La unicidad y la lógica de process_reminder_event evitan un segundo aviso.</p><p><strong>Resultado observado.</strong> Inbox DONE y una sola notificación para el eventId.</p><p><strong>Alcance.</strong> La primera consulta de auditoría usó igualdad de MsgId sensible a mayúsculas; la verificación corregida de fase V confirmó el resultado. El error de la consulta histórica no fue pérdida de mensajes.</p><figure><img loading="lazy" src="capturas/respuesta-c15.png" alt="Respuesta registrada C15"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;inbox&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: [
+      {
+        &quot;id&quot;: &quot;eb7fd085-6355-4cdb-9cec-3260776ab1bf&quot;,
+        &quot;queue_name&quot;: &quot;AUTHCDN.REMINDERS.Q&quot;,
+        &quot;message_id&quot;: &quot;ID:414D51204155544843444E514D2020203736D56A06AD1C40&quot;,
+        &quot;correlation_id&quot;: null,
+        &quot;reply_to&quot;: null,
+        &quot;body&quot;: &quot;{\&quot;cardId\&quot;:\&quot;c65fade2-7ae4-4ccb-be7d-9c43229caa2c\&quot;,\&quot;eventId\&quot;:\&quot;2a4627f8-d401-440b-a4f5-611edd10fe08\&quot;,\&quot;eventType\&quot;:\&quot;TASK_REMINDER_DUE\&quot;,\&quot;expiresAt\&quot;:\&quot;2026-10-20T01:11:08.738Z\&quot;,\&quot;occurredAt\&quot;:\&quot;2026-10-20T00:51:21.306Z\&quot;,\&quot;reminderId\&quot;:\&quot;456bc06e-f5b3-4071-b7db-845da94f4835\&quot;,\&quot;workspaceId\&quot;:\&quot;443b712e-a038-45b5-bdc9-be54b9abad82\&quot;,\&quot;schemaVersion\&quot;:1,\&quot;scheduleVersion\&quot;:2}&quot;,
+        &quot;state&quot;: &quot;DONE&quot;,
+        &quot;attempts&quot;: 1,
+        &quot;output_attempts&quot;: 0,
+        &quot;output&quot;: null,
+        &quot;next_attempt_at&quot;: &quot;2026-10-20T00:54:00.727719+00:00&quot;,
+        &quot;last_error&quot;: null
+      }
+    ]
+  },
+  &quot;notifications&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: [
+      {
+        &quot;id&quot;: &quot;c54d9158-b6b2-4576-b479-dcaa8c7897b9&quot;,
+        &quot;event_id&quot;: &quot;2a4627f8-d401-440b-a4f5-611edd10fe08&quot;,
+        &quot;card_id&quot;: &quot;c65fade2-7ae4-4ccb-be7d-9c43229caa2c&quot;
+      }
+    ]
+  },
+  &quot;note&quot;: &quot;La verificación anterior usó igualdad de texto sensible a mayúsculas; el adaptador normaliza los MsgId.&quot;
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C16"><h2>C16 · Recuperación después de una pausa entre captura y procesamiento</h2><p><strong>Cómo funciona y cómo se probó.</strong> Se captura y retira un mensaje real; el ensayo se pausa antes de procesarlo. Un tick posterior recupera el payload desde Supabase.</p><p><strong>Resultado observado.</strong> PENDING → DONE; el MsgId ya no está en IBM y se conserva una sola notificación.</p><figure><img loading="lazy" src="capturas/respuesta-c16.png" alt="Respuesta registrada C16"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;removed&quot;: {
+    &quot;request&quot;: {
+      &quot;role&quot;: &quot;consumer&quot;,
+      &quot;method&quot;: &quot;DELETE&quot;,
+      &quot;queue&quot;: &quot;AUTHCDN.REMINDERS.Q&quot;,
+      &quot;selector&quot;: {
+        &quot;id&quot;: &quot;ID:414d51204155544843444e514d2020203736d56a10ad1c40&quot;
+      },
+      &quot;body&quot;: null
+    },
+    &quot;status&quot;: 200,
+    &quot;body&quot;: {
+      &quot;cardId&quot;: &quot;c65fade2-7ae4-4ccb-be7d-9c43229caa2c&quot;,
+      &quot;eventId&quot;: &quot;2a4627f8-d401-440b-a4f5-611edd10fe08&quot;,
+      &quot;eventType&quot;: &quot;TASK_REMINDER_DUE&quot;,
+      &quot;expiresAt&quot;: &quot;2026-10-20T01:11:08.738Z&quot;,
+      &quot;occurredAt&quot;: &quot;2026-10-20T00:51:21.306Z&quot;,
+      &quot;reminderId&quot;: &quot;456bc06e-f5b3-4071-b7db-845da94f4835&quot;,
+      &quot;workspaceId&quot;: &quot;443b712e-a038-45b5-bdc9-be54b9abad82&quot;,
+      &quot;schemaVersion&quot;: 1,
+      &quot;scheduleVersion&quot;: 2
+    },
+    &quot;metadata&quot;: {
+      &quot;ibm-mq-md-messageId&quot;: &quot;ID:414d51204155544843444e514d2020203736d56a10ad1c40&quot;,
+      &quot;ibm-mq-md-persistence&quot;: &quot;persistent&quot;,
+      &quot;ibm-mq-md-expiry&quot;: &quot;unlimited&quot;
+    }
+  },
+  &quot;pending&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: [
+      {
+        &quot;id&quot;: &quot;cb89c973-cac0-4cd0-bf32-17f49eb9ecc5&quot;,
+        &quot;queue_name&quot;: &quot;AUTHCDN.REMINDERS.Q&quot;,
+        &quot;message_id&quot;: &quot;ID:414d51204155544843444e514d2020203736d56a10ad1c40&quot;,
+        &quot;correlation_id&quot;: null,
+        &quot;reply_to&quot;: null,
+        &quot;body&quot;: &quot;{\&quot;cardId\&quot;:\&quot;c65fade2-7ae4-4ccb-be7d-9c43229caa2c\&quot;,\&quot;eventId\&quot;:\&quot;2a4627f8-d401-440b-a4f5-611edd10fe08\&quot;,\&quot;eventType\&quot;:\&quot;TASK_REMINDER_DUE\&quot;,\&quot;expiresAt\&quot;:\&quot;2026-10-20T01:11:08.738Z\&quot;,\&quot;occurredAt\&quot;:\&quot;2026-10-20T00:51:21.306Z\&quot;,\&quot;reminderId\&quot;:\&quot;456bc06e-f5b3-4071-b7db-845da94f4835\&quot;,\&quot;workspaceId\&quot;:\&quot;443b712e-a038-45b5-bdc9-be54b9abad82\&quot;,\&quot;schemaVersion\&quot;:1,\&quot;scheduleVersion\&quot;:2}&quot;,
+        &quot;state&quot;: &quot;PENDING&quot;,
+        &quot;attempts&quot;: 0,
+        &quot;output_attempts&quot;: 0,
+        &quot;output&quot;: null,
+        &quot;next_attempt_at&quot;: &quot;2026-10-20T00:54:22.609284+00:00&quot;,
+        &quot;last_error&quot;: null
+      }
+    ]
+  }
+}</pre><pre>{
+  &quot;inbox&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: [
+      {
+        &quot;id&quot;: &quot;cb89c973-cac0-4cd0-bf32-17f49eb9ecc5&quot;,
+        &quot;queue_name&quot;: &quot;AUTHCDN.REMINDERS.Q&quot;,
+        &quot;message_id&quot;: &quot;ID:414d51204155544843444e514d2020203736d56a10ad1c40&quot;,
+        &quot;correlation_id&quot;: null,
+        &quot;reply_to&quot;: null,
+        &quot;body&quot;: &quot;{\&quot;cardId\&quot;:\&quot;c65fade2-7ae4-4ccb-be7d-9c43229caa2c\&quot;,\&quot;eventId\&quot;:\&quot;2a4627f8-d401-440b-a4f5-611edd10fe08\&quot;,\&quot;eventType\&quot;:\&quot;TASK_REMINDER_DUE\&quot;,\&quot;expiresAt\&quot;:\&quot;2026-10-20T01:11:08.738Z\&quot;,\&quot;occurredAt\&quot;:\&quot;2026-10-20T00:51:21.306Z\&quot;,\&quot;reminderId\&quot;:\&quot;456bc06e-f5b3-4071-b7db-845da94f4835\&quot;,\&quot;workspaceId\&quot;:\&quot;443b712e-a038-45b5-bdc9-be54b9abad82\&quot;,\&quot;schemaVersion\&quot;:1,\&quot;scheduleVersion\&quot;:2}&quot;,
+        &quot;state&quot;: &quot;DONE&quot;,
+        &quot;attempts&quot;: 1,
+        &quot;output_attempts&quot;: 0,
+        &quot;output&quot;: null,
+        &quot;next_attempt_at&quot;: &quot;2026-10-20T00:54:22.609284+00:00&quot;,
+        &quot;last_error&quot;: null
+      }
+    ]
+  },
+  &quot;notifications&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: [
+      {
+        &quot;id&quot;: &quot;c54d9158-b6b2-4576-b479-dcaa8c7897b9&quot;,
+        &quot;event_id&quot;: &quot;2a4627f8-d401-440b-a4f5-611edd10fe08&quot;,
+        &quot;card_id&quot;: &quot;c65fade2-7ae4-4ccb-be7d-9c43229caa2c&quot;
+      }
+    ]
+  }
+}</pre><pre>{
+  &quot;request&quot;: {
+    &quot;role&quot;: &quot;consumer&quot;,
+    &quot;method&quot;: &quot;GET&quot;,
+    &quot;queue&quot;: &quot;AUTHCDN.REMINDERS.Q&quot;,
+    &quot;selector&quot;: {
+      &quot;id&quot;: &quot;ID:414d51204155544843444e514d2020203736d56a10ad1c40&quot;
+    },
+    &quot;body&quot;: null
+  },
+  &quot;status&quot;: 204,
+  &quot;body&quot;: &quot;&quot;,
+  &quot;metadata&quot;: {}
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C17"><h2>C17 · Durabilidad ante interrupción real del procesamiento SQL</h2><p><strong>Cómo funciona y cómo se probó.</strong> Se detiene únicamente el backend PostgreSQL identificado que ejecuta process_reminder_event para la tarjeta de ensayo. La transacción se interrumpe después de intentar insertar el aviso y antes de confirmar el estado final. Se retira la condición de fallo y se invoca otro ciclo.</p><p><strong>Resultado observado.</strong> Backend terminado; cero avisos parciales y trabajo PENDING. Recuperación posterior DONE con attempts=2 y exactamente un aviso.</p><p><strong>Alcance.</strong> Se interrumpió un backend real de la RPC, restringido al fixture. No se reinició IBM MQ ni se apagó una función de Vercel; esta prueba no demuestra todos los fallos posibles de proveedores.</p><figure><img loading="lazy" src="capturas/respuesta-c17.png" alt="Respuesta registrada C17"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><figure><img loading="lazy" src="capturas/43-avisos-finales-firefox.png" alt="Captura real — Durabilidad ante interrupción real del procesamiento SQL"><figcaption>Captura real de la aplicación o de IBM MQ Console.</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;status&quot;: 200,
+  &quot;body&quot;: {
+    &quot;pid&quot;: 382242,
+    &quot;queryStart&quot;: &quot;2026-10-20T03:47:13.696902+00:00&quot;,
+    &quot;terminated&quot;: true,
+    &quot;backendStart&quot;: &quot;2026-10-20T03:47:13.358211+00:00&quot;,
+    &quot;reminderStatus&quot;: &quot;QUEUED&quot;,
+    &quot;applicationName&quot;: &quot;authcdn-e2e-interrupt-155d2be1&quot;,
+    &quot;fixtureNotifications&quot;: 0
+  }
+}</pre><pre>{
+  &quot;signal&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: {
+      &quot;pid&quot;: 382242,
+      &quot;queryStart&quot;: &quot;2026-10-20T03:47:13.696902+00:00&quot;,
+      &quot;terminated&quot;: true,
+      &quot;backendStart&quot;: &quot;2026-10-20T03:47:13.358211+00:00&quot;,
+      &quot;reminderStatus&quot;: &quot;QUEUED&quot;,
+      &quot;applicationName&quot;: &quot;authcdn-e2e-interrupt-155d2be1&quot;,
+      &quot;fixtureNotifications&quot;: 0
+    }
+  },
+  &quot;tick&quot;: {
+    &quot;request&quot;: {
+      &quot;method&quot;: &quot;POST&quot;,
+      &quot;path&quot;: &quot;/api/mq/tick&quot;,
+      &quot;body&quot;: {}
+    },
+    &quot;elapsedMs&quot;: 5192,
+    &quot;status&quot;: 502,
+    &quot;body&quot;: {
+      &quot;published&quot;: 1,
+      &quot;captured&quot;: 1,
+      &quot;worked&quot;: 1,
+      &quot;errors&quot;: 1
+    }
+  },
+  &quot;inbox&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: [
+      {
+        &quot;id&quot;: &quot;715b20c4-f4f6-4c90-b715-0a20798259bb&quot;,
+        &quot;message_id&quot;: &quot;ID:414D51204155544843444E514D2020203736D56A11491E40&quot;,
+        &quot;body&quot;: &quot;{\&quot;schemaVersion\&quot;:1,\&quot;eventId\&quot;:\&quot;8cfbcf5a-804d-400b-8018-504cd641fcb6\&quot;,\&quot;eventType\&quot;:\&quot;TASK_REMINDER_DUE\&quot;,\&quot;reminderId\&quot;:\&quot;c3bf2cf5-e609-41a8-b991-adc3cec6d957\&quot;,\&quot;cardId\&quot;:\&quot;56453971-70c2-4612-986b-4466862b39f2\&quot;,\&quot;workspaceId\&quot;:\&quot;443b712e-a038-45b5-bdc9-be54b9abad82\&quot;,\&quot;scheduleVersion\&quot;:2,\&quot;occurredAt\&quot;:\&quot;2026-10-20T03:47:12.723Z\&quot;,\&quot;expiresAt\&quot;:\&quot;2026-10-20T04:47:07.013Z\&quot;}&quot;,
+        &quot;state&quot;: &quot;PENDING&quot;,
+        &quot;attempts&quot;: 1,
+        &quot;output_attempts&quot;: 0,
+        &quot;output&quot;: null,
+        &quot;next_attempt_at&quot;: &quot;2026-10-20T03:48:43.998838+00:00&quot;,
+        &quot;last_error&quot;: &quot;PROCESSING_OR_DELIVERY_UNCONFIRMED&quot;
+      }
+    ]
+  },
+  &quot;notifications&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: []
+  }
+}</pre><pre>{
+  &quot;tick&quot;: {
+    &quot;request&quot;: {
+      &quot;method&quot;: &quot;POST&quot;,
+      &quot;path&quot;: &quot;/api/mq/tick&quot;,
+      &quot;body&quot;: {}
+    },
+    &quot;elapsedMs&quot;: 4223,
+    &quot;status&quot;: 200,
+    &quot;body&quot;: {
+      &quot;published&quot;: 0,
+      &quot;captured&quot;: 0,
+      &quot;worked&quot;: 1,
+      &quot;errors&quot;: 0
+    }
+  },
+  &quot;inbox&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: [
+      {
+        &quot;id&quot;: &quot;715b20c4-f4f6-4c90-b715-0a20798259bb&quot;,
+        &quot;message_id&quot;: &quot;ID:414D51204155544843444E514D2020203736D56A11491E40&quot;,
+        &quot;body&quot;: &quot;{\&quot;schemaVersion\&quot;:1,\&quot;eventId\&quot;:\&quot;8cfbcf5a-804d-400b-8018-504cd641fcb6\&quot;,\&quot;eventType\&quot;:\&quot;TASK_REMINDER_DUE\&quot;,\&quot;reminderId\&quot;:\&quot;c3bf2cf5-e609-41a8-b991-adc3cec6d957\&quot;,\&quot;cardId\&quot;:\&quot;56453971-70c2-4612-986b-4466862b39f2\&quot;,\&quot;workspaceId\&quot;:\&quot;443b712e-a038-45b5-bdc9-be54b9abad82\&quot;,\&quot;scheduleVersion\&quot;:2,\&quot;occurredAt\&quot;:\&quot;2026-10-20T03:47:12.723Z\&quot;,\&quot;expiresAt\&quot;:\&quot;2026-10-20T04:47:07.013Z\&quot;}&quot;,
+        &quot;state&quot;: &quot;DONE&quot;,
+        &quot;attempts&quot;: 2,
+        &quot;output_attempts&quot;: 0,
+        &quot;output&quot;: null,
+        &quot;next_attempt_at&quot;: &quot;2026-10-20T03:47:24.904+00:00&quot;,
+        &quot;last_error&quot;: null
+      }
+    ]
+  },
+  &quot;notifications&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: [
+      {
+        &quot;id&quot;: &quot;0c0cc90a-cc9b-46d1-a2fe-ab13bf56a39a&quot;,
+        &quot;event_id&quot;: &quot;8cfbcf5a-804d-400b-8018-504cd641fcb6&quot;,
+        &quot;message&quot;: &quot;La tarjeta \&quot;MQ-E2E-20261020004000 155d2be1 interrupcion-real-rpc\&quot; vence el 2026-10-20T04:47:07Z.&quot;,
+        &quot;created_at&quot;: &quot;2026-10-20T03:47:26.073471+00:00&quot;
+      }
+    ]
+  }
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C18"><h2>C18 · Concurrencia y recuperación de una reserva vencida</h2><p><strong>Cómo funciona y cómo se probó.</strong> Dos consumidores intentan reservar el mismo trabajo. Después se hace vencer únicamente la reserva de ensayo y se comprueba el cambio de token y el rechazo al token antiguo.</p><p><strong>Resultado observado.</strong> La reserva vigente excluye al segundo consumidor; una actualización sin token o con token obsoleto no puede modificar el trabajo.</p><p><strong>Alcance.</strong> La antigüedad de la reserva se fuerza en el registro técnico de ensayo para verificar la recuperación sin esperar su vencimiento natural.</p><figure><img loading="lazy" src="capturas/respuesta-c18.png" alt="Respuesta registrada C18"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;capture&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: &quot;2d63e3da-11bd-43cf-bfe6-cc3d607a5695&quot;
+  },
+  &quot;first&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: {
+      &quot;id&quot;: &quot;2d63e3da-11bd-43cf-bfe6-cc3d607a5695&quot;,
+      &quot;body&quot;: &quot;{\&quot;testRun\&quot;:\&quot;MQ-E2E-20261020004000\&quot;,\&quot;case\&quot;:\&quot;lease-and-retry\&quot;,\&quot;note\&quot;:\&quot;Fixture SQL: no es un MsgId emitido por IBM.\&quot;}&quot;,
+      &quot;qmgr&quot;: &quot;AUTHCDNQM&quot;,
+      &quot;state&quot;: &quot;PENDING&quot;,
+      &quot;output&quot;: null,
+      &quot;attempts&quot;: 1,
+      &quot;reply_to&quot;: null,
+      &quot;created_at&quot;: &quot;2026-10-20T00:57:34.767041+00:00&quot;,
+      &quot;last_error&quot;: null,
+      &quot;lock_token&quot;: &quot;[REDACTED]&quot;,
+      &quot;message_id&quot;: &quot;ID:B1AE7F038C4D2D90E06B630AB4DB509C928F77C71DB881B8&quot;,
+      &quot;queue_name&quot;: &quot;AUTHCDN.REMINDERS.Q&quot;,
+      &quot;completed_at&quot;: null,
+      &quot;locked_until&quot;: &quot;2026-10-20T00:59:34.989226+00:00&quot;,
+      &quot;correlation_id&quot;: null,
+      &quot;next_attempt_at&quot;: &quot;2026-10-20T00:57:34.767041+00:00&quot;,
+      &quot;output_attempts&quot;: 0
+    }
+  },
+  &quot;second&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: null
+  }
+}</pre><pre>{
+  &quot;status&quot;: 200,
+  &quot;body&quot;: false
+}</pre><pre>{
+  &quot;reclaimed&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: {
+      &quot;id&quot;: &quot;2d63e3da-11bd-43cf-bfe6-cc3d607a5695&quot;,
+      &quot;body&quot;: &quot;{\&quot;testRun\&quot;:\&quot;MQ-E2E-20261020004000\&quot;,\&quot;case\&quot;:\&quot;lease-and-retry\&quot;,\&quot;note\&quot;:\&quot;Fixture SQL: no es un MsgId emitido por IBM.\&quot;}&quot;,
+      &quot;qmgr&quot;: &quot;AUTHCDNQM&quot;,
+      &quot;state&quot;: &quot;PENDING&quot;,
+      &quot;output&quot;: null,
+      &quot;attempts&quot;: 2,
+      &quot;reply_to&quot;: null,
+      &quot;created_at&quot;: &quot;2026-10-20T00:57:34.767041+00:00&quot;,
+      &quot;last_error&quot;: null,
+      &quot;lock_token&quot;: &quot;[REDACTED]&quot;,
+      &quot;message_id&quot;: &quot;ID:B1AE7F038C4D2D90E06B630AB4DB509C928F77C71DB881B8&quot;,
+      &quot;queue_name&quot;: &quot;AUTHCDN.REMINDERS.Q&quot;,
+      &quot;completed_at&quot;: null,
+      &quot;locked_until&quot;: &quot;2026-10-20T00:59:36.219918+00:00&quot;,
+      &quot;correlation_id&quot;: null,
+      &quot;next_attempt_at&quot;: &quot;2026-10-20T00:57:34.767041+00:00&quot;,
+      &quot;output_attempts&quot;: 0
+    }
+  },
+  &quot;staleUpdate&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: false
+  },
+  &quot;tokenChanged&quot;: true
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C19"><h2>C19 · Colisión de MsgId con cuerpo diferente</h2><p><strong>Cómo funciona y cómo se probó.</strong> Se intenta capturar otra carga usando el mismo identificador de mensaje ya registrado.</p><p><strong>Resultado observado.</strong> La captura se rechaza y no sobrescribe el cuerpo durable original.</p><figure><img loading="lazy" src="capturas/respuesta-c19.png" alt="Respuesta registrada C19"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;status&quot;: 400,
+  &quot;body&quot;: {
+    &quot;code&quot;: &quot;P0001&quot;,
+    &quot;details&quot;: null,
+    &quot;hint&quot;: null,
+    &quot;message&quot;: &quot;MQ_MESSAGE_ID_COLLISION&quot;
+  }
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C20"><h2>C20 · Evento atrasado de una versión anterior</h2><p><strong>Cómo funciona y cómo se probó.</strong> Una reprogramación incrementa scheduleVersion. Se reproduce la llegada de un evento válido de la versión cancelada.</p><p><strong>Resultado observado.</strong> La versión anterior queda CANCELLED; el mensaje se consume y termina DONE sin crear un aviso.</p><figure><img loading="lazy" src="capturas/respuesta-c20.png" alt="Respuesta registrada C20"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;request&quot;: {
+    &quot;method&quot;: &quot;PATCH&quot;,
+    &quot;path&quot;: &quot;/api/cards/eba66877-dbae-4ea5-9076-a61702fc7ffb/schedule&quot;,
+    &quot;body&quot;: {
+      &quot;expectedVersion&quot;: 2,
+      &quot;dueAt&quot;: &quot;2026-10-20T01:38:28.309Z&quot;,
+      &quot;notifyAt&quot;: &quot;2026-10-20T01:11:28.309Z&quot;,
+      &quot;assigneeIds&quot;: []
+    }
+  },
+  &quot;status&quot;: 200,
+  &quot;body&quot;: {
+    &quot;card&quot;: {
+      &quot;id&quot;: &quot;eba66877-dbae-4ea5-9076-a61702fc7ffb&quot;,
+      &quot;due_at&quot;: &quot;2026-10-20T01:38:28.309+00:00&quot;,
+      &quot;notify_at&quot;: &quot;2026-10-20T01:11:28.309+00:00&quot;,
+      &quot;assignee_ids&quot;: [],
+      &quot;completed_at&quot;: null,
+      &quot;schedule_version&quot;: 3
+    }
+  }
+}</pre><pre>{
+  &quot;request&quot;: {
+    &quot;role&quot;: &quot;producer&quot;,
+    &quot;method&quot;: &quot;POST&quot;,
+    &quot;queue&quot;: &quot;AUTHCDN.REMINDERS.Q&quot;,
+    &quot;selector&quot;: {
+      &quot;expiry&quot;: 60000
+    },
+    &quot;body&quot;: {
+      &quot;schemaVersion&quot;: 1,
+      &quot;eventId&quot;: &quot;a3df7057-0e8a-44fe-bfff-a32be8fcc13b&quot;,
+      &quot;eventType&quot;: &quot;TASK_REMINDER_DUE&quot;,
+      &quot;reminderId&quot;: &quot;631b9aa4-a6bb-4549-9fcd-bbb727d2c568&quot;,
+      &quot;cardId&quot;: &quot;eba66877-dbae-4ea5-9076-a61702fc7ffb&quot;,
+      &quot;workspaceId&quot;: &quot;443b712e-a038-45b5-bdc9-be54b9abad82&quot;,
+      &quot;scheduleVersion&quot;: 2,
+      &quot;occurredAt&quot;: &quot;2026-10-20T01:08:29.631Z&quot;,
+      &quot;expiresAt&quot;: &quot;2026-10-20T01:28:26.944Z&quot;
+    }
+  },
+  &quot;status&quot;: 201,
+  &quot;body&quot;: &quot;&quot;,
+  &quot;metadata&quot;: {
+    &quot;ibm-mq-md-messageId&quot;: &quot;ID:414d51204155544843444e514d2020203736d56a065d1d40&quot;
+  }
+}</pre><pre>{
+  &quot;inbox&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: [
+      {
+        &quot;id&quot;: &quot;4d732abb-b0f1-43b7-ba41-1e08c9ffa40a&quot;,
+        &quot;queue_name&quot;: &quot;AUTHCDN.REMINDERS.Q&quot;,
+        &quot;message_id&quot;: &quot;ID:414D51204155544843444E514D2020203736D56A065D1D40&quot;,
+        &quot;correlation_id&quot;: null,
+        &quot;reply_to&quot;: null,
+        &quot;body&quot;: &quot;{\&quot;schemaVersion\&quot;:1,\&quot;eventId\&quot;:\&quot;a3df7057-0e8a-44fe-bfff-a32be8fcc13b\&quot;,\&quot;eventType\&quot;:\&quot;TASK_REMINDER_DUE\&quot;,\&quot;reminderId\&quot;:\&quot;631b9aa4-a6bb-4549-9fcd-bbb727d2c568\&quot;,\&quot;cardId\&quot;:\&quot;eba66877-dbae-4ea5-9076-a61702fc7ffb\&quot;,\&quot;workspaceId\&quot;:\&quot;443b712e-a038-45b5-bdc9-be54b9abad82\&quot;,\&quot;scheduleVersion\&quot;:2,\&quot;occurredAt\&quot;:\&quot;2026-10-20T01:08:29.631Z\&quot;,\&quot;expiresAt\&quot;:\&quot;2026-10-20T01:28:26.944Z\&quot;}&quot;,
+        &quot;state&quot;: &quot;DONE&quot;,
+        &quot;attempts&quot;: 1,
+        &quot;output_attempts&quot;: 0,
+        &quot;output&quot;: null,
+        &quot;next_attempt_at&quot;: &quot;2026-10-20T01:08:31.41774+00:00&quot;,
+        &quot;last_error&quot;: null
+      }
+    ]
+  },
+  &quot;reminder&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: [
+      {
+        &quot;id&quot;: &quot;631b9aa4-a6bb-4549-9fcd-bbb727d2c568&quot;,
+        &quot;status&quot;: &quot;CANCELLED&quot;,
+        &quot;schedule_version&quot;: 2
+      }
+    ]
+  },
+  &quot;notifications&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: []
+  }
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C21"><h2>C21 · BOQ: JSON mal formado</h2><p><strong>Cómo funciona y cómo se probó.</strong> Un mensaje real con JSON inválido llega a la cola principal. El consumidor conserva el original en una salida persistente a BOQ.</p><p><strong>Resultado observado.</strong> Cuarentena MALFORMED_JSON terminada y detalle visible en IBM Console.</p><figure><img loading="lazy" src="capturas/respuesta-c21.png" alt="Respuesta registrada C21"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><figure><img loading="lazy" src="capturas/23-ibm-boq-malformed-json.png" alt="Captura real — BOQ: JSON mal formado"><figcaption>Captura real de la aplicación o de IBM MQ Console.</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;status&quot;: 200,
+  &quot;body&quot;: [
+    {
+      &quot;id&quot;: &quot;87421194-25d4-4ecc-b6f7-662903f555c2&quot;,
+      &quot;queue_name&quot;: &quot;AUTHCDN.REMINDERS.Q&quot;,
+      &quot;message_id&quot;: &quot;ID:414D51204155544843444E514D2020203736D56A08AD1C40&quot;,
+      &quot;correlation_id&quot;: null,
+      &quot;reply_to&quot;: null,
+      &quot;body&quot;: &quot;{\&quot;run\&quot;:\&quot;MQ-E2E-20261020004000\&quot;,\&quot;broken\&quot;:&quot;,
+      &quot;state&quot;: &quot;DONE&quot;,
+      &quot;attempts&quot;: 1,
+      &quot;output_attempts&quot;: 1,
+      &quot;output&quot;: {
+        &quot;body&quot;: &quot;{\&quot;schemaVersion\&quot;:1,\&quot;type\&quot;:\&quot;MQ_REST_QUARANTINE\&quot;,\&quot;inboxId\&quot;:\&quot;87421194-25d4-4ecc-b6f7-662903f555c2\&quot;,\&quot;sourceQueue\&quot;:\&quot;AUTHCDN.REMINDERS.Q\&quot;,\&quot;messageId\&quot;:\&quot;ID:414D51204155544843444E514D2020203736D56A08AD1C40\&quot;,\&quot;reason\&quot;:\&quot;MALFORMED_JSON\&quot;,\&quot;attempts\&quot;:1,\&quot;originalBody\&quot;:\&quot;{\\\&quot;run\\\&quot;:\\\&quot;MQ-E2E-20261020004000\\\&quot;,\\\&quot;broken\\\&quot;:\&quot;}&quot;,
+        &quot;queue&quot;: &quot;AUTHCDN.REMINDERS.BOQ&quot;,
+        &quot;purpose&quot;: &quot;QUARANTINE&quot;
+      },
+      &quot;next_attempt_at&quot;: &quot;2026-10-20T00:54:10.376043+00:00&quot;,
+      &quot;last_error&quot;: null
+    }
+  ]
+}</pre><pre>{
+  &quot;queue&quot;: &quot;AUTHCDN.REMINDERS.BOQ&quot;,
+  &quot;source&quot;: &quot;Sesión Firefox iniciada manualmente por el usuario&quot;,
+  &quot;body&quot;: {
+    &quot;schemaVersion&quot;: 1,
+    &quot;type&quot;: &quot;MQ_REST_QUARANTINE&quot;,
+    &quot;inboxId&quot;: &quot;87421194-25d4-4ecc-b6f7-662903f555c2&quot;,
+    &quot;sourceQueue&quot;: &quot;AUTHCDN.REMINDERS.Q&quot;,
+    &quot;messageId&quot;: &quot;ID:414D51204155544843444E514D2020203736D56A08AD1C40&quot;,
+    &quot;reason&quot;: &quot;MALFORMED_JSON&quot;,
+    &quot;attempts&quot;: 1,
+    &quot;originalBody&quot;: &quot;{\&quot;run\&quot;:\&quot;MQ-E2E-20261020004000\&quot;,\&quot;broken\&quot;:&quot;
+  },
+  &quot;identifiers&quot;: &quot;Skip to main content\nIBM\n MQ\nLogout\nHome\nManage\nLearning resources\nSettings\nToggle opening or closing the side navigation\nManage\nAUTHCDNQM\nQueues\nLocal Queue: AUTHCDN.REMINDERS.BOQ messages\nActions\nMessage details\nClose\nGeneral\nContext\nIdentifiers\nData\nMessage ID\tID:414d51204155544843444e514d2020203736d56a0cad1c40\nClose\nDownload\n&quot;,
+  &quot;screenshot&quot;: &quot;23-ibm-boq-malformed-json.png&quot;
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C22"><h2>C22 · BOQ: contrato de recordatorio inválido</h2><p><strong>Cómo funciona y cómo se probó.</strong> Se publica un evento con schemaVersion no admitida. El consumidor lo rechaza sin generar un aviso de negocio.</p><p><strong>Resultado observado.</strong> Cuarentena INVALID_REMINDER visible en BOQ.</p><figure><img loading="lazy" src="capturas/respuesta-c22.png" alt="Respuesta registrada C22"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><figure><img loading="lazy" src="capturas/23-ibm-boq-invalid-reminder.png" alt="Captura real — BOQ: contrato de recordatorio inválido"><figcaption>Captura real de la aplicación o de IBM MQ Console.</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;status&quot;: 200,
+  &quot;body&quot;: [
+    {
+      &quot;id&quot;: &quot;5766abca-8b1a-443c-8992-108913c8ade2&quot;,
+      &quot;queue_name&quot;: &quot;AUTHCDN.REMINDERS.Q&quot;,
+      &quot;message_id&quot;: &quot;ID:414D51204155544843444E514D2020203736D56A09AD1C40&quot;,
+      &quot;correlation_id&quot;: null,
+      &quot;reply_to&quot;: null,
+      &quot;body&quot;: &quot;{\&quot;schemaVersion\&quot;:999,\&quot;testRun\&quot;:\&quot;MQ-E2E-20261020004000\&quot;}&quot;,
+      &quot;state&quot;: &quot;DONE&quot;,
+      &quot;attempts&quot;: 1,
+      &quot;output_attempts&quot;: 1,
+      &quot;output&quot;: {
+        &quot;body&quot;: &quot;{\&quot;schemaVersion\&quot;:1,\&quot;type\&quot;:\&quot;MQ_REST_QUARANTINE\&quot;,\&quot;inboxId\&quot;:\&quot;5766abca-8b1a-443c-8992-108913c8ade2\&quot;,\&quot;sourceQueue\&quot;:\&quot;AUTHCDN.REMINDERS.Q\&quot;,\&quot;messageId\&quot;:\&quot;ID:414D51204155544843444E514D2020203736D56A09AD1C40\&quot;,\&quot;reason\&quot;:\&quot;INVALID_REMINDER\&quot;,\&quot;attempts\&quot;:1,\&quot;originalBody\&quot;:\&quot;{\\\&quot;schemaVersion\\\&quot;:999,\\\&quot;testRun\\\&quot;:\\\&quot;MQ-E2E-20261020004000\\\&quot;}\&quot;}&quot;,
+        &quot;queue&quot;: &quot;AUTHCDN.REMINDERS.BOQ&quot;,
+        &quot;purpose&quot;: &quot;QUARANTINE&quot;
+      },
+      &quot;next_attempt_at&quot;: &quot;2026-10-20T00:54:11.268567+00:00&quot;,
+      &quot;last_error&quot;: null
+    }
+  ]
+}</pre><pre>{
+  &quot;queue&quot;: &quot;AUTHCDN.REMINDERS.BOQ&quot;,
+  &quot;source&quot;: &quot;Sesión Firefox iniciada manualmente por el usuario&quot;,
+  &quot;body&quot;: {
+    &quot;schemaVersion&quot;: 1,
+    &quot;type&quot;: &quot;MQ_REST_QUARANTINE&quot;,
+    &quot;inboxId&quot;: &quot;5766abca-8b1a-443c-8992-108913c8ade2&quot;,
+    &quot;sourceQueue&quot;: &quot;AUTHCDN.REMINDERS.Q&quot;,
+    &quot;messageId&quot;: &quot;ID:414D51204155544843444E514D2020203736D56A09AD1C40&quot;,
+    &quot;reason&quot;: &quot;INVALID_REMINDER&quot;,
+    &quot;attempts&quot;: 1,
+    &quot;originalBody&quot;: &quot;{\&quot;schemaVersion\&quot;:999,\&quot;testRun\&quot;:\&quot;MQ-E2E-20261020004000\&quot;}&quot;
+  },
+  &quot;identifiers&quot;: &quot;Skip to main content\nIBM\n MQ\nLogout\nHome\nManage\nLearning resources\nSettings\nToggle opening or closing the side navigation\nManage\nAUTHCDNQM\nQueues\nLocal Queue: AUTHCDN.REMINDERS.BOQ messages\nActions\nMessage details\nClose\nGeneral\nContext\nIdentifiers\nData\nMessage ID\tID:414d51204155544843444e514d2020203736d56a0ead1c40\nClose\nDownload\n&quot;,
+  &quot;screenshot&quot;: &quot;23-ibm-boq-invalid-reminder.png&quot;
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C23"><h2>C23 · BOQ: error permanente de correspondencia</h2><p><strong>Cómo funciona y cómo se probó.</strong> Se publica un evento con referencias inconsistentes con el recordatorio real. El error permanente no se reintenta como si fuera transitorio.</p><p><strong>Resultado observado.</strong> Cuarentena PERMANENT_ERROR con cuerpo original conservado.</p><figure><img loading="lazy" src="capturas/respuesta-c23.png" alt="Respuesta registrada C23"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><figure><img loading="lazy" src="capturas/23-ibm-boq-permanent-error.png" alt="Captura real — BOQ: error permanente de correspondencia"><figcaption>Captura real de la aplicación o de IBM MQ Console.</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;status&quot;: 200,
+  &quot;body&quot;: [
+    {
+      &quot;id&quot;: &quot;a14133b4-0142-4ff8-a1db-c1b24af16592&quot;,
+      &quot;queue_name&quot;: &quot;AUTHCDN.REMINDERS.Q&quot;,
+      &quot;message_id&quot;: &quot;ID:414D51204155544843444E514D2020203736D56A0AAD1C40&quot;,
+      &quot;correlation_id&quot;: null,
+      &quot;reply_to&quot;: null,
+      &quot;body&quot;: &quot;{\&quot;cardId\&quot;:\&quot;c65fade2-7ae4-4ccb-be7d-9c43229caa2c\&quot;,\&quot;eventId\&quot;:\&quot;2a4627f8-d401-440b-a4f5-611edd10fe08\&quot;,\&quot;eventType\&quot;:\&quot;TASK_REMINDER_DUE\&quot;,\&quot;expiresAt\&quot;:\&quot;2026-10-20T01:11:08.738Z\&quot;,\&quot;occurredAt\&quot;:\&quot;2026-10-20T00:51:21.306Z\&quot;,\&quot;reminderId\&quot;:\&quot;456bc06e-f5b3-4071-b7db-845da94f4835\&quot;,\&quot;workspaceId\&quot;:\&quot;947c7680-5f3e-4f00-85be-089590de2217\&quot;,\&quot;schemaVersion\&quot;:1,\&quot;scheduleVersion\&quot;:2}&quot;,
+      &quot;state&quot;: &quot;DONE&quot;,
+      &quot;attempts&quot;: 1,
+      &quot;output_attempts&quot;: 1,
+      &quot;output&quot;: {
+        &quot;body&quot;: &quot;{\&quot;schemaVersion\&quot;:1,\&quot;type\&quot;:\&quot;MQ_REST_QUARANTINE\&quot;,\&quot;inboxId\&quot;:\&quot;a14133b4-0142-4ff8-a1db-c1b24af16592\&quot;,\&quot;sourceQueue\&quot;:\&quot;AUTHCDN.REMINDERS.Q\&quot;,\&quot;messageId\&quot;:\&quot;ID:414D51204155544843444E514D2020203736D56A0AAD1C40\&quot;,\&quot;reason\&quot;:\&quot;PERMANENT_ERROR\&quot;,\&quot;attempts\&quot;:1,\&quot;originalBody\&quot;:\&quot;{\\\&quot;cardId\\\&quot;:\\\&quot;c65fade2-7ae4-4ccb-be7d-9c43229caa2c\\\&quot;,\\\&quot;eventId\\\&quot;:\\\&quot;2a4627f8-d401-440b-a4f5-611edd10fe08\\\&quot;,\\\&quot;eventType\\\&quot;:\\\&quot;TASK_REMINDER_DUE\\\&quot;,\\\&quot;expiresAt\\\&quot;:\\\&quot;2026-10-20T01:11:08.738Z\\\&quot;,\\\&quot;occurredAt\\\&quot;:\\\&quot;2026-10-20T00:51:21.306Z\\\&quot;,\\\&quot;reminderId\\\&quot;:\\\&quot;456bc06e-f5b3-4071-b7db-845da94f4835\\\&quot;,\\\&quot;workspaceId\\\&quot;:\\\&quot;947c7680-5f3e-4f00-85be-089590de2217\\\&quot;,\\\&quot;schemaVersion\\\&quot;:1,\\\&quot;scheduleVersion\\\&quot;:2}\&quot;}&quot;,
+        &quot;queue&quot;: &quot;AUTHCDN.REMINDERS.BOQ&quot;,
+        &quot;purpose&quot;: &quot;QUARANTINE&quot;
+      },
+      &quot;next_attempt_at&quot;: &quot;2026-10-20T00:54:12.19538+00:00&quot;,
+      &quot;last_error&quot;: null
+    }
+  ]
+}</pre><pre>{
+  &quot;queue&quot;: &quot;AUTHCDN.REMINDERS.BOQ&quot;,
+  &quot;source&quot;: &quot;Sesión Firefox iniciada manualmente por el usuario&quot;,
+  &quot;body&quot;: {
+    &quot;schemaVersion&quot;: 1,
+    &quot;type&quot;: &quot;MQ_REST_QUARANTINE&quot;,
+    &quot;inboxId&quot;: &quot;a14133b4-0142-4ff8-a1db-c1b24af16592&quot;,
+    &quot;sourceQueue&quot;: &quot;AUTHCDN.REMINDERS.Q&quot;,
+    &quot;messageId&quot;: &quot;ID:414D51204155544843444E514D2020203736D56A0AAD1C40&quot;,
+    &quot;reason&quot;: &quot;PERMANENT_ERROR&quot;,
+    &quot;attempts&quot;: 1,
+    &quot;originalBody&quot;: &quot;{\&quot;cardId\&quot;:\&quot;c65fade2-7ae4-4ccb-be7d-9c43229caa2c\&quot;,\&quot;eventId\&quot;:\&quot;2a4627f8-d401-440b-a4f5-611edd10fe08\&quot;,\&quot;eventType\&quot;:\&quot;TASK_REMINDER_DUE\&quot;,\&quot;expiresAt\&quot;:\&quot;2026-10-20T01:11:08.738Z\&quot;,\&quot;occurredAt\&quot;:\&quot;2026-10-20T00:51:21.306Z\&quot;,\&quot;reminderId\&quot;:\&quot;456bc06e-f5b3-4071-b7db-845da94f4835\&quot;,\&quot;workspaceId\&quot;:\&quot;947c7680-5f3e-4f00-85be-089590de2217\&quot;,\&quot;schemaVersion\&quot;:1,\&quot;scheduleVersion\&quot;:2}&quot;
+  },
+  &quot;identifiers&quot;: &quot;Skip to main content\nIBM\n MQ\nLogout\nHome\nManage\nLearning resources\nSettings\nToggle opening or closing the side navigation\nManage\nAUTHCDNQM\nQueues\nLocal Queue: AUTHCDN.REMINDERS.BOQ messages\nActions\nMessage details\nClose\nGeneral\nContext\nIdentifiers\nData\nMessage ID\tID:414d51204155544843444e514d2020203736d56a0fad1c40\nClose\nDownload\n&quot;,
+  &quot;screenshot&quot;: &quot;23-ibm-boq-permanent-error.png&quot;
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C24"><h2>C24 · BOQ: ReplyTo fuera de la lista permitida</h2><p><strong>Cómo funciona y cómo se probó.</strong> Una solicitud indica una cola de respuesta no permitida. El servidor aplica la lista de destinos autorizados antes de publicar la respuesta.</p><p><strong>Resultado observado.</strong> Cuarentena INVALID_REPLY_DESTINATION; no se envía la respuesta al destino indicado por el atacante.</p><figure><img loading="lazy" src="capturas/respuesta-c24.png" alt="Respuesta registrada C24"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><figure><img loading="lazy" src="capturas/23-ibm-boq-invalid-reply-destination.png" alt="Captura real — BOQ: ReplyTo fuera de la lista permitida"><figcaption>Captura real de la aplicación o de IBM MQ Console.</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;status&quot;: 200,
+  &quot;body&quot;: [
+    {
+      &quot;id&quot;: &quot;92053757-9172-43ea-b6da-24d11ea1cb05&quot;,
+      &quot;queue_name&quot;: &quot;AUTHCDN.SUMMARY.REQUEST.Q&quot;,
+      &quot;message_id&quot;: &quot;ID:414D51204155544843444E514D2020203736D56A0BAD1C40&quot;,
+      &quot;correlation_id&quot;: null,
+      &quot;reply_to&quot;: &quot;E2E.UNTRUSTED.REPLY.Q@AUTHCDNQM&quot;,
+      &quot;body&quot;: &quot;{\&quot;schemaVersion\&quot;:1,\&quot;requestId\&quot;:\&quot;9613f1e5-bab5-45d2-97b9-0499f4b832aa\&quot;,\&quot;boardId\&quot;:\&quot;5c52e0b4-62f0-4545-9ea3-2aa86dfe0c62\&quot;,\&quot;userId\&quot;:\&quot;45e0ff79-940c-4230-bd97-bb9e0572e0f0\&quot;,\&quot;createdAt\&quot;:\&quot;2026-10-20T00:54:09.944Z\&quot;,\&quot;expiresAt\&quot;:\&quot;2026-10-20T00:55:09.944Z\&quot;}&quot;,
+      &quot;state&quot;: &quot;DONE&quot;,
+      &quot;attempts&quot;: 1,
+      &quot;output_attempts&quot;: 1,
+      &quot;output&quot;: {
+        &quot;body&quot;: &quot;{\&quot;schemaVersion\&quot;:1,\&quot;type\&quot;:\&quot;MQ_REST_QUARANTINE\&quot;,\&quot;inboxId\&quot;:\&quot;92053757-9172-43ea-b6da-24d11ea1cb05\&quot;,\&quot;sourceQueue\&quot;:\&quot;AUTHCDN.SUMMARY.REQUEST.Q\&quot;,\&quot;messageId\&quot;:\&quot;ID:414D51204155544843444E514D2020203736D56A0BAD1C40\&quot;,\&quot;reason\&quot;:\&quot;INVALID_REPLY_DESTINATION\&quot;,\&quot;attempts\&quot;:1,\&quot;originalBody\&quot;:\&quot;{\\\&quot;schemaVersion\\\&quot;:1,\\\&quot;requestId\\\&quot;:\\\&quot;9613f1e5-bab5-45d2-97b9-0499f4b832aa\\\&quot;,\\\&quot;boardId\\\&quot;:\\\&quot;5c52e0b4-62f0-4545-9ea3-2aa86dfe0c62\\\&quot;,\\\&quot;userId\\\&quot;:\\\&quot;45e0ff79-940c-4230-bd97-bb9e0572e0f0\\\&quot;,\\\&quot;createdAt\\\&quot;:\\\&quot;2026-10-20T00:54:09.944Z\\\&quot;,\\\&quot;expiresAt\\\&quot;:\\\&quot;2026-10-20T00:55:09.944Z\\\&quot;}\&quot;}&quot;,
+        &quot;queue&quot;: &quot;AUTHCDN.REMINDERS.BOQ&quot;,
+        &quot;purpose&quot;: &quot;QUARANTINE&quot;
+      },
+      &quot;next_attempt_at&quot;: &quot;2026-10-20T00:54:10.604318+00:00&quot;,
+      &quot;last_error&quot;: null
+    }
+  ]
+}</pre><pre>{
+  &quot;queue&quot;: &quot;AUTHCDN.REMINDERS.BOQ&quot;,
+  &quot;source&quot;: &quot;Sesión Firefox iniciada manualmente por el usuario&quot;,
+  &quot;body&quot;: {
+    &quot;schemaVersion&quot;: 1,
+    &quot;type&quot;: &quot;MQ_REST_QUARANTINE&quot;,
+    &quot;inboxId&quot;: &quot;92053757-9172-43ea-b6da-24d11ea1cb05&quot;,
+    &quot;sourceQueue&quot;: &quot;AUTHCDN.SUMMARY.REQUEST.Q&quot;,
+    &quot;messageId&quot;: &quot;ID:414D51204155544843444E514D2020203736D56A0BAD1C40&quot;,
+    &quot;reason&quot;: &quot;INVALID_REPLY_DESTINATION&quot;,
+    &quot;attempts&quot;: 1,
+    &quot;originalBody&quot;: &quot;{\&quot;schemaVersion\&quot;:1,\&quot;requestId\&quot;:\&quot;9613f1e5-bab5-45d2-97b9-0499f4b832aa\&quot;,\&quot;boardId\&quot;:\&quot;5c52e0b4-62f0-4545-9ea3-2aa86dfe0c62\&quot;,\&quot;userId\&quot;:\&quot;45e0ff79-940c-4230-bd97-bb9e0572e0f0\&quot;,\&quot;createdAt\&quot;:\&quot;2026-10-20T00:54:09.944Z\&quot;,\&quot;expiresAt\&quot;:\&quot;2026-10-20T00:55:09.944Z\&quot;}&quot;
+  },
+  &quot;identifiers&quot;: &quot;Skip to main content\nIBM\n MQ\nLogout\nHome\nManage\nLearning resources\nSettings\nToggle opening or closing the side navigation\nManage\nAUTHCDNQM\nQueues\nLocal Queue: AUTHCDN.REMINDERS.BOQ messages\nActions\nMessage details\nClose\nGeneral\nContext\nIdentifiers\nData\nMessage ID\tID:414d51204155544843444e514d2020203736d56a0dad1c40\nClose\nDownload\n&quot;,
+  &quot;screenshot&quot;: &quot;23-ibm-boq-invalid-reply-destination.png&quot;
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C25"><h2>C25 · Consumidor: cinco fallos y paso a BOQ</h2><p><strong>Cómo funciona y cómo se probó.</strong> Una condición SQL temporal lanza P0001 solo al insertar el aviso de una tarjeta de ensayo. El consumidor realiza sus reintentos reales y, al agotarlos, publica la cuarentena.</p><p><strong>Resultado observado.</strong> Cinco fallos RPC medidos, attempts=5, cero avisos y salida QUARANTINE a BOQ terminada con RETRIES_EXHAUSTED.</p><p><strong>Alcance.</strong> Se inyecta un error SQL acotado para ejercitar la política de reintentos. No es una interrupción de red ni una indisponibilidad general de Supabase.</p><figure><img loading="lazy" src="capturas/respuesta-c25.png" alt="Respuesta registrada C25"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><figure><img loading="lazy" src="capturas/45-ibm-boq-cinco-intentos.png" alt="Captura real — Consumidor: cinco fallos y paso a BOQ"><figcaption>Captura real de la aplicación o de IBM MQ Console.</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;inbox&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: [
+      {
+        &quot;id&quot;: &quot;0ec5288f-f3af-4f31-bbbc-9c5f33edd30a&quot;,
+        &quot;message_id&quot;: &quot;ID:414D51204155544843444E514D2020203736D56A0F491E40&quot;,
+        &quot;body&quot;: &quot;{\&quot;schemaVersion\&quot;:1,\&quot;eventId\&quot;:\&quot;f8111b46-4ac9-4b10-a0e3-d2bb8b27f093\&quot;,\&quot;eventType\&quot;:\&quot;TASK_REMINDER_DUE\&quot;,\&quot;reminderId\&quot;:\&quot;263d2bd0-fafa-43e5-a1b0-b5bc3f6ad3f1\&quot;,\&quot;cardId\&quot;:\&quot;b39f29c8-0d2b-4158-a8ca-c5b760806696\&quot;,\&quot;workspaceId\&quot;:\&quot;443b712e-a038-45b5-bdc9-be54b9abad82\&quot;,\&quot;scheduleVersion\&quot;:2,\&quot;occurredAt\&quot;:\&quot;2026-10-20T03:45:25.472Z\&quot;,\&quot;expiresAt\&quot;:\&quot;2026-10-20T04:45:20.242Z\&quot;}&quot;,
+        &quot;state&quot;: &quot;DONE&quot;,
+        &quot;attempts&quot;: 5,
+        &quot;output_attempts&quot;: 1,
+        &quot;output&quot;: {
+          &quot;body&quot;: &quot;{\&quot;schemaVersion\&quot;:1,\&quot;type\&quot;:\&quot;MQ_REST_QUARANTINE\&quot;,\&quot;inboxId\&quot;:\&quot;0ec5288f-f3af-4f31-bbbc-9c5f33edd30a\&quot;,\&quot;sourceQueue\&quot;:\&quot;AUTHCDN.REMINDERS.Q\&quot;,\&quot;messageId\&quot;:\&quot;ID:414D51204155544843444E514D2020203736D56A0F491E40\&quot;,\&quot;reason\&quot;:\&quot;RETRIES_EXHAUSTED\&quot;,\&quot;attempts\&quot;:5,\&quot;originalBody\&quot;:\&quot;{\\\&quot;schemaVersion\\\&quot;:1,\\\&quot;eventId\\\&quot;:\\\&quot;f8111b46-4ac9-4b10-a0e3-d2bb8b27f093\\\&quot;,\\\&quot;eventType\\\&quot;:\\\&quot;TASK_REMINDER_DUE\\\&quot;,\\\&quot;reminderId\\\&quot;:\\\&quot;263d2bd0-fafa-43e5-a1b0-b5bc3f6ad3f1\\\&quot;,\\\&quot;cardId\\\&quot;:\\\&quot;b39f29c8-0d2b-4158-a8ca-c5b760806696\\\&quot;,\\\&quot;workspaceId\\\&quot;:\\\&quot;443b712e-a038-45b5-bdc9-be54b9abad82\\\&quot;,\\\&quot;scheduleVersion\\\&quot;:2,\\\&quot;occurredAt\\\&quot;:\\\&quot;2026-10-20T03:45:25.472Z\\\&quot;,\\\&quot;expiresAt\\\&quot;:\\\&quot;2026-10-20T04:45:20.242Z\\\&quot;}\&quot;}&quot;,
+          &quot;queue&quot;: &quot;AUTHCDN.REMINDERS.BOQ&quot;,
+          &quot;purpose&quot;: &quot;QUARANTINE&quot;
+        },
+        &quot;next_attempt_at&quot;: &quot;2026-10-20T03:46:47.790386+00:00&quot;,
+        &quot;last_error&quot;: null
+      }
+    ]
+  },
+  &quot;actualRpcFailures&quot;: {
+    &quot;is_called&quot;: true,
+    &quot;last_value&quot;: 5
+  },
+  &quot;notifications&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: []
+  }
+}</pre><pre>{
+  &quot;queue&quot;: &quot;AUTHCDN.REMINDERS.BOQ&quot;,
+  &quot;body&quot;: {
+    &quot;schemaVersion&quot;: 1,
+    &quot;type&quot;: &quot;MQ_REST_QUARANTINE&quot;,
+    &quot;inboxId&quot;: &quot;0ec5288f-f3af-4f31-bbbc-9c5f33edd30a&quot;,
+    &quot;sourceQueue&quot;: &quot;AUTHCDN.REMINDERS.Q&quot;,
+    &quot;messageId&quot;: &quot;ID:414D51204155544843444E514D2020203736D56A0F491E40&quot;,
+    &quot;reason&quot;: &quot;RETRIES_EXHAUSTED&quot;,
+    &quot;attempts&quot;: 5,
+    &quot;originalBody&quot;: &quot;{\&quot;schemaVersion\&quot;:1,\&quot;eventId\&quot;:\&quot;f8111b46-4ac9-4b10-a0e3-d2bb8b27f093\&quot;,\&quot;eventType\&quot;:\&quot;TASK_REMINDER_DUE\&quot;,\&quot;reminderId\&quot;:\&quot;263d2bd0-fafa-43e5-a1b0-b5bc3f6ad3f1\&quot;,\&quot;cardId\&quot;:\&quot;b39f29c8-0d2b-4158-a8ca-c5b760806696\&quot;,\&quot;workspaceId\&quot;:\&quot;443b712e-a038-45b5-bdc9-be54b9abad82\&quot;,\&quot;scheduleVersion\&quot;:2,\&quot;occurredAt\&quot;:\&quot;2026-10-20T03:45:25.472Z\&quot;,\&quot;expiresAt\&quot;:\&quot;2026-10-20T04:45:20.242Z\&quot;}&quot;
+  },
+  &quot;screenshot&quot;: &quot;45-ibm-boq-cinco-intentos.png&quot;
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C26"><h2>C26 · Salida a BOQ: cinco fallos conservan el cuerpo y recuperación posterior</h2><p><strong>Cómo funciona y cómo se probó.</strong> Se introduce un destino inválido únicamente en la salida técnica de un fixture. Cinco ciclos de Vercel fallan. Al restaurar el destino, se reintenta la entrega pendiente.</p><p><strong>Resultado observado.</strong> Los ciclos fallidos devuelven 502, conservan el payload y aumentan output_attempts; tras corregir, DONE con sexto intento de salida.</p><p><strong>Alcance.</strong> La salida pendiente no se descarta al quinto error. El límite de procesamiento y la recuperación de una salida durable son mecanismos distintos.</p><figure><img loading="lazy" src="capturas/respuesta-c26.png" alt="Respuesta registrada C26"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><figure><img loading="lazy" src="capturas/23-ibm-boq-e2e-injected-output-failure.png" alt="Captura real — Salida a BOQ: cinco fallos conservan el cuerpo y recuperación posterior"><figcaption>Captura real de la aplicación o de IBM MQ Console.</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;inbox&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: [
+      {
+        &quot;id&quot;: &quot;2d63e3da-11bd-43cf-bfe6-cc3d607a5695&quot;,
+        &quot;queue_name&quot;: &quot;AUTHCDN.REMINDERS.Q&quot;,
+        &quot;message_id&quot;: &quot;ID:B1AE7F038C4D2D90E06B630AB4DB509C928F77C71DB881B8&quot;,
+        &quot;correlation_id&quot;: null,
+        &quot;reply_to&quot;: null,
+        &quot;body&quot;: &quot;{\&quot;testRun\&quot;:\&quot;MQ-E2E-20261020004000\&quot;,\&quot;case\&quot;:\&quot;lease-and-retry\&quot;,\&quot;note\&quot;:\&quot;Fixture SQL: no es un MsgId emitido por IBM.\&quot;}&quot;,
+        &quot;state&quot;: &quot;OUTPUT&quot;,
+        &quot;attempts&quot;: 2,
+        &quot;output_attempts&quot;: 1,
+        &quot;output&quot;: {
+          &quot;body&quot;: &quot;{\&quot;schemaVersion\&quot;:1,\&quot;type\&quot;:\&quot;MQ_REST_QUARANTINE\&quot;,\&quot;testRun\&quot;:\&quot;MQ-E2E-20261020004000\&quot;,\&quot;inboxId\&quot;:\&quot;2d63e3da-11bd-43cf-bfe6-cc3d607a5695\&quot;,\&quot;reason\&quot;:\&quot;E2E_INJECTED_OUTPUT_FAILURE\&quot;,\&quot;originalBody\&quot;:\&quot;{\\\&quot;testRun\\\&quot;:\\\&quot;MQ-E2E-20261020004000\\\&quot;,\\\&quot;case\\\&quot;:\\\&quot;lease-and-retry\\\&quot;,\\\&quot;note\\\&quot;:\\\&quot;Fixture SQL: no es un MsgId emitido por IBM.\\\&quot;}\&quot;}&quot;,
+          &quot;queue&quot;: &quot;E2E.INVALID.TARGET&quot;,
+          &quot;purpose&quot;: &quot;QUARANTINE&quot;
+        },
+        &quot;next_attempt_at&quot;: &quot;2026-10-20T00:57:48.938088+00:00&quot;,
+        &quot;last_error&quot;: &quot;PROCESSING_OR_DELIVERY_UNCONFIRMED&quot;
+      }
+    ]
+  },
+  &quot;observedBackoffSeconds&quot;: 5.138,
+  &quot;cycleStatus&quot;: 502
+}</pre><pre>{
+  &quot;inbox&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: [
+      {
+        &quot;id&quot;: &quot;2d63e3da-11bd-43cf-bfe6-cc3d607a5695&quot;,
+        &quot;queue_name&quot;: &quot;AUTHCDN.REMINDERS.Q&quot;,
+        &quot;message_id&quot;: &quot;ID:B1AE7F038C4D2D90E06B630AB4DB509C928F77C71DB881B8&quot;,
+        &quot;correlation_id&quot;: null,
+        &quot;reply_to&quot;: null,
+        &quot;body&quot;: &quot;{\&quot;testRun\&quot;:\&quot;MQ-E2E-20261020004000\&quot;,\&quot;case\&quot;:\&quot;lease-and-retry\&quot;,\&quot;note\&quot;:\&quot;Fixture SQL: no es un MsgId emitido por IBM.\&quot;}&quot;,
+        &quot;state&quot;: &quot;OUTPUT&quot;,
+        &quot;attempts&quot;: 2,
+        &quot;output_attempts&quot;: 5,
+        &quot;output&quot;: {
+          &quot;body&quot;: &quot;{\&quot;schemaVersion\&quot;:1,\&quot;type\&quot;:\&quot;MQ_REST_QUARANTINE\&quot;,\&quot;testRun\&quot;:\&quot;MQ-E2E-20261020004000\&quot;,\&quot;inboxId\&quot;:\&quot;2d63e3da-11bd-43cf-bfe6-cc3d607a5695\&quot;,\&quot;reason\&quot;:\&quot;E2E_INJECTED_OUTPUT_FAILURE\&quot;,\&quot;originalBody\&quot;:\&quot;{\\\&quot;testRun\\\&quot;:\\\&quot;MQ-E2E-20261020004000\\\&quot;,\\\&quot;case\\\&quot;:\\\&quot;lease-and-retry\\\&quot;,\\\&quot;note\\\&quot;:\\\&quot;Fixture SQL: no es un MsgId emitido por IBM.\\\&quot;}\&quot;}&quot;,
+          &quot;queue&quot;: &quot;E2E.INVALID.TARGET&quot;,
+          &quot;purpose&quot;: &quot;QUARANTINE&quot;
+        },
+        &quot;next_attempt_at&quot;: &quot;2026-10-20T00:59:18.96045+00:00&quot;,
+        &quot;last_error&quot;: &quot;PROCESSING_OR_DELIVERY_UNCONFIRMED&quot;
+      }
+    ]
+  },
+  &quot;observedBackoffSeconds&quot;: 74.546,
+  &quot;cycleStatus&quot;: 502
+}</pre><pre>{
+  &quot;counts&quot;: [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  &quot;note&quot;: &quot;Se aceleró next_attempt_at únicamente en este fixture; las esperas calculadas quedaron registradas. Es fallo de salida, no cinco fallos de la RPC de negocio.&quot;
+}</pre><pre>{
+  &quot;status&quot;: 200,
+  &quot;body&quot;: [
+    {
+      &quot;id&quot;: &quot;2d63e3da-11bd-43cf-bfe6-cc3d607a5695&quot;,
+      &quot;queue_name&quot;: &quot;AUTHCDN.REMINDERS.Q&quot;,
+      &quot;message_id&quot;: &quot;ID:B1AE7F038C4D2D90E06B630AB4DB509C928F77C71DB881B8&quot;,
+      &quot;correlation_id&quot;: null,
+      &quot;reply_to&quot;: null,
+      &quot;body&quot;: &quot;{\&quot;testRun\&quot;:\&quot;MQ-E2E-20261020004000\&quot;,\&quot;case\&quot;:\&quot;lease-and-retry\&quot;,\&quot;note\&quot;:\&quot;Fixture SQL: no es un MsgId emitido por IBM.\&quot;}&quot;,
+      &quot;state&quot;: &quot;DONE&quot;,
+      &quot;attempts&quot;: 2,
+      &quot;output_attempts&quot;: 6,
+      &quot;output&quot;: {
+        &quot;body&quot;: &quot;{\&quot;schemaVersion\&quot;:1,\&quot;type\&quot;:\&quot;MQ_REST_QUARANTINE\&quot;,\&quot;testRun\&quot;:\&quot;MQ-E2E-20261020004000\&quot;,\&quot;inboxId\&quot;:\&quot;2d63e3da-11bd-43cf-bfe6-cc3d607a5695\&quot;,\&quot;reason\&quot;:\&quot;E2E_INJECTED_OUTPUT_FAILURE\&quot;,\&quot;originalBody\&quot;:\&quot;{\\\&quot;testRun\\\&quot;:\\\&quot;MQ-E2E-20261020004000\\\&quot;,\\\&quot;case\\\&quot;:\\\&quot;lease-and-retry\\\&quot;,\\\&quot;note\\\&quot;:\\\&quot;Fixture SQL: no es un MsgId emitido por IBM.\\\&quot;}\&quot;}&quot;,
+        &quot;queue&quot;: &quot;AUTHCDN.REMINDERS.BOQ&quot;,
+        &quot;purpose&quot;: &quot;QUARANTINE&quot;
+      },
+      &quot;next_attempt_at&quot;: &quot;2026-10-20T00:58:03.796+00:00&quot;,
+      &quot;last_error&quot;: null
+    }
+  ]
+}</pre><pre>{
+  &quot;queue&quot;: &quot;AUTHCDN.REMINDERS.BOQ&quot;,
+  &quot;source&quot;: &quot;Sesión Firefox iniciada manualmente por el usuario&quot;,
+  &quot;body&quot;: {
+    &quot;schemaVersion&quot;: 1,
+    &quot;type&quot;: &quot;MQ_REST_QUARANTINE&quot;,
+    &quot;testRun&quot;: &quot;MQ-E2E-20261020004000&quot;,
+    &quot;inboxId&quot;: &quot;2d63e3da-11bd-43cf-bfe6-cc3d607a5695&quot;,
+    &quot;reason&quot;: &quot;E2E_INJECTED_OUTPUT_FAILURE&quot;,
+    &quot;originalBody&quot;: &quot;{\&quot;testRun\&quot;:\&quot;MQ-E2E-20261020004000\&quot;,\&quot;case\&quot;:\&quot;lease-and-retry\&quot;,\&quot;note\&quot;:\&quot;Fixture SQL: no es un MsgId emitido por IBM.\&quot;}&quot;
+  },
+  &quot;identifiers&quot;: &quot;Skip to main content\nIBM\n MQ\nLogout\nHome\nManage\nLearning resources\nSettings\nToggle opening or closing the side navigation\nManage\nAUTHCDNQM\nQueues\nLocal Queue: AUTHCDN.REMINDERS.BOQ messages\nActions\nMessage details\nClose\nGeneral\nContext\nIdentifiers\nData\nMessage ID\tID:414d51204155544843444e514d2020203736d56a08ae1c40\nClose\nDownload\n&quot;,
+  &quot;screenshot&quot;: &quot;23-ibm-boq-e2e-injected-output-failure.png&quot;
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C27"><h2>C27 · Productor: cinco intentos reales hasta FAILED</h2><p><strong>Cómo funciona y cómo se probó.</strong> Se prepara un evento de ensayo válido cuyo TTL ya venció, manteniendo futuro el vencimiento del recordatorio SQL. El productor ejecuta su política normal de intentos.</p><p><strong>Resultado observado.</strong> Outbox alcanza FAILED con attempts=5 y MQ_PUBLICATION_UNCONFIRMED.</p><p><strong>Alcance.</strong> El transporte de Vercel rechaza el TTL antes de contactar IBM por HTTP. Esta prueba valida los reintentos del productor; no demuestra una caída del broker ni cinco peticiones HTTP rechazadas por IBM.</p><figure><img loading="lazy" src="capturas/respuesta-c27.png" alt="Respuesta registrada C27"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;prepare&quot;: [
+    {
+      &quot;event_id&quot;: &quot;7694e118-5454-4282-b14d-0dec995b28f7&quot;
+    }
+  ],
+  &quot;payload&quot;: {
+    &quot;schemaVersion&quot;: 1,
+    &quot;eventId&quot;: &quot;7694e118-5454-4282-b14d-0dec995b28f7&quot;,
+    &quot;eventType&quot;: &quot;TASK_REMINDER_DUE&quot;,
+    &quot;reminderId&quot;: &quot;767958ef-9f8b-475d-b31c-790d94e9ec3e&quot;,
+    &quot;cardId&quot;: &quot;693c0929-b042-4811-ab78-c0273ee70c70&quot;,
+    &quot;workspaceId&quot;: &quot;443b712e-a038-45b5-bdc9-be54b9abad82&quot;,
+    &quot;scheduleVersion&quot;: 2,
+    &quot;occurredAt&quot;: &quot;2026-10-20T03:45:31.054Z&quot;,
+    &quot;expiresAt&quot;: &quot;2026-10-20T03:46:31.054Z&quot;
+  },
+  &quot;note&quot;: &quot;No se inyecta FAILED ni attempts. El transporte de Vercel rechaza el TTL antes de enviar HTTP a IBM; no simula una caída del broker.&quot;
+}</pre><pre>{
+  &quot;status&quot;: 200,
+  &quot;body&quot;: [
+    {
+      &quot;event_id&quot;: &quot;7694e118-5454-4282-b14d-0dec995b28f7&quot;,
+      &quot;status&quot;: &quot;FAILED&quot;,
+      &quot;attempts&quot;: 5,
+      &quot;last_error&quot;: &quot;MQ_PUBLICATION_UNCONFIRMED&quot;
+    }
+  ]
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C28"><h2>C28 · Alerta efectiva después de agotar los reintentos</h2><p><strong>Cómo funciona y cómo se probó.</strong> A partir del FAILED real del caso anterior, Cron de mantenimiento genera un aviso para el responsable. Se ejecutan más ciclos para comprobar deduplicación.</p><p><strong>Resultado observado.</strong> Una alerta creada automáticamente y ninguna duplicada; aparece al usuario en la aplicación.</p><p><strong>Alcance.</strong> La alerta es interna de la aplicación; no se configuró correo ni SMS. Los estados FAILED de esta ronda proceden de los intentos reales, no se insertaron como resultado final.</p><figure><img loading="lazy" src="capturas/respuesta-c28.png" alt="Respuesta registrada C28"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><figure><img loading="lazy" src="capturas/43-avisos-finales-firefox.png" alt="Captura real — Alerta efectiva después de agotar los reintentos"><figcaption>Captura real de la aplicación o de IBM MQ Console.</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;outbox&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: [
+      {
+        &quot;event_id&quot;: &quot;7694e118-5454-4282-b14d-0dec995b28f7&quot;,
+        &quot;status&quot;: &quot;FAILED&quot;,
+        &quot;attempts&quot;: 5,
+        &quot;last_error&quot;: &quot;MQ_PUBLICATION_UNCONFIRMED&quot;
+      }
+    ]
+  },
+  &quot;notifications&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: [
+      {
+        &quot;id&quot;: &quot;aee13992-3ea4-4a05-b789-ae3e617a3fd2&quot;,
+        &quot;event_id&quot;: &quot;ef85b9b5-995e-61d6-b109-99355dee6885&quot;,
+        &quot;message&quot;: &quot;No se pudo entregar un recordatorio tras agotar los reintentos. Solicita revisión al responsable del tablero.&quot;,
+        &quot;created_at&quot;: &quot;2026-10-20T03:50:00.02134+00:00&quot;
+      }
+    ]
+  },
+  &quot;note&quot;: &quot;FAILED fue producido por los reintentos, no insertado manualmente.&quot;
+}</pre><pre>{
+  &quot;tick&quot;: {
+    &quot;request&quot;: {
+      &quot;method&quot;: &quot;POST&quot;,
+      &quot;path&quot;: &quot;/api/mq/tick&quot;,
+      &quot;body&quot;: {}
+    },
+    &quot;elapsedMs&quot;: 4088,
+    &quot;status&quot;: 200,
+    &quot;body&quot;: {
+      &quot;published&quot;: 0,
+      &quot;captured&quot;: 0,
+      &quot;worked&quot;: 0,
+      &quot;errors&quot;: 0
+    }
+  },
+  &quot;notifications&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: [
+      {
+        &quot;id&quot;: &quot;aee13992-3ea4-4a05-b789-ae3e617a3fd2&quot;,
+        &quot;event_id&quot;: &quot;ef85b9b5-995e-61d6-b109-99355dee6885&quot;,
+        &quot;message&quot;: &quot;No se pudo entregar un recordatorio tras agotar los reintentos. Solicita revisión al responsable del tablero.&quot;,
+        &quot;created_at&quot;: &quot;2026-10-20T03:50:00.02134+00:00&quot;
+      }
+    ]
+  }
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C29"><h2>C29 · TTL de IBM: expiración sin consumidor</h2><p><strong>Cómo funciona y cómo se probó.</strong> Se publica un mensaje persistente de ensayo con TTL=1200 ms en la cola de respuestas, se hace GET antes y después de vencer y no se ejecuta DELETE.</p><p><strong>Resultado observado.</strong> GET inicial 200 con expiración restante; GET posterior 204 sin contenido.</p><p><strong>Alcance.</strong> 204 significa que el selector no encuentra un mensaje disponible. En este ensayo controlado no hubo retirada por DELETE; el TTL es la causa comprobada.</p><figure><img loading="lazy" src="capturas/respuesta-c29.png" alt="Respuesta registrada C29"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;request&quot;: {
+    &quot;role&quot;: &quot;consumer&quot;,
+    &quot;method&quot;: &quot;POST&quot;,
+    &quot;queue&quot;: &quot;AUTHCDN.SUMMARY.REPLY.Q&quot;,
+    &quot;selector&quot;: {
+      &quot;expiry&quot;: 1200
+    },
+    &quot;body&quot;: {
+      &quot;testRun&quot;: &quot;MQ-E2E-20261020004000&quot;,
+      &quot;case&quot;: &quot;broker-ttl&quot;
+    }
+  },
+  &quot;status&quot;: 201,
+  &quot;body&quot;: &quot;&quot;,
+  &quot;metadata&quot;: {
+    &quot;ibm-mq-md-messageId&quot;: &quot;ID:414d51204155544843444e514d2020203736d56a07ad1c40&quot;
+  }
+}</pre><pre>{
+  &quot;before&quot;: {
+    &quot;request&quot;: {
+      &quot;role&quot;: &quot;producer&quot;,
+      &quot;method&quot;: &quot;GET&quot;,
+      &quot;queue&quot;: &quot;AUTHCDN.SUMMARY.REPLY.Q&quot;,
+      &quot;selector&quot;: {
+        &quot;id&quot;: &quot;ID:414d51204155544843444e514d2020203736d56a07ad1c40&quot;
+      },
+      &quot;body&quot;: null
+    },
+    &quot;status&quot;: 200,
+    &quot;body&quot;: {
+      &quot;testRun&quot;: &quot;MQ-E2E-20261020004000&quot;,
+      &quot;case&quot;: &quot;broker-ttl&quot;
+    },
+    &quot;metadata&quot;: {
+      &quot;ibm-mq-md-messageId&quot;: &quot;ID:414d51204155544843444e514d2020203736d56a07ad1c40&quot;,
+      &quot;ibm-mq-md-persistence&quot;: &quot;persistent&quot;,
+      &quot;ibm-mq-md-expiry&quot;: &quot;500&quot;
+    }
+  },
+  &quot;after&quot;: {
+    &quot;request&quot;: {
+      &quot;role&quot;: &quot;producer&quot;,
+      &quot;method&quot;: &quot;GET&quot;,
+      &quot;queue&quot;: &quot;AUTHCDN.SUMMARY.REPLY.Q&quot;,
+      &quot;selector&quot;: {
+        &quot;id&quot;: &quot;ID:414d51204155544843444e514d2020203736d56a07ad1c40&quot;
+      },
+      &quot;body&quot;: null
+    },
+    &quot;status&quot;: 204,
+    &quot;body&quot;: &quot;&quot;,
+    &quot;metadata&quot;: {}
+  }
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C30"><h2>C30 · Reconciliación SQL de mensajes expirados</h2><p><strong>Cómo funciona y cómo se probó.</strong> Se fuerza un vencimiento pasado solo en un recordatorio propio y se ejecuta mantenimiento. La entrega histórica se conserva separada de la vigencia del recordatorio.</p><p><strong>Resultado observado.</strong> Recordatorio EXPIRED; outbox conserva PUBLISHED.</p><p><strong>Alcance.</strong> La fecha vencida se prepara por SQL; no se espera durante todo el plazo de retención real.</p><figure><img loading="lazy" src="capturas/respuesta-c30.png" alt="Respuesta registrada C30"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;alert&quot;: {
+    &quot;status&quot;: 201,
+    &quot;body&quot;: [
+      {
+        &quot;event_id&quot;: &quot;fcc3cfca-9326-4152-ba10-f38ec9a7be44&quot;,
+        &quot;reminder_id&quot;: &quot;13234ecb-6fcd-4cfb-b4d1-0f7e561a6f9e&quot;,
+        &quot;payload&quot;: {
+          &quot;cardId&quot;: &quot;1aa7a690-2402-4af5-b981-00b408a7d663&quot;,
+          &quot;eventId&quot;: &quot;fcc3cfca-9326-4152-ba10-f38ec9a7be44&quot;,
+          &quot;eventType&quot;: &quot;TASK_REMINDER_DUE&quot;,
+          &quot;expiresAt&quot;: &quot;2026-10-20T01:21:51.225Z&quot;,
+          &quot;occurredAt&quot;: &quot;2026-10-20T00:58:55.337Z&quot;,
+          &quot;reminderId&quot;: &quot;13234ecb-6fcd-4cfb-b4d1-0f7e561a6f9e&quot;,
+          &quot;workspaceId&quot;: &quot;443b712e-a038-45b5-bdc9-be54b9abad82&quot;,
+          &quot;schemaVersion&quot;: 1,
+          &quot;scheduleVersion&quot;: 2
+        },
+        &quot;status&quot;: &quot;FAILED&quot;,
+        &quot;attempts&quot;: 5,
+        &quot;next_attempt_at&quot;: &quot;2026-10-20T01:01:54.279893+00:00&quot;,
+        &quot;lock_token&quot;: &quot;[REDACTED]&quot;,
+        &quot;locked_until&quot;: null,
+        &quot;last_error&quot;: &quot;E2E_MAX_ATTEMPTS&quot;,
+        &quot;created_at&quot;: &quot;2026-10-20T01:01:54.279893+00:00&quot;,
+        &quot;updated_at&quot;: &quot;2026-10-20T01:01:54.279893+00:00&quot;,
+        &quot;published_at&quot;: null
+      }
+    ]
+  },
+  &quot;expired&quot;: {
+    &quot;status&quot;: 201,
+    &quot;body&quot;: [
+      {
+        &quot;event_id&quot;: &quot;5106d3d9-27a2-478c-b2fa-f4487d1896c3&quot;,
+        &quot;reminder_id&quot;: &quot;d216680e-867e-4d05-82d5-341c9cf5fb6e&quot;,
+        &quot;payload&quot;: {
+          &quot;cardId&quot;: &quot;134ed31f-99e1-466a-a966-a3f27b4415cb&quot;,
+          &quot;eventId&quot;: &quot;5106d3d9-27a2-478c-b2fa-f4487d1896c3&quot;,
+          &quot;eventType&quot;: &quot;TASK_REMINDER_DUE&quot;,
+          &quot;expiresAt&quot;: &quot;2026-10-20T01:00:55.742Z&quot;,
+          &quot;occurredAt&quot;: &quot;2026-10-20T00:58:55.966Z&quot;,
+          &quot;reminderId&quot;: &quot;d216680e-867e-4d05-82d5-341c9cf5fb6e&quot;,
+          &quot;workspaceId&quot;: &quot;443b712e-a038-45b5-bdc9-be54b9abad82&quot;,
+          &quot;schemaVersion&quot;: 1,
+          &quot;scheduleVersion&quot;: 2
+        },
+        &quot;status&quot;: &quot;PUBLISHED&quot;,
+        &quot;attempts&quot;: 0,
+        &quot;next_attempt_at&quot;: &quot;2026-10-20T01:01:54.897928+00:00&quot;,
+        &quot;lock_token&quot;: &quot;[REDACTED]&quot;,
+        &quot;locked_until&quot;: null,
+        &quot;last_error&quot;: null,
+        &quot;created_at&quot;: &quot;2026-10-20T01:01:54.897928+00:00&quot;,
+        &quot;updated_at&quot;: &quot;2026-10-20T01:01:54.897928+00:00&quot;,
+        &quot;published_at&quot;: &quot;2026-10-20T01:01:55.966+00:00&quot;
+      }
+    ]
+  },
+  &quot;note&quot;: &quot;Estados inyectados solo en tarjetas de ensayo. No representan cinco publicaciones fallidas reales ni una publicación MQ de este fixture.&quot;
+}</pre><pre>{
+  &quot;status&quot;: 200,
+  &quot;body&quot;: {
+    &quot;purgedInbox&quot;: 1,
+    &quot;expiredCards&quot;: 1,
+    &quot;purgedOutbox&quot;: 0,
+    &quot;failureAlerts&quot;: 1
+  }
+}</pre><pre>{
+  &quot;reminder&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: [
+      {
+        &quot;id&quot;: &quot;d216680e-867e-4d05-82d5-341c9cf5fb6e&quot;,
+        &quot;status&quot;: &quot;EXPIRED&quot;,
+        &quot;expires_at&quot;: &quot;2026-10-20T01:00:55.742+00:00&quot;
+      }
+    ]
+  },
+  &quot;outbox&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: [
+      {
+        &quot;event_id&quot;: &quot;5106d3d9-27a2-478c-b2fa-f4487d1896c3&quot;,
+        &quot;status&quot;: &quot;PUBLISHED&quot;,
+        &quot;published_at&quot;: &quot;2026-10-20T01:01:55.966+00:00&quot;
+      }
+    ]
+  }
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C31"><h2>C31 · Retención de registros técnicos terminados</h2><p><strong>Cómo funciona y cómo se probó.</strong> Se asignan 40 días de antigüedad a tres registros propios y se ejecuta la política de mantenimiento de 30 días.</p><p><strong>Resultado observado.</strong> Se purga DONE técnico ordinario antiguo; permanecen PENDING y cuarentena.</p><p><strong>Alcance.</strong> Se simula la antigüedad; no se esperaron 40 días. Esta política no borra mensajes de BOQ/DLQ ni configura una retención global del broker. Esas colas requieren revisión y retirada administrativa explícita.</p><figure><img loading="lazy" src="capturas/respuesta-c31.png" alt="Respuesta registrada C31"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;policy&quot;: [
+    {
+      &quot;id&quot;: &quot;9230ad25-f5f1-4a1d-934c-96d4556bc750&quot;,
+      &quot;messageId&quot;: &quot;ID:8CBA4722349AE1FCC2FBB156A361773C5EFACC9EF1ECB5D2&quot;,
+      &quot;name&quot;: &quot;old-done&quot;
+    },
+    {
+      &quot;id&quot;: &quot;a9fee66d-ceb9-4ffc-b67e-33da8ef86eba&quot;,
+      &quot;messageId&quot;: &quot;ID:13F8504792B3E4DEC9E341D96A4419B420F1709473C036BB&quot;,
+      &quot;name&quot;: &quot;old-pending&quot;
+    },
+    {
+      &quot;id&quot;: &quot;eb747938-e7a9-43b4-8619-73fa05205568&quot;,
+      &quot;messageId&quot;: &quot;ID:96BD200966EE6F827768CD13161F4D1D2CBBE9DDCC78A70D&quot;,
+      &quot;name&quot;: &quot;old-quarantine&quot;
+    }
+  ],
+  &quot;note&quot;: &quot;Inyección de fechas de ensayo en la base real; no son 40 días de observación transcurridos.&quot;
+}</pre><pre>{
+  &quot;status&quot;: 200,
+  &quot;body&quot;: {
+    &quot;purgedInbox&quot;: 1,
+    &quot;expiredCards&quot;: 1,
+    &quot;purgedOutbox&quot;: 0,
+    &quot;failureAlerts&quot;: 1
+  }
+}</pre><pre>{
+  &quot;status&quot;: 200,
+  &quot;body&quot;: [
+    {
+      &quot;id&quot;: &quot;eb747938-e7a9-43b4-8619-73fa05205568&quot;,
+      &quot;state&quot;: &quot;DONE&quot;,
+      &quot;created_at&quot;: &quot;2026-09-10T01:01:48.983+00:00&quot;,
+      &quot;completed_at&quot;: &quot;2026-09-10T01:01:48.983+00:00&quot;,
+      &quot;output&quot;: {
+        &quot;body&quot;: &quot;{\&quot;testRun\&quot;:\&quot;MQ-E2E-20261020004000\&quot;}&quot;,
+        &quot;queue&quot;: &quot;AUTHCDN.REMINDERS.BOQ&quot;,
+        &quot;purpose&quot;: &quot;QUARANTINE&quot;
+      }
+    },
+    {
+      &quot;id&quot;: &quot;a9fee66d-ceb9-4ffc-b67e-33da8ef86eba&quot;,
+      &quot;state&quot;: &quot;PENDING&quot;,
+      &quot;created_at&quot;: &quot;2026-09-10T01:01:48.406+00:00&quot;,
+      &quot;completed_at&quot;: null,
+      &quot;output&quot;: null
+    }
+  ]
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C32"><h2>C32 · Supabase Cron autónomo y programación permanente</h2><p><strong>Cómo funciona y cómo se probó.</strong> Un recordatorio se programa por API y no se llama tick manualmente después. Supabase pg_cron usa pg_net para invocar Vercel con secreto desde Vault. Tras el ensayo temporal, se habilitan los dos trabajos permanentes autorizados.</p><p><strong>Resultado observado.</strong> El ensayo autónomo produjo outbox PUBLISHED, inbox DONE y aviso. Procesamiento y mantenimiento siguen activos cada minuto; las últimas llamadas HTTP devuelven 200.</p><p><strong>Alcance.</strong> El destino actual es el alias de Preview de la rama. No depende del navegador ni de un proceso local. Cambios futuros del alias o secretos requieren mantener alineados Vercel y Vault.</p><figure><img loading="lazy" src="capturas/respuesta-c32.png" alt="Respuesta registrada C32"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><figure><img loading="lazy" src="capturas/43-avisos-finales-firefox.png" alt="Captura real — Supabase Cron autónomo y programación permanente"><figcaption>Captura real de la aplicación o de IBM MQ Console.</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;scheduledAt&quot;: &quot;2026-10-20T01:12:47.850Z&quot;,
+  &quot;notifications&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: [
+      {
+        &quot;id&quot;: &quot;4911bd42-4520-4bdb-b927-097be3edc993&quot;,
+        &quot;event_id&quot;: &quot;b72c8bb8-6085-4360-9e9b-e0540a6cef03&quot;,
+        &quot;message&quot;: &quot;La tarjeta \&quot;MQ-E2E-20261020004000 cron-autonomo\&quot; vence el 2026-10-20T01:42:46Z.&quot;,
+        &quot;created_at&quot;: &quot;2026-10-20T01:14:02.933951+00:00&quot;
+      }
+    ]
+  },
+  &quot;reminders&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: [
+      {
+        &quot;id&quot;: &quot;66606d73-0dcd-4f5e-91d0-1dd481c232ea&quot;,
+        &quot;kind&quot;: &quot;TASK_OVERDUE&quot;,
+        &quot;status&quot;: &quot;SCHEDULED&quot;,
+        &quot;processed_at&quot;: null
+      },
+      {
+        &quot;id&quot;: &quot;267b7df0-f8c1-477d-9ff5-43ef0a5b3504&quot;,
+        &quot;kind&quot;: &quot;TASK_REMINDER_DUE&quot;,
+        &quot;status&quot;: &quot;PROCESSED&quot;,
+        &quot;processed_at&quot;: &quot;2026-10-20T01:14:02.935677+00:00&quot;
+      }
+    ]
+  },
+  &quot;outbox&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: [
+      {
+        &quot;event_id&quot;: &quot;b72c8bb8-6085-4360-9e9b-e0540a6cef03&quot;,
+        &quot;status&quot;: &quot;PUBLISHED&quot;,
+        &quot;published_at&quot;: &quot;2026-10-20T01:14:02.18504+00:00&quot;,
+        &quot;payload&quot;: {
+          &quot;cardId&quot;: &quot;bfc16927-5eba-45ca-b3af-53392778447a&quot;,
+          &quot;eventId&quot;: &quot;b72c8bb8-6085-4360-9e9b-e0540a6cef03&quot;,
+          &quot;eventType&quot;: &quot;TASK_REMINDER_DUE&quot;,
+          &quot;expiresAt&quot;: &quot;2026-10-20T01:42:46.718Z&quot;,
+          &quot;occurredAt&quot;: &quot;2026-10-20T01:14:01.182Z&quot;,
+          &quot;reminderId&quot;: &quot;267b7df0-f8c1-477d-9ff5-43ef0a5b3504&quot;,
+          &quot;workspaceId&quot;: &quot;443b712e-a038-45b5-bdc9-be54b9abad82&quot;,
+          &quot;schemaVersion&quot;: 1,
+          &quot;scheduleVersion&quot;: 2
+        }
+      }
+    ]
+  },
+  &quot;inbox&quot;: {
+    &quot;status&quot;: 200,
+    &quot;body&quot;: [
+      {
+        &quot;id&quot;: &quot;d60a867a-bb56-42d8-b37b-c33b5be88291&quot;,
+        &quot;message_id&quot;: &quot;ID:414D51204155544843444E514D2020203736D56A06861D40&quot;,
+        &quot;state&quot;: &quot;DONE&quot;,
+        &quot;attempts&quot;: 1,
+        &quot;body&quot;: &quot;{\&quot;schemaVersion\&quot;:1,\&quot;eventId\&quot;:\&quot;b72c8bb8-6085-4360-9e9b-e0540a6cef03\&quot;,\&quot;eventType\&quot;:\&quot;TASK_REMINDER_DUE\&quot;,\&quot;reminderId\&quot;:\&quot;267b7df0-f8c1-477d-9ff5-43ef0a5b3504\&quot;,\&quot;cardId\&quot;:\&quot;bfc16927-5eba-45ca-b3af-53392778447a\&quot;,\&quot;workspaceId\&quot;:\&quot;443b712e-a038-45b5-bdc9-be54b9abad82\&quot;,\&quot;scheduleVersion\&quot;:2,\&quot;occurredAt\&quot;:\&quot;2026-10-20T01:14:01.182Z\&quot;,\&quot;expiresAt\&quot;:\&quot;2026-10-20T01:42:46.718Z\&quot;}&quot;,
+        &quot;created_at&quot;: &quot;2026-10-20T01:14:02.330116+00:00&quot;,
+        &quot;completed_at&quot;: &quot;2026-10-20T01:14:03.086691+00:00&quot;
+      }
+    ]
+  }
+}</pre><pre>{
+  &quot;configuredAt&quot;: &quot;2026-10-20T01:27:22.569452+00:00&quot;,
+  &quot;jobs&quot;: [
+    {
+      &quot;active&quot;: true,
+      &quot;jobid&quot;: 2,
+      &quot;jobname&quot;: &quot;authcdn-mq-rest-minute&quot;,
+      &quot;schedule&quot;: &quot;* * * * *&quot;
+    },
+    {
+      &quot;active&quot;: true,
+      &quot;jobid&quot;: 3,
+      &quot;jobname&quot;: &quot;authcdn-mq-maintenance&quot;,
+      &quot;schedule&quot;: &quot;* * * * *&quot;
+    }
+  ],
+  &quot;vaultConfigured&quot;: 2
+}</pre><pre>{
+  &quot;activeTestReminders&quot;: 0,
+  &quot;health&quot;: {
+    &quot;deliveryRetries&quot;: 0,
+    &quot;failedPublications&quot;: 0,
+    &quot;pendingInbox&quot;: 0,
+    &quot;quarantined&quot;: 7,
+    &quot;staleInbox&quot;: 0
+  },
+  &quot;jobs&quot;: [
+    {
+      &quot;active&quot;: true,
+      &quot;name&quot;: &quot;authcdn-mq-rest-minute&quot;,
+      &quot;schedule&quot;: &quot;* * * * *&quot;
+    },
+    {
+      &quot;active&quot;: true,
+      &quot;name&quot;: &quot;authcdn-mq-maintenance&quot;,
+      &quot;schedule&quot;: &quot;* * * * *&quot;
+    }
+  ],
+  &quot;recentCronRuns&quot;: [
+    {
+      &quot;end_time&quot;: &quot;2026-10-20T04:25:00.079953+00:00&quot;,
+      &quot;jobid&quot;: 3,
+      &quot;start_time&quot;: &quot;2026-10-20T04:25:00.0668+00:00&quot;,
+      &quot;status&quot;: &quot;succeeded&quot;
+    },
+    {
+      &quot;end_time&quot;: &quot;2026-10-20T04:25:00.091701+00:00&quot;,
+      &quot;jobid&quot;: 2,
+      &quot;start_time&quot;: &quot;2026-10-20T04:25:00.06606+00:00&quot;,
+      &quot;status&quot;: &quot;succeeded&quot;
+    },
+    {
+      &quot;end_time&quot;: &quot;2026-10-20T04:24:00.033081+00:00&quot;,
+      &quot;jobid&quot;: 3,
+      &quot;start_time&quot;: &quot;2026-10-20T04:24:00.022764+00:00&quot;,
+      &quot;status&quot;: &quot;succeeded&quot;
+    },
+    {
+      &quot;end_time&quot;: &quot;2026-10-20T04:24:00.026206+00:00&quot;,
+      &quot;jobid&quot;: 2,
+      &quot;start_time&quot;: &quot;2026-10-20T04:24:00.021538+00:00&quot;,
+      &quot;status&quot;: &quot;succeeded&quot;
+    },
+    {
+      &quot;end_time&quot;: &quot;2026-10-20T04:23:00.03409+00:00&quot;,
+      &quot;jobid&quot;: 3,
+      &quot;start_time&quot;: &quot;2026-10-20T04:23:00.023261+00:00&quot;,
+      &quot;status&quot;: &quot;succeeded&quot;
+    },
+    {
+      &quot;end_time&quot;: &quot;2026-10-20T04:23:00.026647+00:00&quot;,
+      &quot;jobid&quot;: 2,
+      &quot;start_time&quot;: &quot;2026-10-20T04:23:00.022055+00:00&quot;,
+      &quot;status&quot;: &quot;succeeded&quot;
+    }
+  ],
+  &quot;recentHttpResponses&quot;: [
+    {
+      &quot;created&quot;: &quot;2026-10-20T04:25:00.091708+00:00&quot;,
+      &quot;error_msg&quot;: null,
+      &quot;id&quot;: 181,
+      &quot;status_code&quot;: 200,
+      &quot;timed_out&quot;: false
+    },
+    {
+      &quot;created&quot;: &quot;2026-10-20T04:24:00.026413+00:00&quot;,
+      &quot;error_msg&quot;: null,
+      &quot;id&quot;: 180,
+      &quot;status_code&quot;: 200,
+      &quot;timed_out&quot;: false
+    },
+    {
+      &quot;created&quot;: &quot;2026-10-20T04:23:00.026641+00:00&quot;,
+      &quot;error_msg&quot;: null,
+      &quot;id&quot;: 179,
+      &quot;status_code&quot;: 200,
+      &quot;timed_out&quot;: false
+    }
+  ],
+  &quot;temporaryFunctions&quot;: 0,
+  &quot;temporaryTriggers&quot;: 0
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C33"><h2>C33 · DLQ nativa asignada al queue manager</h2><p><strong>Cómo funciona y cómo se probó.</strong> En Firefox se abre AUTHCDNQM → View configuration → Properties → Extended. Se verifica el valor Dead-letter queue sin modificarlo.</p><p><strong>Resultado observado.</strong> DEADQ corresponde a DEV.DEAD.LETTER.QUEUE.</p><p><strong>Alcance.</strong> Las consultas REST administrativas de las identidades de aplicación devolvieron 403; la comprobación se resolvió visualmente con la sesión de consola del usuario. No fue necesario ampliar los permisos administrativos de esas identidades.</p><figure><img loading="lazy" src="capturas/respuesta-c33.png" alt="Respuesta registrada C33"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><figure><img loading="lazy" src="capturas/19-ibm-config-deadq-firefox.png" alt="Captura real — DLQ nativa asignada al queue manager"><figcaption>Captura real de la aplicación o de IBM MQ Console.</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;queueManager&quot;: &quot;AUTHCDNQM&quot;,
+  &quot;property&quot;: &quot;DEADQ&quot;,
+  &quot;configuredValue&quot;: &quot;DEV.DEAD.LETTER.QUEUE&quot;,
+  &quot;screenshot&quot;: &quot;19-ibm-config-deadq-firefox.png&quot;
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C34"><h2>C34 · DLQ nativa: entrega automática rechazada por cola llena</h2><p><strong>Cómo funciona y cómo se probó.</strong> Se crean dos colas exclusivas AUTHCDN.E2E.*. La cola de iniciación de ensayo se llena hasta MAXDEPTH=2. Un nuevo disparo genera un mensaje MQTM que IBM no puede depositar allí y lo envía automáticamente a su DLQ.</p><p><strong>Resultado observado.</strong> DEV.DEAD.LETTER.QUEUE pasa de cero a un mensaje. Application ID=AUTHCDNQM, cabecera MQDLH/MQTM, Reason=MQRC_Q_FULL y destino INIT de ensayo.</p><p><strong>Alcance.</strong> Es un mensaje de control nativo no persistente generado por IBM, distinto del mensaje de aplicación persistente que disparó la condición. No se escribió un JSON manual en DLQ. La API REST devuelve 501 MQWB0309E al examinar este formato binario; la consola sí permite inspeccionarlo. Se conserva el mensaje y no se ejecuta DELETE sobre él.</p><figure><img loading="lazy" src="capturas/respuesta-c34.png" alt="Respuesta registrada C34"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><figure><img loading="lazy" src="capturas/24-ibm-dlq-vacia-firefox.png" alt="Captura real — DLQ nativa: entrega automática rechazada por cola llena"><figcaption>Captura real de la aplicación o de IBM MQ Console.</figcaption></figure><figure><img loading="lazy" src="capturas/36-dlq-init-profundidad-dos.png" alt="Captura real — DLQ nativa: entrega automática rechazada por cola llena"><figcaption>Captura real de la aplicación o de IBM MQ Console.</figcaption></figure><figure><img loading="lazy" src="capturas/37-dlq-resultado-nativo.png" alt="Captura real — DLQ nativa: entrega automática rechazada por cola llena"><figcaption>Captura real de la aplicación o de IBM MQ Console.</figcaption></figure><figure><img loading="lazy" src="capturas/39-dlq-cabecera-motivo-destino.png" alt="Captura real — DLQ nativa: entrega automática rechazada por cola llena"><figcaption>Captura real de la aplicación o de IBM MQ Console.</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;queue&quot;: &quot;DEV.DEAD.LETTER.QUEUE&quot;,
+  &quot;applicationId&quot;: &quot;AUTHCDNQM&quot;,
+  &quot;headers&quot;: [
+    &quot;MQDLH&quot;,
+    &quot;MQTM&quot;
+  ],
+  &quot;nativeHeader&quot;: &quot;Skip to main content\nIBM\n MQ\nLogout\nHome\nManage\nLearning resources\nSettings\nToggle opening or closing the side navigation\nManage\nAUTHCDNQM\nQueues\nLocal Queue: DEV.DEAD.LETTER.QUEUE messages\nActions\nMessage details\nClose\nGeneral\nContext\nIdentifiers\nDead-letter header\nData\nReason\tMQRC_Q_FULL\nDestination queue\tAUTHCDN.E2E.DLQ.INIT.BE495EF3\nDestination queue manager\tAUTHCDNQM\nOriginal encoding\t546\nOriginal CCSID\t1208\nOriginal format\tMQTRIG\nPut application type\tQueue manager\nPut application name\tAUTHCDNQM\nPut date\t20261020\nPut time\t03530331\nClose\nDownload\n&quot;,
+  &quot;identifiers&quot;: &quot;Skip to main content\nIBM\n MQ\nLogout\nHome\nManage\nLearning resources\nSettings\nToggle opening or closing the side navigation\nManage\nAUTHCDNQM\nQueues\nLocal Queue: DEV.DEAD.LETTER.QUEUE messages\nActions\nMessage details\nClose\nGeneral\nContext\nIdentifiers\nDead-letter header\nData\nMessage ID\tID:414d51204155544843444e514d2020203736d56a1db32140\nClose\nDownload\n&quot;,
+  &quot;screenshots&quot;: [
+    &quot;37-dlq-resultado-nativo.png&quot;,
+    &quot;39-dlq-cabecera-motivo-destino.png&quot;
+  ],
+  &quot;note&quot;: &quot;Mensaje de control MQTM generado por IBM, no un JSON escrito manualmente en DLQ. El disparador es la cola temporal y el motivo esperado es cola de iniciación llena.&quot;
+}</pre><pre>{
+  &quot;request&quot;: {
+    &quot;method&quot;: &quot;GET&quot;,
+    &quot;queue&quot;: &quot;DEV.DEAD.LETTER.QUEUE&quot;,
+    &quot;messageId&quot;: &quot;ID:414d51204155544843444e514d2020203736d56a1db32140&quot;
+  },
+  &quot;status&quot;: 501,
+  &quot;body&quot;: {
+    &quot;error&quot;: [
+      {
+        &quot;msgId&quot;: &quot;MQWB0309E&quot;,
+        &quot;action&quot;: &quot;Resubmit the request, correcting any issues.&quot;,
+        &quot;completionCode&quot;: 0,
+        &quot;reasonCode&quot;: 0,
+        &quot;type&quot;: &quot;rest&quot;,
+        &quot;message&quot;: &quot;MQWB0309E: The received or browsed message type is unsupported by the mqweb server.&quot;,
+        &quot;explanation&quot;: &quot;The mqweb server successfully received an MQ message, but was of an unsupported message type.&quot;
+      }
+    ]
+  },
+  &quot;note&quot;: &quot;La consola muestra y conserva el MQDLH/MQTM. REST solo maneja MQSTR/JMS TextMessage; no se hace DELETE.&quot;
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><section id="C35"><h2>C35 · Limpieza del ensayo y estado final</h2><p><strong>Cómo funciona y cómo se probó.</strong> Se retiran las dos colas exclusivas de la prueba DLQ, se cancelan programaciones futuras propias y se eliminan todos los objetos SQL de inyección. Permanecen los avisos y los mensajes de evidencia.</p><p><strong>Resultado observado.</strong> Ninguna cola temporal ni trigger/función de fallo. Cero recordatorios de ensayo activos; Cron permanente sigue activo; salud sin pendientes ni publicaciones fallidas.</p><p><strong>Alcance.</strong> BOQ conserva nueve mensajes: siete publicados por REST durante los ensayos y dos node anteriores. DLQ conserva el mensaje nativo. El contador técnico quarantined=7 corresponde al inbox de aplicación y no tiene por qué coincidir con la profundidad total de BOQ.</p><figure><img loading="lazy" src="capturas/respuesta-c35.png" alt="Respuesta registrada C35"><figcaption>Visualización de respuestas guardadas (puede abreviar contenido).</figcaption></figure><figure><img loading="lazy" src="capturas/42-ibm-colas-tras-limpieza.png" alt="Captura real — Limpieza del ensayo y estado final"><figcaption>Captura real de la aplicación o de IBM MQ Console.</figcaption></figure><figure><img loading="lazy" src="capturas/44-ibm-boq-nueve-mensajes.png" alt="Captura real — Limpieza del ensayo y estado final"><figcaption>Captura real de la aplicación o de IBM MQ Console.</figcaption></figure><details><summary>Ver registros completos de petición, respuesta y comprobación</summary><pre>{
+  &quot;deletedQueues&quot;: [
+    &quot;AUTHCDN.E2E.DLQ.TRIG.BE495EF3&quot;,
+    &quot;AUTHCDN.E2E.DLQ.INIT.BE495EF3&quot;
+  ],
+  &quot;remainingTemporaryQueues&quot;: [],
+  &quot;clearedOnlyOwnMqtmMessages&quot;: 2,
+  &quot;nativeDlqMessageRetained&quot;: true,
+  &quot;screenshot&quot;: &quot;42-ibm-colas-tras-limpieza.png&quot;
+}</pre><pre>{
+  &quot;rows&quot;: [
+    {
+      &quot;attempts&quot;: 5,
+      &quot;event_id&quot;: &quot;7694e118-5454-4282-b14d-0dec995b28f7&quot;,
+      &quot;last_error&quot;: &quot;MQ_PUBLICATION_UNCONFIRMED&quot;,
+      &quot;status&quot;: &quot;CANCELLED&quot;
+    }
+  ],
+  &quot;note&quot;: &quot;El intento adicional de limpieza no modificó filas: la limpieza de cada ronda ya había cancelado el outbox. Se conservan los cinco intentos, last_error y el aviso de alerta.&quot;
+}</pre><pre>{
+  &quot;activeTestReminders&quot;: 0,
+  &quot;health&quot;: {
+    &quot;deliveryRetries&quot;: 0,
+    &quot;failedPublications&quot;: 0,
+    &quot;pendingInbox&quot;: 0,
+    &quot;quarantined&quot;: 7,
+    &quot;staleInbox&quot;: 0
+  },
+  &quot;jobs&quot;: [
+    {
+      &quot;active&quot;: true,
+      &quot;name&quot;: &quot;authcdn-mq-rest-minute&quot;,
+      &quot;schedule&quot;: &quot;* * * * *&quot;
+    },
+    {
+      &quot;active&quot;: true,
+      &quot;name&quot;: &quot;authcdn-mq-maintenance&quot;,
+      &quot;schedule&quot;: &quot;* * * * *&quot;
+    }
+  ],
+  &quot;recentCronRuns&quot;: [
+    {
+      &quot;end_time&quot;: &quot;2026-10-20T04:25:00.079953+00:00&quot;,
+      &quot;jobid&quot;: 3,
+      &quot;start_time&quot;: &quot;2026-10-20T04:25:00.0668+00:00&quot;,
+      &quot;status&quot;: &quot;succeeded&quot;
+    },
+    {
+      &quot;end_time&quot;: &quot;2026-10-20T04:25:00.091701+00:00&quot;,
+      &quot;jobid&quot;: 2,
+      &quot;start_time&quot;: &quot;2026-10-20T04:25:00.06606+00:00&quot;,
+      &quot;status&quot;: &quot;succeeded&quot;
+    },
+    {
+      &quot;end_time&quot;: &quot;2026-10-20T04:24:00.033081+00:00&quot;,
+      &quot;jobid&quot;: 3,
+      &quot;start_time&quot;: &quot;2026-10-20T04:24:00.022764+00:00&quot;,
+      &quot;status&quot;: &quot;succeeded&quot;
+    },
+    {
+      &quot;end_time&quot;: &quot;2026-10-20T04:24:00.026206+00:00&quot;,
+      &quot;jobid&quot;: 2,
+      &quot;start_time&quot;: &quot;2026-10-20T04:24:00.021538+00:00&quot;,
+      &quot;status&quot;: &quot;succeeded&quot;
+    },
+    {
+      &quot;end_time&quot;: &quot;2026-10-20T04:23:00.03409+00:00&quot;,
+      &quot;jobid&quot;: 3,
+      &quot;start_time&quot;: &quot;2026-10-20T04:23:00.023261+00:00&quot;,
+      &quot;status&quot;: &quot;succeeded&quot;
+    },
+    {
+      &quot;end_time&quot;: &quot;2026-10-20T04:23:00.026647+00:00&quot;,
+      &quot;jobid&quot;: 2,
+      &quot;start_time&quot;: &quot;2026-10-20T04:23:00.022055+00:00&quot;,
+      &quot;status&quot;: &quot;succeeded&quot;
+    }
+  ],
+  &quot;recentHttpResponses&quot;: [
+    {
+      &quot;created&quot;: &quot;2026-10-20T04:25:00.091708+00:00&quot;,
+      &quot;error_msg&quot;: null,
+      &quot;id&quot;: 181,
+      &quot;status_code&quot;: 200,
+      &quot;timed_out&quot;: false
+    },
+    {
+      &quot;created&quot;: &quot;2026-10-20T04:24:00.026413+00:00&quot;,
+      &quot;error_msg&quot;: null,
+      &quot;id&quot;: 180,
+      &quot;status_code&quot;: 200,
+      &quot;timed_out&quot;: false
+    },
+    {
+      &quot;created&quot;: &quot;2026-10-20T04:23:00.026641+00:00&quot;,
+      &quot;error_msg&quot;: null,
+      &quot;id&quot;: 179,
+      &quot;status_code&quot;: 200,
+      &quot;timed_out&quot;: false
+    }
+  ],
+  &quot;temporaryFunctions&quot;: 0,
+  &quot;temporaryTriggers&quot;: 0
+}</pre></details><p><a href="#indice">Volver al índice</a></p></section><footer><strong>Cierre:</strong> las dos colas temporales y todos los objetos SQL de fallo se retiraron. Los dos trabajos permanentes siguen activos. Se conservan avisos y mensajes BOQ/DLQ de evidencia. La suite local registró 251 aprobadas y 3 omitidas de 254; la ronda cloud reforzada registró 36 comprobaciones PASS. Se interrumpió un backend SQL específico, no se reiniciaron IBM o Vercel. El documento Markdown conserva los límites, referencias oficiales y contexto de los diagnósticos históricos. Mantenga juntas las carpetas capturas/ y respuestas/ para compartir este informe.</footer></main></html>
