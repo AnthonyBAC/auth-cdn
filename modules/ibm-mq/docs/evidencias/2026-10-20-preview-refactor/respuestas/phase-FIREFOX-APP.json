@@ -1,0 +1,191 @@
+{
+  "records": [
+    {
+      "id": "FIREFOX-FINAL-NOTIFICATIONS",
+      "title": "Firefox muestra la recuperación y las alertas tras los ensayos reales",
+      "at": "2026-10-20T18:31:02.183Z",
+      "result": "PASS",
+      "kind": "LIVE_AUTHENTICATED_UI",
+      "evidence": {
+        "request": {
+          "method": "GET",
+          "path": "/api/notifications",
+          "jwt": "validado; valor omitido"
+        },
+        "status": 200,
+        "body": {
+          "notifications": [
+            {
+              "id": "9195abe7-02de-4a94-90de-707df8e16bb6",
+              "card_id": "26d1cf68-ee61-472c-a2fb-16325e12ec4b",
+              "message": "La tarjeta \"MQ-E2E-20261020181439 cron-autonomo\" vence el 2026-10-20T18:59:17Z.",
+              "created_at": "2026-10-20T18:30:16.870428+00:00",
+              "read_at": null
+            },
+            {
+              "id": "dfcb882f-9bae-4278-bc80-094f544f2307",
+              "card_id": "00a44acf-89f6-439e-aaa3-3f62c9d01e6d",
+              "message": "No se pudo entregar un recordatorio tras agotar los reintentos. Solicita revisión al responsable del tablero.",
+              "created_at": "2026-10-20T18:27:00.037123+00:00",
+              "read_at": null
+            },
+            {
+              "id": "47e78e00-5c1b-425a-b351-4565652c6b48",
+              "card_id": "447981e5-495a-46de-9763-71357a5682c6",
+              "message": "La tarjeta \"MQ-E2E-20261020181439 ecda227e interrupcion-real-rpc\" vence el 2026-10-20T19:24:19Z.",
+              "created_at": "2026-10-20T18:24:38.171233+00:00",
+              "read_at": null
+            },
+            {
+              "id": "2aab643a-8e90-49fa-a78a-316ec24a7f18",
+              "card_id": "819e0ad9-fa08-4f78-95ea-5dfb22ccac31",
+              "message": "La tarjeta \"MQ-E2E-20261020181439 vencimiento\" está vencida.",
+              "created_at": "2026-10-20T18:20:19.536008+00:00",
+              "read_at": null
+            },
+            {
+              "id": "05c7c201-022b-47af-a5d7-10a7c70decca",
+              "card_id": "819e0ad9-fa08-4f78-95ea-5dfb22ccac31",
+              "message": "La tarjeta \"MQ-E2E-20261020181439 vencimiento\" vence el 2026-10-20T18:20:15Z.",
+              "created_at": "2026-10-20T18:19:54.041034+00:00",
+              "read_at": null
+            },
+            {
+              "id": "5722839b-401b-4add-a08a-51b75b67cd4a",
+              "card_id": "40fa8c16-8134-4e80-8abb-43d21d3fa5a8",
+              "message": "No se pudo entregar un recordatorio tras agotar los reintentos. Solicita revisión al responsable del tablero.",
+              "created_at": "2026-10-20T18:19:35.646364+00:00",
+              "read_at": null
+            },
+            {
+              "id": "34416025-503d-47d6-9639-ac8f97c6abe5",
+              "card_id": "781ea7cf-f469-44eb-9eeb-ffd32f244912",
+              "message": "La tarjeta \"MQ-E2E-20261020181439 normal\" vence el 2026-10-20T18:36:15Z.",
+              "created_at": "2026-10-20T18:16:31.117028+00:00",
+              "read_at": "2026-10-20T18:16:46.018+00:00"
+            },
+            {
+              "id": "aee13992-3ea4-4a05-b789-ae3e617a3fd2",
+              "card_id": "693c0929-b042-4811-ab78-c0273ee70c70",
+              "message": "No se pudo entregar un recordatorio tras agotar los reintentos. Solicita revisión al responsable del tablero.",
+              "created_at": "2026-10-20T03:50:00.02134+00:00",
+              "read_at": null
+            },
+            {
+              "id": "0c0cc90a-cc9b-46d1-a2fe-ab13bf56a39a",
+              "card_id": "56453971-70c2-4612-986b-4466862b39f2",
+              "message": "La tarjeta \"MQ-E2E-20261020004000 155d2be1 interrupcion-real-rpc\" vence el 2026-10-20T04:47:07Z.",
+              "created_at": "2026-10-20T03:47:26.073471+00:00",
+              "read_at": null
+            },
+            {
+              "id": "50ad3546-69bd-4f15-83a9-ccd82832b3f9",
+              "card_id": "fe7205b6-73f9-4263-914e-6bcad9e3f216",
+              "message": "No se pudo entregar un recordatorio tras agotar los reintentos. Solicita revisión al responsable del tablero.",
+              "created_at": "2026-10-20T03:43:00.038349+00:00",
+              "read_at": null
+            },
+            {
+              "id": "b81b773b-e04e-47d0-98ad-08ea8bd16f45",
+              "card_id": "6770bf98-0838-4e7b-ae91-31f29731893e",
+              "message": "La tarjeta \"MQ-E2E-20261020004000 ffea3cca interrupcion-real-rpc\" vence el 2026-10-20T04:41:57Z.",
+              "created_at": "2026-10-20T03:42:04.260158+00:00",
+              "read_at": null
+            },
+            {
+              "id": "0e244320-b336-4b41-8842-a28a5aae5b3e",
+              "card_id": "bd53b87f-b0af-4479-bcc2-a38d35f3f47f",
+              "message": "La tarjeta \"MQ-E2E-20261020004000 ffea3cca cinco-reintentos-consumidor\" vence el 2026-10-20T04:39:46Z.",
+              "created_at": "2026-10-20T03:41:56.697112+00:00",
+              "read_at": null
+            },
+            {
+              "id": "4911bd42-4520-4bdb-b927-097be3edc993",
+              "card_id": "bfc16927-5eba-45ca-b3af-53392778447a",
+              "message": "La tarjeta \"MQ-E2E-20261020004000 cron-autonomo\" vence el 2026-10-20T01:42:46Z.",
+              "created_at": "2026-10-20T01:14:02.933951+00:00",
+              "read_at": null
+            },
+            {
+              "id": "b844a3ae-2014-44a8-9e0d-436e50d2586a",
+              "card_id": "a49a239e-193f-484b-a654-cd05e03c8166",
+              "message": "La tarjeta \"MQ-E2E-20261020004000 vencimiento\" está vencida.",
+              "created_at": "2026-10-20T01:03:23.398854+00:00",
+              "read_at": null
+            },
+            {
+              "id": "9b61c9f9-bf72-4bf7-b04e-c1fb15d37ac2",
+              "card_id": "a49a239e-193f-484b-a654-cd05e03c8166",
+              "message": "La tarjeta \"MQ-E2E-20261020004000 vencimiento\" vence el 2026-10-20T01:03:20Z.",
+              "created_at": "2026-10-20T01:02:58.666063+00:00",
+              "read_at": null
+            },
+            {
+              "id": "25f6608b-cb48-4721-916f-c83a76a4b336",
+              "card_id": "1aa7a690-2402-4af5-b981-00b408a7d663",
+              "message": "No se pudo entregar un recordatorio tras agotar los reintentos. Solicita revisión al responsable del tablero.",
+              "created_at": "2026-10-20T01:01:55.075413+00:00",
+              "read_at": null
+            },
+            {
+              "id": "c54d9158-b6b2-4576-b479-dcaa8c7897b9",
+              "card_id": "c65fade2-7ae4-4ccb-be7d-9c43229caa2c",
+              "message": "La tarjeta \"MQ-E2E-20261020004000 normal\" vence el 2026-10-20T01:11:08Z.",
+              "created_at": "2026-10-20T00:51:22.247911+00:00",
+              "read_at": "2026-10-20T00:51:36.192+00:00"
+            },
+            {
+              "id": "fd24fa87-8588-44e5-a4d4-cbf0ef0fa6ec",
+              "card_id": "3a060d08-4602-4864-9c98-aeaff00c9bc8",
+              "message": "La tarjeta \"Prueba TASK_OVERDUE\" está vencida.",
+              "created_at": "2026-10-20T00:49:57.990091+00:00",
+              "read_at": null
+            },
+            {
+              "id": "76819338-3702-40bc-a1f5-fa66608f4808",
+              "card_id": "3a060d08-4602-4864-9c98-aeaff00c9bc8",
+              "message": "La tarjeta \"Prueba TASK_OVERDUE\" está vencida.",
+              "created_at": "2026-10-19T14:44:31.638021+00:00",
+              "read_at": null
+            },
+            {
+              "id": "e45b3165-7081-42bc-a768-41dcad8a12aa",
+              "card_id": "cfa02c59-2e15-4122-af77-8d034dda2cf6",
+              "message": "La tarjeta \"Prueba recordatorio MQ\" vence el 2026-10-19T03:01:46Z.",
+              "created_at": "2026-10-19T02:49:00.502704+00:00",
+              "read_at": null
+            }
+          ]
+        },
+        "visibleText": "Auth DCN\nWorkspaces\nAvisos\nSupabase\nAvisos\nActualizar\nLa tarjeta \"MQ-E2E-20261020181439 cron-autonomo\" vence el 2026-10-20T18:59:17Z.\n20/10/2026, 15:30:16\nMarcar leído\nNo se pudo entregar un recordatorio tras agotar los reintentos. Solicita revisión al responsable del tablero.\n20/10/2026, 15:27:00\nMarcar leído\nLa tarjeta \"MQ-E2E-20261020181439 ecda227e interrupcion-real-rpc\" vence el 2026-10-20T19:24:19Z.\n20/10/2026, 15:24:38\nMarcar leído\nLa tarjeta \"MQ-E2E-20261020181439 vencimiento\" está vencida.\n20/10/2026, 15:20:19\nMarcar leído\nLa tarjeta \"MQ-E2E-20261020181439 vencimiento\" vence el 2026-10-20T18:20:15Z.\n20/10/2026, 15:19:54\nMarcar leído\nNo se pudo entregar un recordatorio tras agotar los reintentos. Solicita revisión al responsable del tablero.\n20/10/2026, 15:19:35\nMarcar leído\nLa tarjeta \"MQ-E2E-20261020181439 normal\" vence el 2026-10-20T18:36:15Z.\n20/10/2026, 15:16:31\nNo se pudo entregar un recordatorio tras agotar los reintentos. Solicita revisión al responsable del tablero.\n20/10/2026, 00:50:00\nMarcar leído\nLa tarjeta \"MQ-E2E-20261020004000 155d2be1 interrupcion-real-rpc\" vence el 2026-10-20T04:47:07Z.\n20/10/2026, 00:47:26\nMarcar leído\nNo se pudo entregar un recordatorio tras agotar los reintentos. Solicita revisión al responsable del tablero.\n20/10/2026, 00:43:00\nMarcar leído\nLa tarjeta \"MQ-E2E-20261020004000 ffea3cca interrupcion-real-rpc\" vence el 2026-10-20T04:41:57Z.\n20/10/2026, 00:42:04\nMarcar leído\nLa tarjeta \"MQ-E2E-20261020004000 ffea3cca cinco-reintentos-consumidor\" vence el 2026-10-20T04:39:46Z.\n20/10/2026, 00:41:56\nMarcar leído\nLa tarjeta \"MQ-E2E-20261020004000 cron-autonomo\" vence el 2026-10-20T01:42:46Z.\n19/10/2026, 22:14:02\nMarcar leído\nLa tarjeta \"MQ-E2E-20261020004000 vencimiento\" está vencida.\n19/10/2026, 22:03:23\nMarcar leído\nLa tarjeta \"MQ-E2E-20261020004000 vencimiento\" vence el 2026-10-20T01:03:20Z.\n19/10/2026, 22:02:58\nMarcar leído\nNo se pudo entregar un recordatorio tras agotar los reintentos. Solicita revisión al responsable del tablero.\n19/10/2026, 22:01:55\nMarcar leído\nLa tarjeta \"MQ-E2E-20261020004000 normal\" vence el 2026-10-20T01:11:08Z.\n19/10/2026, 21:51:22\nLa tarjeta \"Prueba TASK_OVERDUE\" está vencida.\n19/10/2026, 21:49:57\nMarcar leído\nLa tarjeta \"Prueba TASK_OVERDUE\" está vencida.\n19/10/2026, 11:44:31\nMarcar leído\nLa tarjeta \"Prueba recordatorio MQ\" vence el 2026-10-19T03:01:46Z.\n18/10/2026, 23:49:00\nMarcar leído",
+        "screenshot": "01-app-avisos-preview.png"
+      }
+    },
+    {
+      "id": "FIREFOX-SUMMARY",
+      "title": "La interfaz del nuevo preview solicita Request/Reply y muestra las estadísticas",
+      "result": "PASS",
+      "at": "2026-10-20T18:31:09.080Z",
+      "kind": "LIVE_AUTHENTICATED_UI",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/boards/9dbe1264-eccd-4342-a7d8-3524727a333a/summary"
+        },
+        "status": 200,
+        "body": {
+          "summary": {
+            "totalActive": 11,
+            "pending": 9,
+            "completed": 1,
+            "overdue": 1
+          },
+          "requestId": "3f7d576d-2ca5-4981-a095-d348b7962232",
+          "generatedAt": "2026-10-20T18:31:06.026Z"
+        },
+        "screenshot": "02-app-resumen-preview.png",
+        "rendered": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "origin": "https://auth-pawu47st3-anthonys-projects-0d8acba7.vercel.app",
+  "records": [
+    {
+      "id": "FINAL-CLOUD-CHECK",
+      "title": "Salud del sistema después del ensayo y limpieza de los recursos temporales",
+      "result": "PASS",
+      "at": "2026-10-20T18:45:05.883Z",
+      "kind": "LIVE_FINAL_STATE",
+      "evidence": {
+        "activeTestReminders": 0,
+        "health": {
+          "deliveryRetries": 0,
+          "failedPublications": 0,
+          "pendingInbox": 0,
+          "quarantined": 13,
+          "staleInbox": 0
+        },
+        "jobs": [
+          {
+            "active": true,
+            "name": "authcdn-mq-rest-minute",
+            "schedule": "* * * * *"
+          },
+          {
+            "active": true,
+            "name": "authcdn-mq-maintenance",
+            "schedule": "* * * * *"
+          }
+        ],
+        "origin": "https://auth-pawu47st3-anthonys-projects-0d8acba7.vercel.app",
+        "permanentTarget": "https://auth-cdn-git-feature-mq-consumidor-anthonys-projects-0d8acba7.vercel.app",
+        "temporaryTables": 0,
+        "temporaryVaultEntries": 0,
+        "testFaultFunctions": 0,
+        "testFaultTriggers": 0
+      }
+    }
+  ]
+}

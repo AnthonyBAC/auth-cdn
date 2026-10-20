@@ -18,4 +18,4 @@ pnpm test:mq:rest
 
 `vitest.config.ts` descubre tanto estas pruebas como las del módulo IBM. Las pruebas de integración IBM usan una base PGlite local; no ejecutan las migraciones contra Supabase Cloud.
 
-`playwright.config.ts` reserva `tests/e2e/` para recorridos de navegador cuando se añadan. Las respuestas y fotografías de las pruebas cloud ya ejecutadas están en [evidencias IBM](../modules/ibm-mq/docs/evidencias/2026-10-19-mq-rest/LEEME.md).
+`playwright.config.ts` reserva `tests/e2e/` para recorridos de navegador cuando se añadan. Las respuestas y fotografías de las pruebas cloud ya ejecutadas están en [evidencias IBM](../modules/ibm-mq/docs/evidencias/2026-10-20-preview-refactor/LEEME.md).

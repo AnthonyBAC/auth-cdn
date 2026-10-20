@@ -14,4 +14,4 @@ Las pruebas están separadas en [tests/legacy](../tests/legacy). El productor in
 
 Los paquetes históricos conservan sus dependencias y scripts de arranque, con rutas actualizadas. No se ejecutan consumidores MQI y REST sobre las mismas colas simultáneamente. `pnpm mq:scheduler` conserva el comando histórico; el funcionamiento autónomo actual depende del Cron cloud.
 
-[Guía MQI histórica](../docs/mensajeria-mq-nativo.md) · [Volver al módulo](../README.md).
+[Documentación vigente](../docs/evidencias/2026-10-20-preview-refactor/requisitos-ev2-pruebas-y-resultados.md) · [Volver al módulo](../README.md).

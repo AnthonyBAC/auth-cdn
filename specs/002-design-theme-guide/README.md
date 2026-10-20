@@ -1,5 +1,5 @@
 # Design Theme Guide
 
-Use `design-tokens.md` as the canonical token source. Use `theme-guide.md` for product/UI decisions and `review-guide.md` for design review.
+El tema implementado está en [app/globals.css](../../app/globals.css) y [app/providers.tsx](../../app/providers.tsx).
 
-The implemented Next.js MVP maps the theme into `app/globals.css` and Ant Design theme tokens in `app/providers.tsx`.
+La documentación actual del proyecto se consulta en el [último informe de pruebas](../../modules/ibm-mq/docs/evidencias/2026-10-20-preview-refactor/requisitos-ev2-pruebas-y-resultados.md).

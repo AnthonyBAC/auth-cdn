@@ -6,9 +6,9 @@ Este es el punto de entrada para encontrar el código, las pruebas y la document
 
 | Necesito… | Abrir |
 |---|---|
-| Entender el flujo cloud, autenticación y recuperación | [Guía REST](docs/mensajeria-mq.md) |
-| Ver los diez requisitos EV2, sus pruebas y resultados | [Documento principal de evidencias](docs/evidencias/2026-10-19-mq-rest/requisitos-ev2-pruebas-y-resultados.md) |
-| Abrir las evidencias con imágenes en el navegador | [Informe visual](docs/evidencias/2026-10-19-mq-rest/requisitos-ev2-pruebas-y-resultados.html) |
+| Entender el flujo cloud, autenticación y recuperación | [Informe vigente](docs/evidencias/2026-10-20-preview-refactor/requisitos-ev2-pruebas-y-resultados.md) |
+| Ver los diez requisitos EV2, sus pruebas y resultados | [Documento principal de evidencias](docs/evidencias/2026-10-20-preview-refactor/requisitos-ev2-pruebas-y-resultados.md) |
+| Abrir las evidencias con imágenes en el navegador | [Informe visual](docs/evidencias/2026-10-20-preview-refactor/requisitos-ev2-pruebas-y-resultados.html) |
 | Encontrar mensajes de ejemplo | [Aviso preventivo](examples/aviso-preventivo.json) y [aviso vencido](examples/aviso-vencido.json) |
 | Saber qué variables configurar | [Ejemplo sin secretos](config/mq-rest-config.example.txt) |
 | Encontrar migraciones, Cron y endpoints | [Mapa de integración](database/README.md) |
@@ -30,7 +30,7 @@ modules/ibm-mq/
 │   ├── integration/ Pruebas SQL locales con PGlite
 │   └── legacy/      Pruebas de la implementación nativa histórica
 ├── database/        Índice hacia el SQL y las rutas obligatorias del framework
-├── docs/            Guías, evidencias, capturas y respuestas de las pruebas cloud
+├── docs/            Último informe, capturas y respuestas de las pruebas cloud
 └── legacy/          MQI, diagnósticos y herramientas locales anteriores
 ```
 
@@ -67,7 +67,7 @@ El resumen entra por la API de tableros, usa `SUMMARY.REQUEST.Q` y `SUMMARY.REPL
 
 Next.js descubre los endpoints dentro de `app/api/`. Supabase CLI descubre las migraciones en `supabase/migrations/`. Esos archivos conservan sus rutas y están enlazados desde [database/README.md](database/README.md); no hay copias de las migraciones.
 
-Las variables reales permanecen en los archivos de entorno locales y en la configuración cloud. Las evidencias históricas mantienen sus respuestas y hashes originales; las rutas y la revisión de código que aparecen dentro de ellas describen el momento de esas pruebas.
+Las variables reales permanecen en los archivos de entorno locales y en la configuración cloud. La documentación de pruebas vigente está en `docs/evidencias/2026-10-20-preview-refactor/`, con sus respuestas, capturas y archivos de integridad.
 
 ## Comandos desde la raíz del proyecto
 
