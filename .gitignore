@@ -13,3 +13,4 @@ supabase/.temp/
 swarmforge/scripts/
 .vercel
 .env*
+!.env.example

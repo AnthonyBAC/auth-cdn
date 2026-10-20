@@ -2,7 +2,7 @@
 import { createHash } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
 
-import { evaluarArchivos, ejecutarIntegridad } from "@/lib/mq/diagnostico";
+import { evaluarArchivos, ejecutarIntegridad } from "./diagnostico";
 
 const sha = (s: string) => createHash("sha256").update(s).digest("hex");
 
@@ -39,7 +39,7 @@ describe("integridad del keystore TLS", () => {
     expect(resultado.kdb.coincide).toBe(false);
   });
 
-  it("reconstruye desde Base64 y compara de extremo a extremo sin ejecutar MQ", async () => {
+  it.skipIf(process.platform === "win32")("reconstruye desde Base64 y compara de extremo a extremo sin ejecutar MQ", async () => {
     vi.stubEnv("MQ_TLS_KEY_REPOSITORY_BASE64", Buffer.from("contenido-kdb").toString("base64"));
     vi.stubEnv("MQ_TLS_KEY_STH_BASE64", Buffer.from("contenido-sth").toString("base64"));
     vi.stubEnv("MQ_TLS_KEY_RDB_BASE64", "");

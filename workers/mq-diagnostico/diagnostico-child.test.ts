@@ -4,10 +4,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { ejecutarChildConnx, extraerProbeId } from "@/lib/mq/diagnostico";
+import { ejecutarChildConnx, extraerProbeId } from "./diagnostico";
 
 describe("MQCONNX en proceso hijo", () => {
-  it("ejecuta el hijo en dry-run sin conectarse a MQ y sin modificar HOME del padre", async () => {
+  it.skipIf(process.platform === "win32")("ejecuta el hijo en dry-run sin conectarse a MQ y sin modificar HOME del padre", async () => {
     const homeAntes = process.env.HOME;
 
     const resultado = await ejecutarChildConnx(true);

@@ -17,15 +17,13 @@
     "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit",
     "mq:scheduler": "node --env-file=.env.local scripts/mq-scheduler.mjs",
-    "mq:resumen:respondedor": "pnpm --dir workers/mq-resumen start:respondedor",
-    "mq:resumen:puente": "pnpm --dir workers/mq-resumen start:puente"
+    "test:mq:rest": "vitest run tests/unit/mq/rest.test.ts tests/unit/mq/inbox.test.ts tests/unit/mq/cloud.test.ts tests/unit/mq/endpoints-rest.test.ts tests/integration/mq/rest-inbox.test.ts tests/integration/mq/consumidor.test.ts"
   },
   "dependencies": {
     "@ant-design/icons": "^5.5.2",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.45.4",
     "antd": "^5.22.5",
-    "ibmmq": "2.1.9",
     "next": "^15.0.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

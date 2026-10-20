@@ -1,443 +1,208 @@
-# Mensajería con IBM MQ — base compartida
+# IBM MQ REST en Vercel y Supabase Cloud
 
-## 1. Alcance de este paso
+La aplicación usa IBM MQ Cloud como broker mediante su Messaging REST API v3.
+Next.js en Vercel ejecuta ciclos acotados; Supabase Cron los invoca por HTTPS.
+No se necesita un equipo encendido, puente localhost, cliente MQI ni certificados
+de cliente empaquetados en Vercel. El código nativo anterior se conserva en
+`workers/` y su documentación histórica en `mensajeria-mq-nativo.md`.
 
-Se preparan tablas, contrato y endpoints para programar, asignar responsables y completar
-tarjetas. El tablero incluye el formulario de fechas/responsables y la acción de completar.
-El scheduler ya prepara los eventos en outbox. El productor nativo está implementado, pero su conexión real con IBM MQ y el consumidor siguen pendientes de validar. Publish/Subscribe
-queda fuera del alcance acordado. TLS se configurará en la conexión con IBM MQ.
+## Autenticación y autorización
 
-## 2. Datos
+```mermaid
+flowchart LR
+  U[Usuario con sesión JWT] --> V[API Vercel: JWT, MFA y permisos]
+  V --> M[IBM MQ Cloud: HTTPS y credencial privada]
+  M --> V
+  V --> D[Supabase: procesamiento idempotente]
+  C[Supabase Cron con secreto de servidor] --> V
+  D --> N[API de avisos: JWT y RLS del destinatario]
+```
 
-| Recurso | Responsabilidad |
+El JWT de Supabase se transporta mediante las cookies de sesión existentes.
+`requireUser()` valida al usuario contra Supabase Auth y comprueba MFA. No se
+aceptan un `userId`, destinatario ni nombres de cola enviados por el navegador.
+
+| Ruta de usuario | Protección |
 |---|---|
-| `cards` | Tarjeta existente: agrega creador, `due_at`, `notify_at`, `completed_at` y `schedule_version`. |
-| `task_reminders` | Destinatario, fecha de aviso, vencimiento y estado de cada programación. |
-| `notification_outbox` | Evento pendiente de publicar, intentos y reserva temporal del productor. |
-| `notifications` | Aviso visible y fecha de lectura. Un evento no se duplica para el mismo usuario. |
+| `PATCH /api/cards/{id}/schedule` | Sesión JWT/MFA, rol y validaciones de la RPC existente. |
+| `POST /api/cards/{id}/complete` | Sesión JWT/MFA y acceso a la tarjeta. |
+| `POST /api/boards/{id}/summary` | JWT/MFA, tablero activo y membresía; el servidor toma `userId` de la sesión. |
+| `GET /api/notifications` | JWT/MFA, filtro por usuario verificado y RLS con su sesión. |
+| `PATCH /api/notifications/{id}` | JWT/MFA, destinatario propio y RLS; solo marca leído. |
 
-`task_reminders.due_at` conserva el vencimiento de esa versión de la programación.
-No es otro vencimiento editable: debe copiarse desde la tarjeta en la operación atómica.
-Las fechas usan `timestamptz`; los mensajes usan UTC con sufijo `Z`.
+El servidor vuelve a comprobar acceso y estado actual al procesar mensajes. La
+lectura de una respuesta de resumen recuperada revalida el acceso al tablero.
+El JWT no se guarda en MQ, outbox, inbox ni BOQ y no se envía a IBM como credencial.
+IBM autentica por separado con IBM MQ username/API key mediante HTTP Basic sobre TLS.
 
-No se crea otra tabla de tareas ni otro sistema de roles. Se reutiliza `card_assignees`:
-cada responsable recibe su aviso. Sin responsables, lo recibe el creador de la tarjeta,
-si sigue siendo miembro activo. Las tarjetas antiguas sin creador necesitan un responsable.
-El creador de tarjetas nuevas se obtiene de la sesión en la base de datos; no se acepta
-un creador enviado por el navegador.
+Los endpoints operativos no aceptan una sesión de usuario para ejecutar trabajo
+global. `POST /api/mq/tick` exige `Authorization: Bearer <MQ_CRON_SECRET>`;
+`GET /api/mq/poc` exige `x-mq-poc-secret: <MQ_POC_SECRET>`. Son secretos independientes
+de 32 caracteres o más, exclusivos de servidor. El diagnóstico solo hace GET de
+browse; no publica, retira mensajes ni escribe en Supabase. Sus respuestas no
+incluyen cuerpos de mensajes ni credenciales. No existe un proxy de colas arbitrarias.
 
-## 3. Contrato del mensaje
+## Qué confirma REST y qué no
 
-Fuente compartida: [`lib/mq/contrato.ts`](../lib/mq/contrato.ts).
+Una publicación se registra como `PUBLISHED` cuando IBM devuelve éxito HTTP y un
+`ibm-mq-md-messageId` válido. Se solicita `persistent` y expiración en **milisegundos**.
+Esto confirma aceptación por MQ, no ejecución del efecto de negocio.
 
-```json
-{
-  "schemaVersion": 1,
-  "eventId": "f345a124-783e-4caa-830c-8930337b535f",
-  "eventType": "TASK_REMINDER_DUE",
-  "reminderId": "d13497cd-5063-459f-9f90-9dc78293eb49",
-  "cardId": "33086fde-719d-4724-9b05-b6f6947e0c59",
-  "workspaceId": "fe962a07-38d5-4124-a67f-09e631abf5e6",
-  "scheduleVersion": 1,
-  "occurredAt": "2026-10-18T18:00:00.000Z",
-  "expiresAt": "2026-10-20T18:00:00.000Z"
-}
-```
+REST no ofrece una unidad de trabajo que el cliente pueda confirmar/revertir
+entre llamadas. No se implementan métodos ficticios `commit` o `rollback`. Un POST
+sin respuesta puede haber publicado; reintentarlo puede duplicar el evento. El
+`eventId` permanece estable y `process_reminder_event` evita duplicar notificaciones.
+No se promete entrega exactamente una vez ni una transacción distribuida MQ/SQL.
+[Limitaciones oficiales](https://www.ibm.com/docs/en/ibm-mq/9.3.x?topic=mq-messaging-using-rest-api).
 
-Tipos: `TASK_REMINDER_DUE` (aviso preventivo) y `TASK_OVERDUE` (tarea vencida).
-El consumidor resolverá el destinatario desde el recordatorio guardado y comprobará
-que tarjeta, workspace y versión coincidan. El mensaje no contiene JWT, contraseñas
-ni claves de Supabase. La validación del formato no sustituye esas comprobaciones.
+## Flujo asíncrono y recuperación
 
-## 4. Estados y operaciones
+1. `enqueue_due_reminders` prepara eventos en `notification_outbox` de forma atómica.
+2. El productor reutiliza reservas/token y confirmación de las RPC de 0007.
+3. Publica texto JSON persistente por REST. La reserva no se marca publicada ante
+   timeout; se recupera con el mismo evento según la política existente (cinco intentos).
+4. El receptor hace **GET browse**, que no retira el mensaje.
+5. `mq_rest_capture` guarda cuerpo y metadatos en `mq_rest_inbox`, con unicidad por
+   gestor, cola y MsgId. Un ID reutilizado con distinto cuerpo bloquea la retirada.
+6. Solo entonces hace **DELETE filtrado por ese MsgId**. Un timeout, expiración o
+   caída en este punto deja una copia durable en SQL. Nunca se usa DELETE sin filtro.
+7. Una reserva SQL de 120 segundos permite procesar el inbox. Las reservas vencidas
+   se recuperan con un token nuevo; un token viejo no puede terminar ni cambiar la salida.
+8. El recordatorio se valida y se procesa con `process_reminder_event` de 0008,
+   conservando idempotencia, permisos, versión, cancelación y comprobación de vigencia.
 
-| Recurso | Estados |
+Si falla Supabase antes de capturar, no se retira nada de MQ. Si falla después del
+efecto de negocio y antes de terminar el inbox, se repite la RPC idempotente. Si se
+solapan dos ejecuciones, la captura deduplica y las reservas separan el procesamiento.
+Las pausas del proceso o funciones terminadas por presupuesto se recuperan en Cron.
+
+No ejecutar productores/consumidores MQI simultáneamente con el receptor REST: un
+consumidor nativo podría retirar el mensaje antes de que REST lo capture. El cambio
+debe realizarse con los procesos anteriores detenidos, una vez autorizado el entorno.
+
+## Reintentos, BOQ y DLQ
+
+El procesamiento temporal se reintenta hasta cinco reservas. Se aplica espera
+creciente de 5, 10, 20 y 40 segundos, con tope de 300 segundos para fallos posteriores.
+Los mensajes malformados, errores permanentes y reintentos agotados generan un
+sobre JSON de cuarentena dirigido a `AUTHCDN.REMINDERS.BOQ`.
+
+El sobre contiene `inboxId`, cola/MsgId originales, motivo, intentos y cuerpo original.
+Se persiste la salida completa antes del POST a BOQ. Si se pierde la confirmación,
+puede repetirse el sobre con el mismo `inboxId`; ese identificador permite deduplicar.
+Un fallo persistente de BOQ conserva la salida en SQL y reintenta con espera acotada
+sin descartar el original. La BOQ no se consume automáticamente.
+
+Esta es una BOQ de aplicación. No se fabrica una cabecera MQDLH ni se confunde el
+sobre JSON con una DLQ nativa. `DEV.DEAD.LETTER.QUEUE` conserva su función de broker;
+su asociación como `DEADQ` y permisos deben comprobarse administrativamente. No se
+ha cambiado la configuración del gestor. El traslado REST no es un GET/PUT atómico.
+
+REST solo permite leer MQSTR/JMS TextMessage. Un mensaje binario no compatible
+requiere intervención administrativa; el endpoint devuelve fallo operativo y no
+intenta eliminarlo. Esta limitación queda fuera de la recuperación automática de JSON.
+
+## Request/Reply de resúmenes
+
+La ruta autenticada publica una solicitud persistente en `AUTHCDN.SUMMARY.REQUEST.Q`
+con TTL de 30 segundos y ReplyTo fijo. El MsgId devuelto por IBM será el CorrelId
+de la respuesta en `AUTHCDN.SUMMARY.REPLY.Q`. Se conservan los IDs v3 con prefijo
+`ID:` y 48 dígitos hexadecimales, tanto en filtros como en cabeceras.
+
+La misma invocación cloud ejecuta el respondedor para esa solicitud; Cron puede
+recuperarla si se interrumpe. No se espera al siguiente minuto para responder al
+usuario. El respondedor valida contrato, ReplyTo permitido, caducidad y membresía,
+calcula el resumen y persiste la respuesta exacta antes de publicarla. El cliente
+captura también la respuesta antes de retirarla, y comprueba CorrelId, requestId y
+boardId. La respuesta tiene TTL de 60 segundos. El presupuesto interactivo es de
+20 segundos y las llamadas individuales están acotadas. Un timeout HTTP no equivale
+a cancelar una publicación ya aceptada por IBM.
+
+## Expiración, retención y alertas
+
+- Recordatorios: TTL restante según el contrato vigente; el preventivo expira al
+  vencimiento y el vencido 24 horas después. No se interpreta TTL como entrega diferida.
+- `mq_rest_maintenance` reconcilia recordatorios QUEUED ya caducados aunque el mensaje
+  haya expirado en IBM. Conserva el hecho histórico `PUBLISHED` del outbox.
+- Inbox DONE y outbox PUBLISHED/CANCELLED/EXPIRED: limpieza después de 30 días.
+- Inbox pendiente, salidas de cuarentena y outbox FAILED: se conservan para revisión,
+  sin purga automática. Los sobres BOQ se publican sin TTL para evitar perder evidencia;
+  su archivado/purga exige intervención explícita. No se eliminan avisos de usuario
+  ni recordatorios terminales mediante esta limpieza.
+- Fallo de publicación agotado: mantenimiento crea un aviso deduplicado para el
+  destinatario, visible en **Avisos**, bajo JWT/MFA y RLS.
+- El endpoint de ciclos devuelve 502 y registra `MQ_REST_CYCLE_ERRORS` si detecta
+  fallos. `mq_rest_health()` informa pendientes antiguos, cuarentenas y reintentos.
+  Configurar alertas de logs en Vercel/Supabase si se necesita aviso externo proactivo.
+  El aviso en la aplicación exige que el usuario la consulte; no se ha añadido email,
+  otro proveedor ni un monitor que garantice avisar si Vercel y Supabase dejan de funcionar.
+
+## Configuración y puesta en marcha autorizada
+
+Ejemplo versionado sin secretos: [`mq-rest-config.example.txt`](mq-rest-config.example.txt).
+`.env.example` contiene el mismo ejemplo para uso local. `.env.local` no se modifica
+ni se sube. En Vercel usar variables privadas de servidor; solo las claves públicas
+de Supabase y la URL del sitio llevan `NEXT_PUBLIC_`.
+
+`MQ_REST_BASE_URL` es `https://web-<hostname-del-gestor>/ibmmq/rest/v3`, sin puerto
+del listener MQI. No se desactiva la validación TLS ni se necesita MQ_TLS_* para REST.
+[Formato oficial de IBM Cloud](https://www.ibm.com/docs/en/mq-as-a-service?topic=manager-invoking-queue-rest-apis).
+
+| Cola | Identidad de productor | Identidad de consumidor |
+|---|---|---|
+| AUTHCDN.REMINDERS.Q | PUT | GET, INQ, BROWSE |
+| AUTHCDN.REMINDERS.BOQ | — | PUT |
+| AUTHCDN.SUMMARY.REQUEST.Q | PUT | GET, INQ, BROWSE |
+| AUTHCDN.SUMMARY.REPLY.Q | GET, INQ, BROWSE | PUT |
+
+Primero validar en un entorno de ensayo autorizado:
+
+1. Instalar dependencias con `pnpm install --frozen-lockfile` (Node 22, pnpm 9.15).
+2. Aplicar migraciones existentes 0001–0008 y después 0009 y 0010. Ninguna se aplicó
+   remotamente durante este desarrollo. No ejecutar rollback sobre datos productivos.
+3. Configurar variables REST y secretos en el entorno de Vercel seleccionado.
+4. Ejecutar `node --env-file=.env.local scripts/mq-rest-probe.mjs` para browse sin
+   publicar/retirar; o llamar a `/api/mq/poc` con su secreto privado.
+5. Detener los procesos MQI anteriores antes de habilitar el consumidor REST.
+6. Revisar [`supabase/cron/mq-rest.sql`](../supabase/cron/mq-rest.sql). En Supabase,
+   habilitar Cron/pg_net y guardar URL HTTPS y secreto en Vault. El SQL no contiene
+   credenciales y no se ejecuta como migración. Activarlo requiere autorización.
+7. Invocar el ciclo y verificar avisos desde una sesión de ensayo con permisos.
+8. Verificar los códigos HTTP en `net._http_response`: un job Cron exitoso solo prueba
+   que pg_net encoló la petición. Supervisar también la salud y las cuarentenas.
+
+Vercel declara un máximo de 60 segundos por función; cada ciclo usa un presupuesto
+de 35 segundos y lotes máximos de diez iteraciones. Cada llamada tiene timeout y
+comparte el presupuesto restante. La cadencia inicial es de un minuto, con latencia
+adicional posible; ajustar capacidad/lotes según las mediciones del entorno.
+El secreto de Vault se descifra para enviar el header: administradores con acceso a
+las tablas operativas de pg_net pueden ver solicitudes; restringir ese acceso.
+[Cron/pg_net oficial](https://supabase.com/docs/guides/functions/schedule-functions).
+
+## Evidencia y pruebas
+
+Se confirmó HTTPS y autenticación de ambas identidades contra el gestor real.
+Los GET de consumidor en REMINDERS/REQUEST y productor en REPLY devolvieron 204
+después de revisar los permisos. No se hicieron POST/DELETE reales ni cambios de
+datos remotos. Esta prueba no demuestra permisos PUT ni recuperación del broker.
+
+`pnpm test:mq:rest` ejecuta pruebas aisladas de transporte HTTP simulado, captura antes
+de retirada, fallos inciertos, reintentos, correlación, autorización y persistencia SQL
+con PGlite. `pnpm test` incluye además las pruebas heredadas de negocio y MQI simulado.
+Las pruebas nativas específicas de Linux se omiten en Windows.
+
+Para completar la evidencia de la evaluación en un entorno autorizado:
+
+| Caso | Qué comprobar con servicios reales |
 |---|---|
-| Recordatorio | `SCHEDULED`, `QUEUED`, `PROCESSED`, `CANCELLED`, `EXPIRED`, `FAILED`. |
-| Outbox | `PENDING`, `PROCESSING`, `PUBLISHED`, `FAILED`, `CANCELLED`, `EXPIRED`. |
-
-`QUEUED` significa que existe un evento en outbox; no confirma recepción por IBM MQ.
-`PUBLISHED` se registrará después de la confirmación de publicación del broker.
-La programación, cancelación, finalización y detección están implementadas; el productor está implementado con pruebas simuladas; falta validarlo con IBM MQ y desarrollar el consumidor.
-
-Operaciones compartidas (1 a 4 implementadas; publicación real por validar y 5 pendiente):
-
-1. Programar o cambiar fechas: bloquear la tarjeta, verificar usuario/rol, incrementar
-   su versión y cancelar programaciones previas, todo en una transacción.
-2. Completar: registrar `completed_at` e invalidar avisos pendientes en esa misma transacción.
-3. Detectar avisos: comprobar vigencia y archivado, crear un evento único en outbox y
-   marcar `QUEUED` de forma atómica.
-4. Publicar: reservar con `lock_token` y `locked_until`; recuperar reservas vencidas.
-   Confirmar o reintentar solo si el productor conserva su token de reserva.
-5. Consumir: validar estado actual, permisos del destinatario, versión, vencimiento y
-   archivado; guardar aviso u omisión antes de confirmar el mensaje en MQ.
-
-El scheduler prepara el evento cuando llega `notify_at`; el productor deberá publicarlo. La expiración no programa la entrega.
-El aviso preventivo caduca al vencer la tarjeta; el vencido caduca 24 horas después
-del vencimiento. Esta es la política inicial de vigencia, no una configuración del broker.
-Falta configurar la limpieza de registros, reintentos, alertas y colas de errores.
-
-## 5. Acceso a los datos
-
-- RLS está habilitado en las tres tablas nuevas.
-- El usuario puede leer sus recordatorios y notificaciones si conserva acceso al workspace activo.
-- Solo puede modificar `read_at` de sus notificaciones; no el destinatario ni el contenido.
-- El navegador no puede leer ni escribir outbox, ni crear recordatorios/notificaciones directamente.
-- Los procesos internos escribirán mediante credenciales de servidor y operaciones validadas.
-  La clave de servicio no debe llegar al navegador. Su acceso privilegiado exige validación explícita.
-
-La migración 0005 limita las escrituras directas de fechas, creador y responsables.
-Las nuevas RPC verifican sesión, MFA, rol y estado activo de tarjeta/lista/tablero/workspace.
-No corrige los otros hallazgos de seguridad de la revisión anterior.
-
-## 6. Coordinación entre ramas
-
-`feature/mq-programacion` mantiene migración, contrato, programación y productor.
-`feature/mq-consumidor` reutiliza ese contrato y prepara consumo, confirmaciones,
-reintentos y notificaciones. No crear otra migración que repita estas tablas.
-El contrato debe revisarse entre ambos e integrarse mediante Git antes de conectar los procesos.
-
-## 7. Migración y comprobaciones
-
-Migraciones nuevas: `0004_mq_base.sql`, `0005_mq_programacion.sql`, `0006_mq_scheduler.sql` y `0007_mq_productor.sql`. No modifican las tres anteriores.
-No se ha aplicado a Supabase remoto. Primero debe probarse en una base local o de ensayo:
-
-- Aplicar migraciones en orden y comprobar que siguen funcionando tarjetas antiguas.
-- Verificar usuario propio, otro usuario, no miembro y usuario anónimo con RLS.
-- Intentar alterar contenido/destinatario de una notificación: debe rechazarse.
-- Insertar dos avisos del mismo evento/destinatario: el segundo debe rechazarse.
-- Comprobar fechas inválidas, versiones inválidas y reservas inconsistentes.
-
-Las pruebas incluyen validación, endpoints con sesión simulada y ejecución de las siete
-migraciones en PostgreSQL en memoria (PGlite). Se simulan las interfaces mínimas de Auth;
-esto no sustituye una prueba del Supabase desplegado, concurrencia real ni IBM MQ.
-Ejecutar `pnpm test`. No requiere claves ni conexión remota.
-Las reversiones de ensayo están en `supabase/rollback/`: primero 0007, después 0006, 0005 y finalmente 0004.
-Eliminan datos de la funcionalidad y no se ejecutan como migraciones normales.
-
-
-## 8. Programar y completar desde la API
-
-Ambas rutas usan la sesión y MFA existentes. No reciben JWT dentro del mensaje.
-
-`PATCH /api/cards/{cardId}/schedule`
-
-```json
-{
-  "expectedVersion": 1,
-  "dueAt": "2099-01-03T00:00:00Z",
-  "notifyAt": "2099-01-02T00:00:00Z",
-  "assigneeIds": []
-}
-```
-
-- `assigneeIds` es la lista completa de responsables, sin duplicados y miembros activos.
-- Una lista vacía usa al creador como destinatario; no cambia quién creó la tarjeta.
-- Ambas fechas en `null` eliminan la programación y permiten guardar responsables sin avisos.
-- `expectedVersion` se obtiene al consultar el tablero o crear la tarjeta.
-- Cambiar fechas o responsables cancela la versión anterior de los recordatorios y outbox pendientes.
-- Si solo cambian responsables, los avisos ya procesados no se repiten para quienes permanecen.
-- Una publicación confirmada se conserva; el consumidor deberá descartar la versión cancelada.
-
-`POST /api/cards/{cardId}/complete`
-
-```json
-{ "expectedVersion": 2 }
-```
-
-Registra la fecha del servidor y cancela los recordatorios pendientes de todos los destinatarios.
-Repetir con la versión vigente no vuelve a completar. No se incluye reapertura en este paso.
-Archivar una tarjeta también invalida sus avisos. El consumidor/scheduler deberá comprobar
-además si se archivó su lista, tablero o workspace, o si se retiró un destinatario.
-
-Respuestas: `200` con `{ card: ... }`, `400` por datos inválidos, `401` sin sesión,
-`403` sin permiso o MFA pendiente, `409` si cambió la versión y `500` ante un fallo interno.
-Las fechas devueltas por SQL pueden incluir un desplazamiento horario; el productor deberá
-normalizarlas a UTC al construir un mensaje. No se han modificado las colecciones Postman.
-
-
-## 9. Uso desde el tablero
-
-1. Crea una tarjeta y abre **Fechas y responsables**.
-2. Elige uno o varios miembros activos. Sin responsables, se usa al creador disponible.
-3. Indica la fecha límite y la fecha del aviso; guarda con **Guardar fechas y responsables**.
-4. **Quitar fechas** limpia ambas fechas en el formulario; guarda para cancelar la programación.
-5. **Completar tarjeta** pide confirmación y cancela los avisos de todos los destinatarios.
-
-El formulario interpreta fechas en la zona horaria del navegador y las envía como fechas
-absolutas. El resumen del tablero usa la zona del workspace (UTC si no está configurada).
-Si alguien cambió la tarjeta, el formulario conserva el borrador y bloquea el guardado;
-**Cargar datos actuales** pide confirmación antes de reemplazarlo. Los usuarios viewer
-solo ven los datos. Las tarjetas archivadas no se muestran ni se recuperan al recargar.
-
-Antes de usar estos controles en un entorno real, aplicar 0004 y 0005 en orden.
-Guardar fechas todavía no envía mensajes a IBM MQ: falta conectar productor y consumidor.
-
-
-## 10. Detector de avisos (scheduler)
-
-La migración `0006_mq_scheduler.sql` agrega `enqueue_due_reminders(p_limit)`.
-Solo el proceso de servidor con `service_role` puede ejecutarla. No se expone una
-ruta pública ni se reutiliza la sesión del usuario para este trabajo de fondo.
-
-Cada ejecución:
-
-1. Busca avisos cuya fecha ya llegó, usando la hora de PostgreSQL.
-2. Comprueba versión, tarjeta pendiente, elementos sin archivar y destinatario activo.
-3. Cancela avisos inválidos o marca como expirados los que perdieron vigencia.
-4. Guarda el evento en outbox y marca el recordatorio `QUEUED` en una sola transacción.
-
-El evento conserva el contrato compartido, con fechas UTC y sin credenciales.
-El bloqueo de tarjetas y la restricción única por recordatorio evitan duplicados.
-El lote procesa hasta 100 recordatorios por defecto (máximo 1000). Los siguientes
-quedan para otra ejecución. Si falla la operación, la transacción se revierte.
-El productor y el consumidor deben comprobar otra vez la vigencia: un usuario
-puede completar la tarjeta, archivar un tablero o perder acceso después de este paso.
-
-### Ejecutar localmente
-
-Requiere Node.js 20.6 o posterior y las migraciones aplicadas en una base de ensayo.
-En `.env.local`, configura `NEXT_PUBLIC_SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY`.
-La clave de servicio es privada; no debe llevar el prefijo `NEXT_PUBLIC_`.
-
-```sh
-# Una sola revisión de avisos pendientes
-pnpm mq:scheduler --once
-
-# Mantener el proceso activo (revisa cada 30 segundos)
-pnpm mq:scheduler
-```
-
-Opcionales: `MQ_SCHEDULER_INTERVAL_MS=30000` y `MQ_SCHEDULER_BATCH_SIZE=100`.
-El proceso termina con Ctrl+C. En un servidor con variables ya configuradas,
-ejecuta `node scripts/mq-scheduler.mjs`. Debe correr como proceso independiente;
-no se instala como bucle dentro de una petición HTTP de Next.js.
-
-Los resultados indican `queued`, `cancelled` y `expired`. `queued` confirma guardado
-en la base de datos, **no recepción por IBM MQ**. Ante error, una ejecución única
-termina con código 1; el modo continuo vuelve a intentar en el siguiente intervalo.
-No se ha activado ningún proceso permanente ni aplicado migraciones remotamente.
-
-Pendiente: validar TLS y publicación contra IBM MQ real, consumidor, cola de errores, limpieza y alertas operativas.
-
-
-## 11. Productor IBM MQ
-
-Código: `workers/mq-productor/`. Corre separado de Next.js y requiere Node.js 20.19 o posterior,
-las dependencias del proyecto y el cliente nativo IBM MQ compatible con el sistema operativo.
-En macOS, instalar `ibmmq` no instala el cliente nativo completo. Su biblioteca y repositorio
-de certificados deben estar disponibles antes de ejecutar una conexión real.
-
-```sh
-# Desde la raíz del repositorio
-pnpm --dir workers/mq-productor install --frozen-lockfile
-pnpm --dir workers/mq-productor start --once
-# Sin --once, continúa revisando eventos
-pnpm --dir workers/mq-productor start
-# Revisar los tipos del proceso independiente
-pnpm exec tsc -p workers/mq-productor/tsconfig.json --noEmit
-```
-
-Aplicar primero las migraciones 0004 a 0007 en una base de ensayo. Completar las variables
-`MQ_*` de `.env.example` en `.env.local`, sin versionar claves ni certificados privados.
-`MQ_CONNECTION_NAME` usa el formato `servidor(puerto)`; el nombre de canal, gestor y cola
-se obtienen de la configuración de IBM MQ. `MQ_TLS_PEER_NAME` identifica el certificado
-esperado del servidor. El repositorio de certificados y su formato dependen del cliente
-nativo instalado. No se incluye ninguna opción para desactivar TLS.
-
-### Envío, confirmación y reintentos
-
-1. `claim_notification_event()` reserva un evento durante 120 segundos y revalida su vigencia.
-2. El productor valida el contrato y envía JSON UTF-8 por el canal TLS.
-3. Usa mensajes persistentes y expiración en décimas de segundo, calculada con el tiempo restante.
-4. Ejecuta `MQPUT` dentro de una transacción y espera `MQCMIT` antes de registrar `PUBLISHED`.
-5. Si falla, programa reintentos con espera creciente: 5, 10, 20 y 40 segundos, hasta cinco intentos.
-
-Una reserva vencida se recupera con otro token; un token antiguo no puede confirmar eventos.
-Al agotar intentos, el evento queda `FAILED` para revisión. Esto **no es una DLQ**: todavía
-falta configurar la cola de errores y su flujo. El código no garantiza entrega si todos
-los intentos fallan; conserva el registro para diagnóstico y recuperación posterior.
-
-Si MQ recibió el mensaje pero se perdió su respuesta, o falló el guardado posterior en
-Supabase, puede repetirse el envío con el mismo `eventId`. El consumidor debe deduplicarlo
-y revisar que la tarjeta siga pendiente y accesible antes de notificar. Completar la tarjeta
-no permite retirar un mensaje ya entregado a MQ: se descarta lógicamente al consumirlo.
-El ACK del productor confirma publicación; el ACK del consumidor confirmará procesamiento.
-
-### Reparto entre las dos personas
-
-| Persona/rama | Responsabilidad |
-|---|---|
-| Tú: `feature/mq-programacion` | Fechas, responsables, migraciones, detector y productor. |
-| Compañera: `feature/mq-consumidor` | Crear/configurar IBM MQ, canal TLS, cola y accesos; desarrollar consumidor y confirmaciones. |
-| Ambos | Integrar el contrato y probar TLS, reinicio, duplicados, vencimiento y cancelación. |
-
-Para conectar, compartir nombres de gestor/cola/canal, servidor/puerto, CipherSpec y
-certificado público de confianza. Entregar contraseñas y claves privadas por un canal seguro,
-fuera del repositorio y del chat. El usuario MQ del productor necesita permiso para conectar
-y escribir en la cola; el consumidor tiene sus propios permisos de lectura/procesamiento.
-
-### Estado de verificación
-
-Las pruebas usan PostgreSQL en memoria y un cliente MQ simulado. Comprueban reservas,
-reintentos, cancelación, persistencia solicitada y orden de confirmación. No demuestran aún
-un handshake TLS real, supervivencia al reinicio del gestor ni entrega al consumidor.
-No se aplicaron migraciones remotas ni se dejó un proceso permanente ejecutándose.
-
-Referencia técnica: [cliente Node.js de IBM MQ](https://github.com/ibm-messaging/mq-mqi-nodejs).
-
-
-## 12. Ejemplos y recepción del mensaje
-
-- [Aviso preventivo](ejemplos/mq/aviso-preventivo.json): `TASK_REMINDER_DUE`.
-- [Aviso de tarjeta vencida](ejemplos/mq/aviso-vencido.json): `TASK_OVERDUE`.
-
-Los identificadores son ficticios. Los ejemplos permiten comprobar el formato;
-para probar el flujo completo se necesitan registros reales relacionados en Supabase
-y fechas vigentes. Un ejemplo cuya fecha ya pasó debe tratarse como expirado.
-
-El productor envía texto JSON UTF-8 (MQSTR, CCSID 1208), sin un envoltorio adicional.
-El consumidor debe reutilizar [el contrato compartido](../lib/mq/contrato.ts):
-
-```ts
-import { reminderEventSchema } from "@/lib/mq/contrato";
-
-// body es el Buffer recibido desde IBM MQ.
-const event = reminderEventSchema.parse(JSON.parse(body.toString("utf8")));
-```
-
-Este fragmento solo valida el formato. El consumidor debe capturar los errores de
-JSON/validación y aplicar la política de errores, sin reintentos infinitos.
-
-### Comprobaciones antes de confirmar
-
-1. Buscar el recordatorio por `reminderId`; su `user_id` identifica al destinatario.
-2. Verificar que tarjeta, workspace, tipo y versión coincidan con los datos guardados.
-3. Comprobar vigencia, tarjeta pendiente, elementos sin archivar y membresía activa.
-4. Guardar notificación y estado procesado de forma atómica, evitando duplicados por
-   `eventId` y destinatario. Cada responsable tiene su propio recordatorio y evento.
-5. Confirmar en MQ después de guardar el resultado o resolver una omisión válida.
-   Ante fallos temporales, aplicar el flujo acordado de reintentos y cola de errores.
-
-`schemaVersion` identifica el formato; `scheduleVersion`, la programación de la tarjeta.
-El `eventId` se conserva al reintentar, aunque cambie el identificador interno de MQ.
-No exigir que outbox esté en `PUBLISHED` para consumir: el mensaje puede llegar antes
-de que el productor registre esa confirmación en Supabase.
-
-Estos ejemplos no incluyen credenciales ni aplican migraciones. Ambas ramas deben
-compartir el contrato y las migraciones existentes; no crear tablas o contratos duplicados.
-
-
-## 13. Resumen de tablero con Request/Reply
-
-Esta funcionalidad es independiente del flujo de recordatorios. No modifica migraciones,
-productor, consumidor, outbox ni cola de backout.
-
-### Arquitectura
-
-```text
-Navegador
-  -> POST /api/boards/{boardId}/summary (Next.js, sesión + MFA + membresía)
-  -> puente local HTTP (workers/mq-resumen, credenciales authproducer)
-  -> AUTHCDN.SUMMARY.REQUEST.Q
-  -> worker respondedor (credenciales authconsumer, consulta Supabase)
-  -> AUTHCDN.SUMMARY.REPLY.Q
-  -> puente (MQMO_MATCH_CORREL_ID)
-  -> Next.js -> navegador
-```
-
-El cliente nativo `ibmmq` nunca se importa desde Next.js. El puente usa `Get()` asíncrono,
-no `GetSync`, para no bloquear su hilo. Cada solicitud abre su propia conexión y su propio
-handle de respuesta; `MsgId` de la solicitud se copia a `CorrelId` de la respuesta. El
-respondedor usa transacciones MQ: el GET de la solicitud y el PUT de la respuesta se
-confirman con un único `MQCMIT`.
-
-### Contrato
-
-Solicitud (`lib/mq/resumen.ts`):
-
-```json
-{
-  "schemaVersion": 1,
-  "requestId": "11111111-1111-4111-8111-111111111111",
-  "boardId": "22222222-2222-4222-8222-222222222222",
-  "userId": "33333333-3333-4333-8333-333333333333",
-  "createdAt": "2026-10-19T12:00:00.000Z",
-  "expiresAt": "2026-10-19T12:00:15.000Z"
-}
-```
-
-Respuesta:
-
-```json
-{
-  "schemaVersion": 1,
-  "requestId": "11111111-1111-4111-8111-111111111111",
-  "boardId": "22222222-2222-4222-8222-222222222222",
-  "status": "OK",
-  "generatedAt": "2026-10-19T12:00:01.000Z",
-  "stats": { "totalActive": 12, "pending": 7, "completed": 3, "overdue": 2 }
-}
-```
-
-En error, `status` es `ERROR`, `stats` es `null` y `error` contiene un código controlado:
-`INVALID_REQUEST`, `EXPIRED`, `FORBIDDEN`, `NOT_FOUND` o `INTERNAL_ERROR`.
-
-Categorías mutuamente excluyentes sobre tarjetas activas (tarjeta, lista, tablero y
-workspace sin archivar):
-
-- Completadas: `completed_at` no nulo.
-- Vencidas: no completadas con `due_at < now`.
-- Pendientes: no completadas sin `due_at` o con `due_at >= now`.
-- `totalActive = pending + completed + overdue`.
-
-### Variables nuevas
-
-Reutiliza `MQ_QUEUE_MANAGER`, `MQ_CHANNEL`, `MQ_CONNECTION_NAME`, `MQ_TLS_*` y
-`NEXT_PUBLIC_SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`. Las credenciales no cambian:
-el puente usa `MQ_PRODUCER_USERNAME`/`MQ_PRODUCER_PASSWORD`; el respondedor usa
-`MQ_USERNAME`/`MQ_PASSWORD`.
-
-```sh
-MQ_SUMMARY_REQUEST_QUEUE=AUTHCDN.SUMMARY.REQUEST.Q
-MQ_SUMMARY_REPLY_QUEUE=AUTHCDN.SUMMARY.REPLY.Q
-MQ_SUMMARY_TIMEOUT_MS=8000
-MQ_SUMMARY_REQUEST_TTL_MS=15000
-MQ_SUMMARY_WAIT_MS=5000
-MQ_SUMMARY_INTERVAL_MS=2000
-MQ_SUMMARY_MAX_ATTEMPTS=3
-MQ_SUMMARY_REPLY_TTL_MS=60000
-MQ_SUMMARY_BRIDGE_HOST=127.0.0.1
-MQ_SUMMARY_BRIDGE_PORT=4100
-MQ_SUMMARY_BRIDGE_URL=http://127.0.0.1:4100
-MQ_SUMMARY_BRIDGE_TOKEN=<secreto-largo-compartido-por-ambos-procesos>
-MQ_SUMMARY_HTTP_TIMEOUT_MS=12000
-```
-
-`MQ_SUMMARY_BRIDGE_TOKEN` debe ser el mismo en Next.js y en el puente. No debe llevar
-prefijo `NEXT_PUBLIC_` ni llegar al navegador.
-
-### Arranque local
-
-```sh
-pnpm --dir workers/mq-resumen install
-pnpm mq:resumen:respondedor
-pnpm mq:resumen:puente
-# En otra terminal:
-pnpm dev
-```
-
-Para una sola iteración del respondedor: `pnpm --dir workers/mq-resumen start:respondedor --once`.
-
-### Prueba de integración real (requiere autorización previa)
-
-1. Confirmar que las colas existen y que los permisos son los indicados en el enunciado.
-2. Añadir las variables anteriores a `.env.local` sin commitear secretos.
-3. Arrancar respondedor y puente; revisar que ambos procesos conecten por TLS.
-4. Abrir un tablero, pulsar **Resumen del tablero** y comprobar las cuatro cifras.
-5. Repetir desde dos navegadores a la vez y verificar que cada uno recibe su respuesta.
-6. Detener el respondedor y comprobar que el endpoint devuelve timeout/error controlado.
-7. Revisar que la solicitud no se confirma si falla la publicación de la respuesta.
-
-No se han ejecutado publicaciones ni consumos reales contra IBM MQ Cloud durante el
-desarrollo de este bloque. Las pruebas actuales usan clientes MQ simulados.
+| Asíncrono | Programar tarjeta, ejecutar Cron y recibir exactamente un aviso visible. |
+| Síncrono | Dos resúmenes simultáneos; cada sesión recibe su requestId/tablero. |
+| Confirmación | PUBLISHED solo tras HTTP exitoso; resultado incierto conserva recuperación. |
+| Interrupción | Cortar después de captura y después de RPC; recuperar sin perder ni duplicar aviso. |
+| Reintentos/BOQ | Cinco fallos y cuarentena; fallar PUT a BOQ y recuperar la salida persistida. |
+| TTL/retención | Expirar mensaje y reconciliar SQL; conservar pendientes/cuarentenas durante limpieza. |
+| Seguridad | JWT ausente/caducado, MFA pendiente, otro usuario y miembro retirado: acceso rechazado. |
+| Alertas | Agotar publicación y observar aviso; comprobar 502/log y supervisión de pg_net. |
+
+Publish/Subscribe continúa fuera del alcance acordado. La evidencia anterior de
+MQCMIT/MQBACK pertenece al transporte nativo histórico y no se presenta como prueba REST.

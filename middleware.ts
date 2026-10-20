@@ -14,7 +14,7 @@ type CookieToSet = {
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
   const { url, key, isConfigured } = getSupabaseConfig();
-  const privatePath = request.nextUrl.pathname.startsWith("/workspaces") || request.nextUrl.pathname.startsWith("/boards");
+  const privatePath = request.nextUrl.pathname.startsWith("/workspaces") || request.nextUrl.pathname.startsWith("/boards") || request.nextUrl.pathname.startsWith("/notifications");
   const mfaChallengePath = request.nextUrl.pathname === "/login/mfa";
 
   if (!isConfigured) {

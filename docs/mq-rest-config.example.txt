@@ -1,0 +1,20 @@
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-or-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-private-service-role-key
+NEXT_PUBLIC_SITE_URL=https://your-preview.vercel.app
+OPEN_METEO_TIMEOUT_MS=4500
+
+MQ_REST_BASE_URL=https://web-your-qmgr.qm.eu-de.mq.appdomain.cloud/ibmmq/rest/v3
+MQ_QUEUE_MANAGER=AUTHCDNQM
+MQ_QUEUE=AUTHCDN.REMINDERS.Q
+MQ_BACKOUT_QUEUE=AUTHCDN.REMINDERS.BOQ
+MQ_SUMMARY_REQUEST_QUEUE=AUTHCDN.SUMMARY.REQUEST.Q
+MQ_SUMMARY_REPLY_QUEUE=AUTHCDN.SUMMARY.REPLY.Q
+MQ_PRODUCER_USERNAME=your-producer-mq-username
+MQ_PRODUCER_PASSWORD=your-private-producer-api-key
+MQ_USERNAME=your-consumer-mq-username
+MQ_PASSWORD=your-private-consumer-api-key
+MQ_REST_TIMEOUT_MS=4000
+# Replace these placeholders with independent random secrets of 32+ characters.
+MQ_CRON_SECRET=
+MQ_POC_SECRET=

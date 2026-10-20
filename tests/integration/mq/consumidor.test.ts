@@ -66,7 +66,7 @@ beforeAll(async () => {
     grant execute on all functions in schema auth to anon,authenticated,service_role;
     alter default privileges in schema public grant all on tables to anon,authenticated,service_role;
   `);
-  for (const file of ['0001_initial.sql', '0002_profile_totp.sql', '0003_workspace_invite_rpc.sql', '0004_mq_base.sql', '0005_mq_programacion.sql', '0006_mq_scheduler.sql', '0007_mq_productor.sql', '0008_mq_consumidor.sql']) {
+  for (const file of ['0001_initial.sql', '0002_profile_totp.sql', '0003_workspace_invite_rpc.sql', '0004_mq_base.sql', '0005_mq_programacion.sql', '0006_mq_scheduler.sql', '0007_mq_productor.sql', '0008_mq_consumidor.sql', '0009_mq_rest_inbox.sql', '0010_mq_rest_maintenance.sql']) {
     await db.exec(await readFile(new URL(`supabase/migrations/${file}`, root), 'utf8'));
   }
   await db.query('insert into auth.users(id,email) values ($1,$2)', [owner, 'owner@example.test']);
@@ -241,5 +241,44 @@ describe('procesamiento de recordatorios del consumidor', () => {
     await login();
     await expect(db.query('select process_reminder_event($1::jsonb)', [JSON.stringify(evento)]))
       .rejects.toMatchObject({ code: '42501' });
+  });
+
+  it('reconcilia la expiración en Supabase conservando la confirmación de publicación', async () => {
+    const { reminderId, eventId } = await preparar();
+    await admin();
+    await db.query("update task_reminders set notify_at=now()-interval '2 hours',expires_at=now()-interval '1 hour' where id=$1", [reminderId]);
+    await db.query("update notification_outbox set status='PUBLISHED',published_at=now() where event_id=$1", [eventId]);
+    await db.exec('set role service_role');
+    await db.query('select mq_rest_maintenance()');
+    expect((await estadoRecordatorio(reminderId)).status).toBe('EXPIRED');
+    expect((await db.query<{status:string}>('select status from notification_outbox where event_id=$1', [eventId])).rows[0].status).toBe('PUBLISHED');
+  });
+
+  it('crea una alerta de fallo visible al destinatario sin duplicarla ni abrir acceso ajeno', async () => {
+    const { eventId } = await preparar();
+    await admin();
+    await db.query("update notification_outbox set status='FAILED',last_error='MAX_ATTEMPTS' where event_id=$1", [eventId]);
+    await db.exec('set role service_role');
+    await db.query('select mq_rest_maintenance()'); await db.query('select mq_rest_maintenance()');
+    await login();
+    const alerts = (await db.query<{user_id:string;message:string}>('select user_id,message from notifications')).rows;
+    expect(alerts).toHaveLength(1); expect(alerts[0].user_id).toBe(owner);
+    await login(otherCard); // unrelated identity; no workspace membership
+    expect((await db.query('select id from notifications')).rows).toHaveLength(0);
+  });
+
+  it('retiene pendientes y cuarentenas y limpia solo los registros técnicos terminados de más de 30 días', async () => {
+    await admin();
+    const messageId = `ID:${'B'.repeat(48)}`;
+    const key = (await db.query<{id:string}>("select mq_rest_capture('QM','Q',$1,'payload',null,null) as id", [messageId])).rows[0].id;
+    await db.query("update mq_rest_inbox set created_at=now()-interval '40 days' where id=$1", [key]);
+    await db.query('select mq_rest_maintenance()');
+    expect((await db.query('select id from mq_rest_inbox')).rows).toHaveLength(1);
+    await db.query("update mq_rest_inbox set state='DONE',completed_at=now()-interval '40 days',output=$2::jsonb where id=$1", [key, JSON.stringify({ queue:'CUSTOM.ERRORS', body:'error', purpose:'QUARANTINE' })]);
+    await db.query('select mq_rest_maintenance()');
+    expect((await db.query('select id from mq_rest_inbox')).rows).toHaveLength(1);
+    await db.query('update mq_rest_inbox set output=null where id=$1', [key]);
+    await db.query('select mq_rest_maintenance()');
+    expect((await db.query('select id from mq_rest_inbox')).rows).toHaveLength(0);
   });
 });

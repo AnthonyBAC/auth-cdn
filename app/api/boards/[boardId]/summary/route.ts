@@ -5,6 +5,9 @@ import { apiError } from "@/lib/api/errors";
 import { requireUser } from "@/lib/auth/require-user";
 import { ErrorPuenteResumen, solicitarResumenRemoto } from "@/lib/mq/resumen-cliente";
 
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
 type BoardRow = {
   id: string;
   workspace_id: string;

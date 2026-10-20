@@ -14,6 +14,10 @@ Supabase-backed Trello-style MVP built with Next.js App Router, Ant Design, and 
 - Non-blocking time/weather context via Open-Meteo fallback-safe server code.
 - MVP theme tokens mapped into global CSS and Ant Design theme settings.
 
+## IBM MQ Cloud
+
+El transporte vigente usa la API REST oficial de IBM MQ desde Vercel, con Supabase Cron y recuperación durable en SQL. Las operaciones del usuario conservan sesión JWT/MFA y permisos. Consulte [mensajería MQ](docs/mensajeria-mq.md) y [configuración sin secretos](docs/mq-rest-config.example.txt). El código MQI de `workers/` queda como referencia; no se ejecuta en producción junto con REST.
+
 ## Local Setup
 
 1. Install dependencies:

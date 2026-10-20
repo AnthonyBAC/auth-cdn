@@ -8,7 +8,7 @@ import {
   describirDirectorio,
   ejecutarDiagnosticoDirectorios,
   listarDirectorio
-} from "@/lib/mq/diagnostico";
+} from "./diagnostico";
 
 describe("directorios HOME/.mqm y MQ_OVERRIDE_DATA_PATH", () => {
   it("describe un directorio existente y escribible", async () => {
@@ -37,7 +37,7 @@ describe("directorios HOME/.mqm y MQ_OVERRIDE_DATA_PATH", () => {
     });
   });
 
-  it("prepara y confirma HOME/.mqm y MQ_OVERRIDE_DATA_PATH escribibles", async () => {
+  it.skipIf(process.platform === "win32")("prepara y confirma HOME/.mqm y MQ_OVERRIDE_DATA_PATH escribibles", async () => {
     const resultado = await ejecutarDiagnosticoDirectorios();
     expect(resultado.ok).toBe(true);
     if (resultado.ok) {

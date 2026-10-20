@@ -32,6 +32,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               </Link>
               <nav className="toolbar" aria-label="Primary">
                 <Link href="/workspaces">Workspaces</Link>
+                {user ? <Link href="/notifications">Avisos</Link> : null}
                 <Link href="/diagnostics/supabase">Supabase</Link>
                 {user ? null : <Link href="/login">Sign in</Link>}
               </nav>
