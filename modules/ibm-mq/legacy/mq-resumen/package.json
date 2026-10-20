@@ -1,0 +1,19 @@
+{
+  "name": "auth-cdn-mq-resumen",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "start:respondedor": "node --import tsx --env-file=../../../../.env.local iniciar-respondedor.ts",
+    "start:puente": "node --import tsx --env-file=../../../../.env.local iniciar-puente.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "ibmmq": "2.1.9",
+    "tsx": "4.23.15",
+    "zod": "^3.23.8"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20.19"
+  }
+}

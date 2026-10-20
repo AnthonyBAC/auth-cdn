@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { apiError } from "@/lib/api/errors";
 import { requireUser } from "@/lib/auth/require-user";
-import { ErrorPuenteResumen, solicitarResumenRemoto } from "@/lib/mq/resumen-cliente";
+import { ErrorPuenteResumen, solicitarResumenRemoto } from "@/modules/ibm-mq/application/resumen-cliente";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;

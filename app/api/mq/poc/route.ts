@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { createRestMq, readRestConfig } from "@/lib/mq/rest";
-import { validSecret } from "@/lib/mq/security";
+import { createRestMq, readRestConfig } from "@/modules/ibm-mq/infrastructure/rest";
+import { validSecret } from "@/modules/ibm-mq/infrastructure/security";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { createCloudMq } from "@/lib/mq/cloud";
-import { validSecret } from "@/lib/mq/security";
+import { createCloudMq } from "@/modules/ibm-mq/application/cloud";
+import { validSecret } from "@/modules/ibm-mq/infrastructure/security";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

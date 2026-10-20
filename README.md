@@ -16,7 +16,7 @@ Supabase-backed Trello-style MVP built with Next.js App Router, Ant Design, and 
 
 ## IBM MQ Cloud
 
-El transporte vigente usa la API REST oficial de IBM MQ desde Vercel, con Supabase Cron y recuperaci髇 durable en SQL. Las operaciones del usuario conservan sesi髇 JWT/MFA y permisos. Consulte [mensajer韆 MQ](docs/mensajeria-mq.md) y [configuraci髇 sin secretos](docs/mq-rest-config.example.txt). El c骴igo MQI de `workers/` queda como referencia; no se ejecuta en producci髇 junto con REST.
+El transporte vigente usa la API REST oficial de IBM MQ desde Vercel, con Supabase Cron y recuperaci贸n durable en SQL. Las operaciones del usuario conservan sesi贸n JWT/MFA y permisos. Empiece por el [mapa del m贸dulo IBM MQ](modules/ibm-mq/README.md). Consulte [mensajer铆a MQ](modules/ibm-mq/docs/mensajeria-mq.md) y [configuraci贸n sin secretos](modules/ibm-mq/config/mq-rest-config.example.txt). El c贸digo MQI de `modules/ibm-mq/legacy/` queda como referencia; no se ejecuta en producci贸n junto con REST.
 
 ## Local Setup
 
@@ -83,3 +83,10 @@ pnpm seed:supabase
 The script requires `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`,
 `SEED_PASSWORD`, `SEED_OWNER_EMAIL`, `SEED_EDITOR_EMAIL`, and `SEED_VIEWER_EMAIL`.
 Configure those values through local environment variables; do not commit real credentials.
+
+
+## Mapa del proyecto
+
+- [Estructura y responsabilidades](docs/estructura-proyecto.md).
+- [IBM MQ: c贸digo, pruebas, configuraci贸n y evidencias](modules/ibm-mq/README.md).
+- [Pruebas generales](tests/README.md).

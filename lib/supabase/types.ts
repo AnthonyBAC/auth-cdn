@@ -1,4 +1,4 @@
-import type { ReminderKind, ReminderStatus, OutboxStatus, ReminderEvent } from "@/lib/mq/contrato";
+import type { ReminderKind, ReminderStatus, OutboxStatus, ReminderEvent } from "@/modules/ibm-mq/domain/contrato";
 import type { WorkspaceRole } from "@/lib/rbac/permissions";
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];

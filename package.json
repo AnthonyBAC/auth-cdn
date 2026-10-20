@@ -16,8 +16,10 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit",
-    "mq:scheduler": "node --env-file=.env.local scripts/mq-scheduler.mjs",
-    "test:mq:rest": "vitest run tests/unit/mq/rest.test.ts tests/unit/mq/inbox.test.ts tests/unit/mq/cloud.test.ts tests/unit/mq/endpoints-rest.test.ts tests/integration/mq/rest-inbox.test.ts tests/integration/mq/consumidor.test.ts"
+    "mq:scheduler": "node --env-file=.env.local modules/ibm-mq/legacy/scripts/mq-scheduler.mjs",
+    "test:mq:rest": "vitest run modules/ibm-mq/tests/unit/rest.test.ts modules/ibm-mq/tests/unit/inbox.test.ts modules/ibm-mq/tests/unit/cloud.test.ts modules/ibm-mq/tests/unit/endpoints-rest.test.ts modules/ibm-mq/tests/integration/rest-inbox.test.ts modules/ibm-mq/tests/integration/consumidor.test.ts",
+    "mq:probe": "node --env-file=.env.local modules/ibm-mq/scripts/mq-rest-probe.mjs",
+    "test:mq": "vitest run modules/ibm-mq/tests"
   },
   "dependencies": {
     "@ant-design/icons": "^5.5.2",

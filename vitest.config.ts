@@ -8,7 +8,7 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     setupFiles: ["./tests/setup.ts"],
-    include: ["tests/**/*.test.ts", "tests/**/*.test.tsx", "workers/**/*.test.ts"]
+    include: ["tests/**/*.test.ts", "tests/**/*.test.tsx", "modules/ibm-mq/tests/**/*.test.ts"]
   },
   resolve: {
     alias: {
