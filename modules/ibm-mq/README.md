@@ -7,6 +7,7 @@ Este es el punto de entrada para encontrar el código, las pruebas y la document
 | Necesito… | Abrir |
 |---|---|
 | Entender desde cero el flujo completo, cada caso y su seguridad | [Guía actual de flujo, escenarios y seguridad](docs/flujo-completo-casos-seguridad.md) |
+| Ver headers HTTP, metadatos MQ, body JWT y opciones por cola | [Cabeceras reales del adaptador y ejemplos sin secretos](docs/flujo-completo-casos-seguridad.md#92-tres-cosas-distintas-llamadas-header) |
 | Ver los diez requisitos EV2 y sus resultados cloud anteriores a la firma | [Documento histórico de evidencias](docs/evidencias/2026-10-20-preview-refactor/requisitos-ev2-pruebas-y-resultados.md) |
 | Abrir las evidencias con imágenes en el navegador | [Informe visual](docs/evidencias/2026-10-20-preview-refactor/requisitos-ev2-pruebas-y-resultados.html) |
 | Encontrar mensajes de ejemplo | [Aviso preventivo](examples/aviso-preventivo.json) y [aviso vencido](examples/aviso-vencido.json) |

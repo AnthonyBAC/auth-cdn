@@ -14,7 +14,7 @@ Revisión documental: 21 de octubre de 2026. Repositorio `auth-cdn`, rama **`ref
 6. [ACK, persistencia, reintentos y estados](#6-ack-persistencia-reintentos-y-estados).
 7. [Mapa de escenarios y pruebas](#7-mapa-de-escenarios-y-pruebas).
 8. [Seguridad por capa](#8-seguridad-por-capa).
-9. [Configuración y tiempos](#9-configuración-y-tiempos).
+9. [Configuración, cabeceras y tiempos](#9-configuración-cabeceras-y-tiempos).
 10. [Mapa de archivos y funciones](#10-mapa-de-archivos-y-funciones).
 11. [Cómo demostrarlo sin credenciales cloud](#11-cómo-demostrarlo-sin-credenciales-cloud).
 12. [Implementado, histórico y pendiente](#12-implementado-histórico-y-pendiente).
@@ -313,7 +313,9 @@ BOQ sin `expiresAt` recibe JWT con vigencia de 24 horas, pero no TTL de transpor
 
 **Respuesta directa:** ahora hay protección en el código para el contenido mediante firma ES256; antes no se debe confundir HTTPS/credenciales externas con firma del mensaje. Esa protección está implementada y probada localmente, **no confirmada como desplegada**. Ambos roles cloud actuales se crean en Vercel con la configuración de firma; no hay separación criptográfica independiente entre dos servicios desplegados.
 
-## 9. Configuración y tiempos
+## 9. Configuración, cabeceras y tiempos
+
+### 9.1. Variables y plazos
 
 Valores reales deben permanecer privados y fuera del repositorio. [Ejemplo de configuración sin secretos](../config/mq-rest-config.example.txt) y [detalle de firma/rotación](message-signing.md).
 
@@ -340,6 +342,139 @@ Valores reales deben permanecer privados y fuera del repositorio. [Ejemplo de co
 | Retención técnica / señal de atraso | 30 días / inbox no terminado de más de 5 min | SQL 0010. |
 
 La rotación admite varias claves públicas confiables: distribuir públicas primero, después cambiar privada y `kid` firmante, y conservar la pública anterior mientras deba verificarse trabajo previo. No hay rotación automática de un gestor externo de claves implementada. Por solicitud del usuario esta revisión **solo deja código y documentación**, sin ejecutar cambios de configuración remota.
+
+### 9.2. Tres cosas distintas llamadas header
+
+Para no mezclar la autenticación de IBM con la firma del contenido:
+
+| Capa | Qué contiene | Dónde viaja / quién lo usa |
+|---|---|---|
+| Cabeceras HTTP | `Authorization`, `Content-Type`, `ibm-mq-md-*` y otras de la petición REST. | Fuera del cuerpo HTTP; IBM las usa para autenticar y recibir opciones de mensajería. |
+| Metadatos MQ / descriptor MQMD | MsgId, CorrelId, destino de respuesta, persistencia y expiración del mensaje. | IBM los administra; REST expone parte mediante cabeceras `ibm-mq-md-*`. No equivalen al JSON de negocio. |
+| Cabecera protegida JWS | `alg`, `typ`, `kid`. | Primera parte del JWT que va **en el cuerpo HTTP**; `jose` y nuestro verificador la usan. No es `Authorization: Bearer ...` para IBM. |
+
+En una sola frase: **Basic autentica la petición a IBM; el JWT del body autentica el contenido; los metadatos MQ controlan el mensaje en la cola.** La firma no convierte Basic en cifrado ni sustituye permisos de IBM.
+
+Lo siguiente describe lo que construye el código revisado, no una captura actual de tráfico cloud. Los ejemplos usan datos ficticios y omiten deliberadamente secretos. La selección de cabeceras está en [rest.ts](../infrastructure/rest.ts), dentro de `createRestMq()` → `call()`; la firma está en [message-jwt.ts](../infrastructure/message-jwt.ts).
+
+### 9.3. Cabeceras que salen hacia IBM: comunes a POST, GET y DELETE
+
+| Header HTTP | Valor exacto / origen en el código | Para qué sirve y qué no demuestra |
+|---|---|---|
+| `Authorization` | `Basic ` + Base64 de `usuario:contraseña`. Para rol `producer`: `MQ_PRODUCER_USERNAME:MQ_PRODUCER_PASSWORD`; para `consumer`: `MQ_USERNAME:MQ_PASSWORD`. | Autentica la identidad IBM; la contraseña configurada es la API key correspondiente. Base64 es reversible, no cifrado. Nunca se documentan valores reales y se exige HTTPS. No contiene el JWT del mensaje ni el de Supabase. |
+| `ibm-mq-rest-csrf-token` | Texto fijo `auth-cdn` en el adaptador de producción. | Cumple la cabecera de la interfaz REST. **No es un secreto, una firma ni una credencial suficiente**: cualquiera puede escribir ese literal. |
+| `Accept` | `text/plain`. | Solicita respuesta en texto para mensajes. No autentica el cuerpo. |
+| `Accept-Charset` | `UTF-8`. | Declara la codificación aceptada. No modifica el contrato Zod. |
+
+Estos son los headers que el adaptador establece explícitamente; la implementación HTTP de Node puede añadir otros de protocolo, como `Host` o longitud del cuerpo. No se presenta esta tabla como un volcado completo de cabeceras de red.
+
+### 9.4. Cabeceras adicionales al publicar un mensaje: POST
+
+| Header HTTP | Cuándo se envía / valor | Efecto en este proyecto |
+|---|---|---|
+| `Content-Type` | En todos los POST: `text/plain;charset=utf-8`. | El cuerpo enviado a IBM es el **token JWT firmado como texto**, no el JSON de negocio suelto. |
+| `ibm-mq-md-persistence` | En todos los POST: `persistent`. | Solicita persistencia para recordatorios, requests, replies y BOQ. No significa “ya procesado” ni demuestra una prueba real de reinicio del broker. |
+| `ibm-mq-md-expiry` | Solo si existe `options.expiresAt`: `floor(Date.parse(expiresAt) - Date.now())`, limitado a `99999999900`, convertido a texto. | Milisegundos restantes; no fecha ISO, segundos ni unidades del helper nativo. Si es inválido o `<= 0`, falla **antes del HTTP** con `EXPIRED`. BOQ sin `expiresAt` no envía este header. |
+| `ibm-mq-md-replyTo` | Solo si existe `options.replyTo`; únicamente admite el nombre configurado de la cola de respuestas. | En la solicitud de resumen indica dónde responder. El adaptador rechaza otro nombre con `REPLY_QUEUE_NOT_ALLOWED`. No redirige por sí solo el resultado de negocio. |
+| `ibm-mq-md-correlationId` | Solo si existe `options.correlationId`; formato `ID:` + 48 caracteres hexadecimales. | En la respuesta se fija al **MsgId de la solicitud**. El código normaliza a mayúsculas y rechaza un ID inválido. No es el UUID `requestId`. |
+
+La documentación oficial de IBM para [POST de mensajería REST](https://www.ibm.com/docs/en/ibm-mq/9.3.x?topic=messagingqmgrqmgrnamequeuequeuenamemessage-post) especifica el TTL en milisegundos, el prefijo `ID:` en v3 y la cabecera CSRF de valor arbitrario. IBM empieza el TTL al llegar a la cola; el código calcula el remanente antes de enviar, mientras JWT y negocio conservan sus controles de tiempo. No se debe presentar el TTL como una garantía de puntualidad absoluta.
+
+### 9.5. Qué cabeceras devuelve IBM y cuáles lee nuestra aplicación
+
+| Respuesta HTTP de IBM | Lectura efectiva en el código | Uso posterior |
+|---|---|---|
+| `ibm-mq-md-messageId` después de POST | `send()` exige `ID:` + 48 hex y devuelve el ID normalizado. Un 2xx sin ID válido no se considera publicación confirmada por este adaptador. | Guardar el resultado de transporte; en resumen sirve para capturar la solicitud y correlacionar su respuesta. La aplicación **no envía un header para asignar ese MsgId**. |
+| `ibm-mq-md-messageId` después de GET con mensaje | `browse()` lo valida y asigna a `MqMessage.id`. | Se persiste como `message_id` y se usa para DELETE filtrado y deduplicación de captura. |
+| `ibm-mq-md-correlationId` después de GET | `browse()` lo recoge; valida los IDs con prefijo `ID:`. | Se guarda en `correlation_id`; el verificador compara el contexto firmado con estos metadatos. La respuesta se busca por el CorrelId esperado. |
+| `ibm-mq-md-replyTo` después de GET | `browse()` lo recoge como texto o `null`. | Se guarda en `reply_to`; se compara con el contexto firmado y se comprueba destino permitido para solicitudes. Se normaliza el sufijo local `@gestor` al verificar. |
+| Otras cabeceras, por ejemplo persistencia/expiración/prioridad | El adaptador actual no las convierte en campos de `MqMessage` ni las utiliza para decidir el negocio. | No atribuir al código verificaciones de cabeceras de respuesta que no realiza. El cuerpo sí se conserva y autentica. |
+
+En GET, `204` se interpreta como “sin mensaje disponible”. Si hay contenido válido se guarda cuerpo y metadatos antes del DELETE. En DELETE, el adaptador comprueba éxito HTTP y descarta el cuerpo de respuesta; no lo usa como segunda fuente del evento. Un error HTTP de IBM se sanitiza a `HTTP_ERROR`; no se devuelve su cuerpo potencialmente sensible al usuario.
+
+Referencia del comportamiento de consulta y retiro: [IBM GET /message](https://www.ibm.com/docs/en/ibm-mq/9.3.x?topic=messagingqmgrqmgrnamequeuequeuenamemessage-get) y [IBM DELETE /message](https://www.ibm.com/docs/en/ibm-mq/9.3.x?topic=messagingqmgrqmgrnamequeuequeuenamemessage-delete). GET consulta sin retirar; nuestro DELETE se ejecuta por el ID ya capturado.
+
+### 9.6. Qué va en URL, query y body, no en headers
+
+```text
+{MQ_REST_BASE_URL}/messaging/qmgr/{gestor}/queue/{cola}/message
+```
+
+- **Gestor y cola de destino:** van en el path de la URL, codificados con `encodeURIComponent`; no existe en este adaptador un header `queueName` que elija el destino. `MQ_QUEUE_MANAGER` y el nombre configurado de cola determinan ese path.
+- **Filtro `messageId`:** va en la query de GET/DELETE, no en una cabecera de petición. Ejemplo conceptual: `?messageId=ID:...`; `URLSearchParams` codifica `:` como `%3A` en la URL transmitida.
+- **Filtro `correlationId`:** va en la query del GET de respuestas. Distinto del header `ibm-mq-md-correlationId`, que establece el CorrelId al publicar la respuesta.
+- **Cuerpo del POST:** el JWT firmado, que contiene `body` y contexto/claims; la clave privada nunca se incluye. El JSON de negocio contiene los identificadores UUID y sus datos según contrato.
+- **Cuerpo de GET y DELETE enviados por este adaptador:** no se proporciona uno. No se adjunta JSON ni JWT a esas peticiones.
+
+Por tanto: **el header al publicar fija metadatos; la query al leer selecciona mensajes; la URL elige la cola; el body lleva el contenido firmado.**
+
+### 9.7. Qué cambia según cola y escenario
+
+Los nombres siguientes son los valores por defecto y se pueden configurar. “Rol” significa qué conjunto de credenciales selecciona el código; los permisos efectivos se deben conceder en IBM.
+
+| Cola / operación | Rol que usa el runtime | Headers opcionales de POST y cuerpo | Cómo se recupera |
+|---|---|---|---|
+| `AUTHCDN.REMINDERS.Q`: publicar recordatorio | `producer`. | Persistencia siempre; expiry hasta `event.expiresAt`; **sin** ReplyTo ni CorrelId establecidos por esta llamada. Body JWT del evento validado. | `consumer` hace GET sin filtro específico y DELETE por MsgId después de capturar. |
+| `AUTHCDN.SUMMARY.REQUEST.Q`: publicar solicitud | `producer`. | Persistencia; expiry hasta `request.expiresAt` (30 s desde creación); ReplyTo `AUTHCDN.SUMMARY.REPLY.Q`; sin CorrelId explícito. Body JWT de request con UUID `requestId`. | `consumer` captura por MsgId en la invocación interactiva; Cron puede capturar solicitudes pendientes sin ese filtro. |
+| `AUTHCDN.SUMMARY.REPLY.Q`: publicar respuesta | `consumer`. | Persistencia; expiry de respuesta (60 s desde su creación); CorrelId igual al MsgId de request; sin ReplyTo explícito. Body JWT de reply con el mismo `requestId`. | `producer` consulta por `?correlationId=...`, captura y retira por el MsgId propio de la respuesta. |
+| `AUTHCDN.REMINDERS.BOQ`: publicar cuarentena | `consumer`. | Persistencia; sin expiry de transporte, ReplyTo ni CorrelId en esta salida. Body JWT del sobre con motivo y `originalBody`. Su JWT vence en 24 h, independientemente de la permanencia en cola. | No hay consumidor automático de BOQ implementado. Recuperación operativa/manual pendiente. |
+| `DEV.DEAD.LETTER.QUEUE`: evidencia histórica | El flujo REST de producción no la selecciona como destino de `send()`. | No confundir sus cabeceras nativas MQDLH con los headers HTTP anteriores ni con una BOQ firmada por nuestra aplicación. | Revisión histórica con herramientas/privilegios del entorno; no hay lector DLQ general en `tick()`. |
+
+**Permisos que necesita cada identidad según estas llamadas:** productora: publicar recordatorios/requests y consultar/retirar replies; consumidora: consultar/retirar recordatorios/requests y publicar replies/BOQ. Esto describe uso necesario, **no una auditoría de permisos concedidos**. La allowlist del adaptador contiene las cuatro colas para ambos roles; la separación efectiva de privilegios por identidad depende de IBM, no de que una variable se llame “producer”.
+
+### 9.8. Ejemplos completos sin credenciales reales
+
+Ejemplo de una solicitud de resumen; `mq.example`, `QM`, valores entre `<...>` y duración son ilustrativos, **no un envío capturado ni ejecutable tal cual**:
+
+```http
+POST /ibmmq/rest/v3/messaging/qmgr/QM/queue/AUTHCDN.SUMMARY.REQUEST.Q/message HTTP/1.1
+Host: mq.example
+Authorization: Basic <BASE64_USUARIO_PRODUCTOR_DOS_PUNTOS_API_KEY>
+ibm-mq-rest-csrf-token: auth-cdn
+Accept: text/plain
+Accept-Charset: UTF-8
+Content-Type: text/plain;charset=utf-8
+ibm-mq-md-persistence: persistent
+ibm-mq-md-expiry: 30000
+ibm-mq-md-replyTo: AUTHCDN.SUMMARY.REPLY.Q
+
+<JWT_ES256_DE_LA_SOLICITUD>
+```
+
+El TTL real suele ser menor que 30.000 ms por el tiempo transcurrido desde crear la solicitud. No se envía `Authorization: Bearer <JWT_ES256_DE_LA_SOLICITUD>` a IBM.
+
+Ejemplo de la respuesta; el ID ficticio que aparece como CorrelId representa el MsgId de la solicitud, no el de la nueva respuesta:
+
+```http
+POST /ibmmq/rest/v3/messaging/qmgr/QM/queue/AUTHCDN.SUMMARY.REPLY.Q/message HTTP/1.1
+Host: mq.example
+Authorization: Basic <BASE64_USUARIO_CONSUMIDOR_DOS_PUNTOS_API_KEY>
+ibm-mq-rest-csrf-token: auth-cdn
+Accept: text/plain
+Accept-Charset: UTF-8
+Content-Type: text/plain;charset=utf-8
+ibm-mq-md-persistence: persistent
+ibm-mq-md-expiry: 60000
+ibm-mq-md-correlationId: ID:111111111111111111111111111111111111111111111111
+
+<JWT_ES256_DE_LA_RESPUESTA>
+```
+
+Para encontrarla se usa GET a la cola de respuestas con query `?correlationId=ID%3A111111111111111111111111111111111111111111111111`, usando los cuatro headers comunes y la credencial productora. Una vez guardado el resultado en inbox, DELETE usa **el MsgId de esa respuesta**, no su CorrelId ni el UUID del negocio. El código no retira el mensaje equivocado usando el ID de solicitud en lugar del de respuesta.
+
+### 9.9. Qué NO se envía y qué no se debe confundir
+
+- No se envía la clave privada ES256, `SUPABASE_SERVICE_ROLE_KEY`, `MQ_CRON_SECRET` ni el JWT de sesión como credencial de IBM. Las credenciales IBM sí van en Basic, protegidas en tránsito por HTTPS.
+- No se fijan explícitamente prioridad `ibm-mq-md-priority`, propiedades `ibm-mq-usr`, `MsgType` Request/Reply ni un `BackoutCount` en estas llamadas. El patrón Request/Reply lo implementan cola, ReplyTo, CorrelId y contratos; no hay que inventar un header `ACK` o un `MQCMIT` HTTP.
+- `alg`, `typ` y `kid` están en la cabecera **JWS** dentro del body. `iss`, `aud`, `iat`, `exp`, `jti`, `body` y `context` son claims del payload JWT, no headers HTTP.
+- La verificación cruza `queue/qmgr/ReplyTo/CorrelId` con contexto firmado; no firma automáticamente todos los headers de red, la credencial Basic o cada atributo MQMD.
+- La llamada **Supabase Cron → Vercel** usa `Content-Type: application/json` y `Authorization: Bearer <MQ_CRON_SECRET>`, con cuerpo `{}`. Es otra conexión y otra autenticación, no el POST de mensajes a IBM.
+- El diagnóstico **cliente → GET /api/mq/poc** espera `x-mq-poc-secret: <MQ_POC_SECRET>`. Después usa el adaptador REST para browse; no verifica la firma del cuerpo. El script `mq:probe` usa `ibm-mq-rest-csrf-token: read-only-probe`, Basic y `Accept: text/plain`; es una herramienta separada, no el conjunto exacto de headers del runtime cloud.
+- `cache: no-store`, `redirect: error` y `AbortSignal.timeout(...)` son opciones de `fetch`, no headers IBM que nuestro código agregue con esos nombres. El `Cache-Control: no-store` que devuelven nuestras rutas pertenece a la respuesta de Vercel, no es un metadato del mensaje MQ.
+
+### 9.10. Cómo se comprueba esta sección
+
+La fuente principal son las asignaciones explícitas de `rest.ts`, las opciones de envío de `cloud.ts` y `inbox.ts`, y las rutas/SQL citados. [rest.test.ts](../tests/unit/rest.test.ts) comprueba credenciales, persistencia, TTL en milisegundos, IDs, filtros de consulta/retiro y errores; [message-jwt.test.ts](../tests/unit/message-jwt.test.ts) comprueba que el body transmitido está firmado y conserva Basic/persistencia/expiry. No se afirma que cada celda de estas tablas tenga una aserción independiente ni que se haya inspeccionado tráfico real del entorno cloud actual.
 
 ## 10. Mapa de archivos y funciones
 
