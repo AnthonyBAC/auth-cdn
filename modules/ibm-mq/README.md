@@ -14,6 +14,7 @@ Este es el punto de entrada para encontrar el código, las pruebas y la document
 | Encontrar migraciones, Cron y endpoints | [Mapa de integración](database/README.md) |
 | Ejecutar las pruebas de IBM | `pnpm test:mq` o `pnpm test:mq:rest` desde la raíz |
 | Consultar la implementación MQI anterior | [Legado nativo](legacy/README.md) |
+| Entender la firma JWT de mensajes y su activación coordinada | [Firma de mensajes](docs/message-signing.md) |
 
 ## Carpetas y responsabilidad
 

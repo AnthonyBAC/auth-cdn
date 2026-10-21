@@ -8,6 +8,7 @@ import { createInboxStore, createMqDatabase, rpc } from "../infrastructure/store
 import { calcularEstadisticas, resumenReplySchema, resumenRequestSchema, type ResumenReply } from "../domain/resumen";
 import { crearResumenStore } from "../infrastructure/tablero";
 import { publishNext } from "./productor";
+import { createMessageAuthentication, MessageAuthenticationError, withMessageSigning, type MessageAuthentication } from "../infrastructure/message-jwt";
 
 const reservation = z.object({ eventId: z.string().uuid(), lockToken: z.string().uuid(), payload: z.unknown() });
 
@@ -17,7 +18,8 @@ export function quarantine(config: RestConfig, job: InboxJob, reason = "RETRIES_
     originalBody: job.body }) };
 }
 
-export function createCloudMq(config = readRestConfig(), database?: SupabaseClient) {
+export function createCloudMq(config = readRestConfig(), database?: SupabaseClient,
+  authentication: MessageAuthentication = createMessageAuthentication(config)) {
   let deadline = Number.POSITIVE_INFINITY;
   const timeout = () => {
     const remaining = Math.floor(deadline - Date.now());
@@ -27,14 +29,22 @@ export function createCloudMq(config = readRestConfig(), database?: SupabaseClie
   const db = database ?? createMqDatabase(timeout);
   const boundedFetch: typeof fetch = (input, init) => fetch(input, { ...init,
     signal: AbortSignal.any([init?.signal ?? new AbortController().signal, AbortSignal.timeout(timeout())]) });
-  const producer = createRestMq(config, "producer", boundedFetch);
-  const consumer = createRestMq(config, "consumer", boundedFetch);
+  const producer = withMessageSigning(createRestMq(config, "producer", boundedFetch), authentication);
+  const consumer = withMessageSigning(createRestMq(config, "consumer", boundedFetch), authentication);
   const inbox = createInboxStore(db, config.MQ_QUEUE_MANAGER);
   const summaryStore = crearResumenStore(db);
 
   async function handle(job: InboxJob): Promise<Output | null> {
+    let authenticatedBody: string;
+    try {
+      authenticatedBody = await authentication.verify(job.queue_name, job.body,
+        { correlationId: job.correlation_id, replyTo: job.reply_to });
+    } catch (error) {
+      if (error instanceof MessageAuthenticationError) return quarantine(config, job, error.code);
+      throw error;
+    }
     let body: unknown;
-    try { body = JSON.parse(job.body); } catch { return quarantine(config, job, "MALFORMED_JSON"); }
+    try { body = JSON.parse(authenticatedBody); } catch { return quarantine(config, job, "MALFORMED_JSON"); }
     if (job.queue_name === config.MQ_QUEUE) {
       const parsed = reminderEventSchema.safeParse(body);
       if (!parsed.success) return quarantine(config, job, "INVALID_REMINDER");
@@ -128,12 +138,20 @@ export function createCloudMq(config = readRestConfig(), database?: SupabaseClie
       if (requestInboxId) await work(requestInboxId);
       try { await captureNext(producer, inbox, config.MQ_SUMMARY_REPLY_QUEUE, { correlationId: messageId }); }
       catch { /* Read the durable reply even if its DELETE response was lost. */ }
-      const { data, error } = await db.from("mq_rest_inbox").select("body")
+      const { data, error } = await db.from("mq_rest_inbox").select("id,body,correlation_id,reply_to")
         .eq("qmgr", config.MQ_QUEUE_MANAGER).eq("queue_name", config.MQ_SUMMARY_REPLY_QUEUE)
         .eq("correlation_id", messageId).order("created_at").limit(1).maybeSingle();
       if (error) throw new Error("No se pudo recuperar la respuesta.");
       if (data) {
-        const reply = resumenReplySchema.parse(JSON.parse(data.body));
+        let authenticatedBody: string;
+        try {
+          authenticatedBody = await authentication.verify(config.MQ_SUMMARY_REPLY_QUEUE, data.body,
+            { correlationId: data.correlation_id, replyTo: data.reply_to });
+        } catch (error) {
+          if (error instanceof MessageAuthenticationError) await work(data.id);
+          throw error;
+        }
+        const reply = resumenReplySchema.parse(JSON.parse(authenticatedBody));
         if (reply.requestId !== request.requestId || reply.boardId !== request.boardId) throw new Error("INVALID_REPLY");
         const access = await summaryStore.consultar(input.boardId, input.userId);
         if (!access.ok) return { schemaVersion: 1, requestId: request.requestId, boardId: input.boardId,

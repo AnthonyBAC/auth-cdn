@@ -19,6 +19,7 @@
     "mq:scheduler": "node --env-file=.env.local modules/ibm-mq/legacy/scripts/mq-scheduler.mjs",
     "test:mq:rest": "vitest run modules/ibm-mq/tests/unit/rest.test.ts modules/ibm-mq/tests/unit/inbox.test.ts modules/ibm-mq/tests/unit/cloud.test.ts modules/ibm-mq/tests/unit/endpoints-rest.test.ts modules/ibm-mq/tests/integration/rest-inbox.test.ts modules/ibm-mq/tests/integration/consumidor.test.ts",
     "mq:probe": "node --env-file=.env.local modules/ibm-mq/scripts/mq-rest-probe.mjs",
+    "mq:keys": "node modules/ibm-mq/scripts/generate-message-signing-keys.mjs",
     "test:mq": "vitest run modules/ibm-mq/tests"
   },
   "dependencies": {
@@ -26,6 +27,7 @@
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.45.4",
     "antd": "^5.22.5",
+    "jose": "6.2.13",
     "next": "^15.0.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

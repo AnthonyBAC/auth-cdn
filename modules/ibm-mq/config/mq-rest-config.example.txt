@@ -18,3 +18,7 @@ MQ_REST_TIMEOUT_MS=4000
 # Replace these placeholders with independent random secrets of 32+ characters.
 MQ_CRON_SECRET=
 MQ_POC_SECRET=
+MQ_MESSAGE_JWT_ISSUER=urn:auth-cdn:mq
+MQ_MESSAGE_JWT_KEY_ID=
+MQ_MESSAGE_JWT_PRIVATE_KEY=
+MQ_MESSAGE_JWT_PUBLIC_KEYS=

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createCloudMq } from "@/modules/ibm-mq/application/cloud";
 import { readRestConfig } from "@/modules/ibm-mq/infrastructure/rest";
 import type { InboxJob } from "@/modules/ibm-mq/application/inbox";
+import { testMessageAuthentication } from "../message-keys";
 
 const f = vi.hoisted(() => ({ browse: vi.fn(), remove: vi.fn(), send: vi.fn(), capture: vi.fn(), claim: vi.fn(),
   output: vi.fn(), finish: vi.fn(), retry: vi.fn(), rpc: vi.fn(), consultar: vi.fn() }));
@@ -13,6 +14,7 @@ vi.mock("@/modules/ibm-mq/infrastructure/store", () => ({ rpc: (...args: unknown
 vi.mock("../../infrastructure/tablero", () => ({ crearResumenStore: () => ({ consultar: f.consultar }) }));
 const config = readRestConfig({ MQ_REST_BASE_URL: "https://mq.example/ibmmq/rest/v3", MQ_QUEUE_MANAGER: "QM",
   MQ_PRODUCER_USERNAME: "producer", MQ_PRODUCER_PASSWORD: "private", MQ_USERNAME: "consumer", MQ_PASSWORD: "private" });
+const authentication = testMessageAuthentication(config);
 const uuid = "11111111-1111-4111-8111-111111111111";
 const id = `ID:${"A".repeat(48)}`;
 const event = { schemaVersion: 1, eventId: uuid, eventType: "TASK_REMINDER_DUE", reminderId: uuid,
@@ -20,6 +22,10 @@ const event = { schemaVersion: 1, eventId: uuid, eventType: "TASK_REMINDER_DUE",
 const job: InboxJob = { id: uuid, queue_name: config.MQ_QUEUE, message_id: id, body: JSON.stringify(event),
   state: "PENDING", correlation_id: null, reply_to: null, attempts: 1, output_attempts: 0, lock_token: uuid, output: null };
 const db = { from: vi.fn() };
+async function signedJob(input = job) {
+  return { ...input, body: await authentication.sign(input.queue_name, input.body,
+    { correlationId: input.correlation_id ?? undefined, replyTo: input.reply_to ?? undefined }) };
+}
 beforeEach(() => {
   vi.resetAllMocks(); f.claim.mockResolvedValue(null); f.browse.mockResolvedValue(null);
   f.finish.mockResolvedValue(true); f.output.mockResolvedValue(true); f.retry.mockResolvedValue(true);
@@ -28,23 +34,24 @@ beforeEach(() => {
 });
 describe("cloud reminder and request/reply processing", () => {
   it("processes reminders through the existing idempotent RPC", async () => {
-    f.claim.mockResolvedValueOnce(job);
-    const result = await createCloudMq(config, db as never).tick(10000, 1);
+    const input = await signedJob();
+    f.claim.mockResolvedValueOnce(input);
+    const result = await createCloudMq(config, db as never, authentication).tick(10000, 1);
     expect(f.rpc).toHaveBeenCalledWith(db, "process_reminder_event", { p_event: event });
-    expect(f.finish).toHaveBeenCalledWith(job); expect(f.send).not.toHaveBeenCalled(); expect(result.errors).toBe(0);
+    expect(f.finish).toHaveBeenCalledWith(input); expect(f.send).not.toHaveBeenCalled(); expect(result.errors).toBe(0);
   });
   it("routes malformed messages to the application BOQ with a stable diagnostic", async () => {
-    f.claim.mockResolvedValueOnce({ ...job, body: "not json" });
-    await createCloudMq(config, db as never).tick(10000, 1);
+    f.claim.mockResolvedValueOnce(await signedJob({ ...job, body: "not json" }));
+    await createCloudMq(config, db as never, authentication).tick(10000, 1);
     expect(f.output.mock.calls[0][1]).toMatchObject({ queue: config.MQ_BACKOUT_QUEUE, purpose: "QUARANTINE" });
     expect(JSON.parse(f.output.mock.calls[0][1].body)).toMatchObject({ reason: "MALFORMED_JSON", inboxId: uuid });
   });
   it("publishes a correlated summary only after rechecking membership in Supabase", async () => {
     const request = { schemaVersion: 1, requestId: uuid, userId: uuid, boardId: uuid,
       createdAt: "2026-01-01T00:00:00Z", expiresAt: "2099-01-01T00:00:00Z" };
-    f.claim.mockResolvedValueOnce({ ...job, queue_name: config.MQ_SUMMARY_REQUEST_QUEUE, reply_to: `${config.MQ_SUMMARY_REPLY_QUEUE}@QM`, body: JSON.stringify(request) });
+    f.claim.mockResolvedValueOnce(await signedJob({ ...job, queue_name: config.MQ_SUMMARY_REQUEST_QUEUE, reply_to: `${config.MQ_SUMMARY_REPLY_QUEUE}@QM`, body: JSON.stringify(request) }));
     f.consultar.mockResolvedValue({ ok: true, cards: [{ dueAt: null, completedAt: null }] });
-    await createCloudMq(config, db as never).tick(10000, 1);
+    await createCloudMq(config, db as never, authentication).tick(10000, 1);
     expect(f.consultar).toHaveBeenCalledWith(uuid, uuid);
     const output = f.output.mock.calls[0][1]; expect(output.correlationId).toBe(id);
     expect(JSON.parse(output.body)).toMatchObject({ requestId: uuid, boardId: uuid, status: "OK", stats: { pending: 1 } });
@@ -52,14 +59,14 @@ describe("cloud reminder and request/reply processing", () => {
   it("does not calculate or send to an arbitrary reply destination", async () => {
     const request = { schemaVersion: 1, requestId: uuid, userId: uuid, boardId: uuid,
       createdAt: "2026-01-01T00:00:00Z", expiresAt: "2099-01-01T00:00:00Z" };
-    f.claim.mockResolvedValueOnce({ ...job, queue_name: config.MQ_SUMMARY_REQUEST_QUEUE, reply_to: "UNTRUSTED.Q", body: JSON.stringify(request) });
-    await createCloudMq(config, db as never).tick(10000, 1);
+    f.claim.mockResolvedValueOnce(await signedJob({ ...job, queue_name: config.MQ_SUMMARY_REQUEST_QUEUE, reply_to: "UNTRUSTED.Q", body: JSON.stringify(request) }));
+    await createCloudMq(config, db as never, authentication).tick(10000, 1);
     expect(f.consultar).not.toHaveBeenCalled(); expect(f.send.mock.calls[0][0]).toBe(config.MQ_BACKOUT_QUEUE);
   });
   it("does not mark PUBLISHED after an uncertain HTTP send", async () => {
     f.rpc.mockImplementation(async (_, name: string) => name === "claim_notification_event" ? { eventId: uuid, lockToken: uuid, payload: event } : true);
     f.send.mockRejectedValueOnce(new Error("network timeout"));
-    const stats = await createCloudMq(config, db as never).tick(10000, 1);
+    const stats = await createCloudMq(config, db as never, authentication).tick(10000, 1);
     expect(f.rpc).toHaveBeenCalledWith(db, "finish_notification_event", { p_event_id: uuid, p_lock_token: uuid, p_result: "RETRY" });
     expect(stats.errors).toBe(1);
   });
@@ -96,12 +103,49 @@ describe("cloud reminder and request/reply processing", () => {
     });
     const firstBoard = uuid, secondBoard = "22222222-2222-4222-8222-222222222222";
     const [first, second] = await Promise.all([
-      createCloudMq(config, db as never).summary({ boardId: firstBoard, userId: uuid }),
-      createCloudMq(config, db as never).summary({ boardId: secondBoard, userId: uuid })
+      createCloudMq(config, db as never, authentication).summary({ boardId: firstBoard, userId: uuid }),
+      createCloudMq(config, db as never, authentication).summary({ boardId: secondBoard, userId: uuid })
     ]);
     expect(first.status).toBe('OK'); expect(second.status).toBe('OK');
     expect(first.boardId).toBe(firstBoard); expect(second.boardId).toBe(secondBoard);
     expect(first.requestId).not.toBe(second.requestId);
     expect(broker).toHaveLength(0);
+  });
+
+  it("quarantines unsigned input without invoking business processing and signs the BOQ output", async () => {
+    f.claim.mockResolvedValueOnce(job);
+    await createCloudMq(config, db as never, authentication).tick(10000, 1);
+    expect(f.rpc.mock.calls.some((call) => call[1] === "process_reminder_event")).toBe(false);
+    const [queue, token] = f.send.mock.calls[0];
+    expect(queue).toBe(config.MQ_BACKOUT_QUEUE);
+    expect(JSON.parse(await authentication.verify(queue, token))).toMatchObject({ reason: "INVALID_MESSAGE_SIGNATURE", originalBody: job.body });
+  });
+
+  it("rejects a corrupted signature before the reminder RPC", async () => {
+    const input = await signedJob();
+    const parts = input.body.split(".");
+    parts[2] = `${parts[2][0] === "A" ? "B" : "A"}${parts[2].slice(1)}`;
+    f.claim.mockResolvedValueOnce({ ...input, body: parts.join(".") });
+    await createCloudMq(config, db as never, authentication).tick(10000, 1);
+    expect(f.rpc.mock.calls.some((call) => call[1] === "process_reminder_event")).toBe(false);
+    expect(JSON.parse(f.output.mock.calls[0][1].body).reason).toBe("INVALID_MESSAGE_SIGNATURE");
+  });
+
+  it("signs outgoing reminders with the stable event ID before sending to IBM", async () => {
+    f.rpc.mockImplementation(async (_, name: string) => name === "claim_notification_event"
+      ? { eventId: uuid, lockToken: uuid, payload: event } : true);
+    await createCloudMq(config, db as never, authentication).tick(10000, 1);
+    const [queue, token] = f.send.mock.calls[0];
+    expect(JSON.parse(await authentication.verify(queue, token))).toEqual(event);
+    expect(f.rpc).toHaveBeenCalledWith(db, "finish_notification_event", { p_event_id: uuid, p_lock_token: uuid, p_result: "PUBLISHED" });
+  });
+
+  it("does not expose an unsigned summary reply recovered from SQL", async () => {
+    const chain = { select: () => chain, eq: () => chain, order: () => chain, limit: () => chain,
+      maybeSingle: async () => ({ data: { id: uuid, body: JSON.stringify({ status: "OK" }), correlation_id: id, reply_to: null }, error: null }) };
+    db.from.mockReturnValue(chain);
+    await expect(createCloudMq(config, db as never, authentication).summary({ boardId: uuid, userId: uuid }))
+      .rejects.toThrow("INVALID_MESSAGE_SIGNATURE");
+    expect(f.consultar).not.toHaveBeenCalled();
   });
 });
