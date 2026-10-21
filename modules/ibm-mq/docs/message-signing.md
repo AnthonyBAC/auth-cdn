@@ -1,5 +1,7 @@
 # Firma JWT de los mensajes IBM MQ
 
+Para estudiar el recorrido completo, los escenarios funcionales, los reintentos y cada capa de seguridad, empieza por la [guía de flujo completo, casos y seguridad](flujo-completo-casos-seguridad.md). Este documento amplía la configuración de firma; no acredita que esté desplegada en cloud.
+
 Esta implementación agrega autenticidad e integridad del mensaje al flujo REST cloud. Se mantiene Vercel + Supabase Cloud + IBM MQ Cloud. No utiliza el JWT de sesión del usuario y no requiere un worker local permanente.
 
 ## Recorrido

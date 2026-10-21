@@ -1,13 +1,13 @@
 # IBM MQ: mapa del módulo
 
-Este es el punto de entrada para encontrar el código, las pruebas y la documentación de IBM MQ. Las piezas se agrupan por responsabilidad: contratos pequeños, casos de uso e infraestructura. La reorganización conserva el comportamiento de la aplicación.
+Este es el punto de entrada para encontrar el código, las pruebas y la documentación de IBM MQ. Las piezas se agrupan por responsabilidad: contratos pequeños, casos de uso e infraestructura. La rama `refactor/estructura-ibm-mq` incluye firma JWT/JWS ES256 de mensajes. Su validación local no demuestra despliegue cloud: las evidencias del 20 de octubre son anteriores a esa firma.
 
 ## Empieza aquí
 
 | Necesito… | Abrir |
 |---|---|
-| Entender el flujo cloud, autenticación y recuperación | [Informe vigente](docs/evidencias/2026-10-20-preview-refactor/requisitos-ev2-pruebas-y-resultados.md) |
-| Ver los diez requisitos EV2, sus pruebas y resultados | [Documento principal de evidencias](docs/evidencias/2026-10-20-preview-refactor/requisitos-ev2-pruebas-y-resultados.md) |
+| Entender desde cero el flujo completo, cada caso y su seguridad | [Guía actual de flujo, escenarios y seguridad](docs/flujo-completo-casos-seguridad.md) |
+| Ver los diez requisitos EV2 y sus resultados cloud anteriores a la firma | [Documento histórico de evidencias](docs/evidencias/2026-10-20-preview-refactor/requisitos-ev2-pruebas-y-resultados.md) |
 | Abrir las evidencias con imágenes en el navegador | [Informe visual](docs/evidencias/2026-10-20-preview-refactor/requisitos-ev2-pruebas-y-resultados.html) |
 | Encontrar mensajes de ejemplo | [Aviso preventivo](examples/aviso-preventivo.json) y [aviso vencido](examples/aviso-vencido.json) |
 | Saber qué variables configurar | [Ejemplo sin secretos](config/mq-rest-config.example.txt) |
@@ -48,27 +48,29 @@ Los archivos `*.test.ts` están dentro de `tests/`; no se mezclan con la impleme
 | Orquestador cloud | [application/cloud.ts](application/cloud.ts) | Ejecuta el ciclo REST y el Request/Reply con presupuesto de tiempo. |
 | Cliente del resumen | [application/resumen-cliente.ts](application/resumen-cliente.ts) | Expone el resumen a la ruta API y traduce errores. |
 | Transporte IBM | [infrastructure/rest.ts](infrastructure/rest.ts) | Publica, examina y retira mensajes por HTTPS con filtros de MsgId. |
+| Autenticidad del mensaje | [infrastructure/message-jwt.ts](infrastructure/message-jwt.ts) | Firma ES256 al enviar y verifica emisor, destino, contexto y vigencia al recibir; no cifra el cuerpo. |
 | Persistencia técnica | [infrastructure/store.ts](infrastructure/store.ts) | Acceso de servidor a las RPC y al inbox de Supabase. |
 | Datos para el resumen | [infrastructure/tablero.ts](infrastructure/tablero.ts) | Consulta tarjetas y vuelve a comprobar la membresía. |
 | Acceso de máquina | [infrastructure/security.ts](infrastructure/security.ts) | Valida los secretos privados de los endpoints operativos. |
 
 ## Cómo viaja un recordatorio
 
-1. El usuario programa una tarjeta en la API existente. Vercel valida su JWT, MFA y permisos.
-2. Supabase conserva la programación. `enqueue_due_reminders` prepara el outbox al llegar la fecha.
-3. Supabase Cron llama a `/api/mq/tick` con el secreto de máquina guardado en Vault.
-4. `application/cloud.ts` usa el productor y `infrastructure/rest.ts` para publicar un mensaje persistente en IBM.
-5. El consumidor examina el mensaje, guarda su cuerpo en el inbox de Supabase y después lo retira por su MsgId.
-6. `process_reminder_event` aplica el evento de forma idempotente. Si falla, el inbox conserva el trabajo para reintentar o enviar a BOQ.
-7. El usuario consulta sus avisos mediante la API protegida con JWT y RLS.
+1. El usuario programa una tarjeta en la API existente. Vercel verifica su sesión, MFA cuando corresponde, contrato y permisos.
+2. Supabase conserva la programación y sus dos tipos de recordatorio. Cron llama cada minuto a `/api/mq/tick` con el secreto de máquina guardado en Vault.
+3. `tick()` invoca `enqueue_due_reminders`; el productor reserva un evento del outbox y valida su contrato con Zod.
+4. `withMessageSigning()` firma el cuerpo como JWT/JWS ES256 antes del POST REST HTTPS a IBM, con persistencia y TTL.
+5. El consumidor examina el mensaje, guarda el token original en el inbox de Supabase y después lo retira por su MsgId.
+6. Antes del negocio verifica el JWT, interpreta el JSON y valida Zod. Una entrada sin firma válida prepara cuarentena BOQ, también firmada.
+7. `process_reminder_event` revalida acceso, vigencia y estado, y aplica el aviso idempotentemente. El inbox conserva reintentos o salidas pendientes.
+8. El usuario consulta sus avisos mediante la API protegida con sesión y RLS.
 
-El resumen entra por la API de tableros, usa `SUMMARY.REQUEST.Q` y `SUMMARY.REPLY.Q` y relaciona las respuestas mediante MsgId/CorrelId y requestId. Se conserva la espera y recuperación ya implementadas.
+El resumen entra por la API de tableros, usa las colas configuradas de solicitud/respuesta y relaciona las respuestas mediante MsgId/CorrelId y requestId. Firma ambas direcciones, verifica antes de procesar/devolver y revalida acceso. La [guía completa](docs/flujo-completo-casos-seguridad.md) explica su espera de 20 segundos y la recuperación sin workers locales.
 
 ## Qué conserva su ubicación
 
 Next.js descubre los endpoints dentro de `app/api/`. Supabase CLI descubre las migraciones en `supabase/migrations/`. Esos archivos conservan sus rutas y están enlazados desde [database/README.md](database/README.md); no hay copias de las migraciones.
 
-Las variables reales permanecen en los archivos de entorno locales y en la configuración cloud. La documentación de pruebas vigente está en `docs/evidencias/2026-10-20-preview-refactor/`, con sus respuestas, capturas y archivos de integridad.
+Las variables reales deben permanecer fuera del repositorio. La documentación del código actual está en `docs/flujo-completo-casos-seguridad.md`; `docs/evidencias/2026-10-20-preview-refactor/` conserva las respuestas, capturas y archivos de integridad históricos anteriores a la firma. No se modificaron claves, Vault ni Cron remotos durante esta actualización.
 
 ## Comandos desde la raíz del proyecto
 
