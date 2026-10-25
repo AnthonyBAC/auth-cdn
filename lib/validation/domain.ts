@@ -20,7 +20,7 @@ export const listInput = z.object({
 export const cardInput = z.object({
   title: requiredText(200),
   description: z.string().max(10_000).optional().nullable(),
-  assigneeId: z.string().uuid().optional().nullable()
+  assigneeId: z.never({ message: "Usa assigneeIds en la programación de la tarjeta para asignar responsables." }).optional()
 });
 
 export const cardMoveInput = z.object({

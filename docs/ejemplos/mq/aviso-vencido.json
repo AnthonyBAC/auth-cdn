@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "eventId": "bc40408d-4c09-4d64-9f14-0b47d29cc6d5",
+  "eventType": "TASK_OVERDUE",
+  "reminderId": "6d176f59-550a-4ccc-a464-de34eb46c6b6",
+  "cardId": "33086fde-719d-4724-9b05-b6f6947e0c59",
+  "workspaceId": "fe962a07-38d5-4124-a67f-09e631abf5e6",
+  "scheduleVersion": 2,
+  "occurredAt": "2026-10-20T18:00:00.000Z",
+  "expiresAt": "2026-10-21T18:00:00.000Z"
+}

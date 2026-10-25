@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "mq:scheduler": "node --env-file=.env.local scripts/mq-scheduler.mjs"
   },
   "dependencies": {
     "@ant-design/icons": "^5.5.2",
@@ -25,6 +26,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.10",
     "@playwright/test": "^1.49.1",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",

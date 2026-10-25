@@ -1,3 +1,4 @@
+import type { ReminderKind, ReminderStatus, OutboxStatus, ReminderEvent } from "@/lib/mq/contrato";
 import type { WorkspaceRole } from "@/lib/rbac/permissions";
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
@@ -60,7 +61,55 @@ export type Card = {
   title: string;
   description: string | null;
   position: number;
+  created_by_user_id: string | null;
+  notify_at: string | null;
+  due_at: string | null;
+  completed_at: string | null;
+  schedule_version: number;
   created_at: string;
   updated_at: string;
   archived_at: string | null;
+};
+
+
+export type TaskReminder = {
+  id: string;
+  card_id: string;
+  user_id: string;
+  kind: ReminderKind;
+  schedule_version: number;
+  due_at: string;
+  notify_at: string;
+  expires_at: string;
+  status: ReminderStatus;
+  created_at: string;
+  updated_at: string;
+  processed_at: string | null;
+};
+
+export type NotificationOutbox = {
+  event_id: string;
+  reminder_id: string;
+  payload: ReminderEvent;
+  status: OutboxStatus;
+  attempts: number;
+  next_attempt_at: string;
+  lock_token: string | null;
+  locked_until: string | null;
+  last_error: string | null;
+  created_at: string;
+  updated_at: string;
+  published_at: string | null;
+};
+
+export type Notification = {
+  id: string;
+  event_id: string;
+  reminder_id: string | null;
+  card_id: string;
+  user_id: string;
+  message: string;
+  created_at: string;
+  updated_at: string;
+  read_at: string | null;
 };
