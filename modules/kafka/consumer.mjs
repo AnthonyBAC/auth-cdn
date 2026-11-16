@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { readFile, rename, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 
@@ -27,9 +28,21 @@ const consumer = kafka.consumer({
   allowAutoTopicCreation: false
 });
 
+const metricsToken = process.env.KAFKA_METRICS_TOKEN ?? "";
+const metricsAuthorization = Buffer.from(`Bearer ${metricsToken}`);
+
 const server = createServer((request, response) => {
   if (request.method !== "GET" || request.url !== "/metrics") {
     response.writeHead(404).end();
+    return;
+  }
+  if (metricsToken.length < 32) {
+    response.writeHead(503).end();
+    return;
+  }
+  const provided = Buffer.from(request.headers.authorization ?? "");
+  if (provided.length !== metricsAuthorization.length || !timingSafeEqual(provided, metricsAuthorization)) {
+    response.writeHead(401, { "Cache-Control": "no-store" }).end();
     return;
   }
   response.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" });

@@ -54,6 +54,7 @@ services:
     environment:
       KAFKA_BROKERS: kafka:29092
       KAFKA_METRICS_STATE_FILE: /app/data/metrics-state.json
+      KAFKA_METRICS_TOKEN: ${KAFKA_METRICS_TOKEN:-}
     ports:
       - "127.0.0.1:9102:9102"
     volumes:

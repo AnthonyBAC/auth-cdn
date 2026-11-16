@@ -68,7 +68,7 @@ export default async function BoardPage({ params }: { params: Promise<{ boardId:
     <section className="grid">
       <ContextPanel context={context} />
       <BoardView boardId={boardId} title={board.title} lists={lists ?? []} canEdit={canManageContent(membership.role as WorkspaceRole)}
-        members={memberOptions((members ?? []) as MemberProfileRow[])} timeZone={timeZone} showActivityMetrics={process.env.KAFKA_ENABLED === "true"} />
+        members={memberOptions((members ?? []) as MemberProfileRow[])} timeZone={timeZone} />
     </section>
   );
 }

@@ -5,16 +5,15 @@ import { Alert, Button, Card, Form, Input, Modal, Select, Space, Tag, Typography
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { BoardActivity } from "@/components/board/board-activity";
 import { BoardSummary } from "@/components/board/board-summary";
 import { CardSchedulingForm } from "@/components/board/programacion-tarjeta";
 import { requestJson } from "@/lib/api/peticiones";
 import { formatCardDate } from "@/lib/cards/fechas";
 import type { BoardCard, BoardColumn, AssigneeOption } from "@/lib/cards/tipos";
 
-export function BoardView({ boardId, title, lists, canEdit, members, timeZone, showActivityMetrics = false }: {
+export function BoardView({ boardId, title, lists, canEdit, members, timeZone }: {
   boardId: string; title: string; lists: BoardColumn[]; canEdit: boolean;
-  members: AssigneeOption[]; timeZone: string; showActivityMetrics?: boolean;
+  members: AssigneeOption[]; timeZone: string;
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +60,6 @@ export function BoardView({ boardId, title, lists, canEdit, members, timeZone, s
         {!canEdit ? <Alert showIcon type="info" message="Tu rol permite ver el tablero, pero no modificarlo." /> : null}
       </div>
       {error ? <Alert showIcon type="error" message={error} /> : null}
-      {showActivityMetrics ? <BoardActivity key={boardId} boardId={boardId} lists={lists} /> : null}
       <BoardSummary boardId={boardId} />
       {canEdit ? (
         <Card>

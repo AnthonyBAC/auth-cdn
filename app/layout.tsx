@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { isActivityAdmin } from "@/lib/auth/activity-admin";
 import { Providers } from "@/app/providers";
 import { getSupabaseConfig } from "@/lib/supabase/config";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -33,6 +34,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <nav className="toolbar" aria-label="Primary">
                 <Link href="/workspaces">Workspaces</Link>
                 {user ? <Link href="/notifications">Avisos</Link> : null}
+                {isActivityAdmin(user) ? <Link href="/admin/activity">Dashboard</Link> : null}
                 <Link href="/diagnostics/supabase">Supabase</Link>
                 {user ? null : <Link href="/login">Sign in</Link>}
               </nav>
