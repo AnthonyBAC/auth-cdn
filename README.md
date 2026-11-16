@@ -20,7 +20,7 @@ El transporte vigente usa la API REST oficial de IBM MQ desde Vercel, con Supaba
 
 ## Apache Kafka local
 
-La actividad de movimientos de tarjetas se puede publicar en Kafka desde el tablero. Consulta la [configuración y demostración en Docker](modules/kafka/README.md).
+Los movimientos de tarjetas se pueden publicar en Kafka y alimentar métricas por tablero en tiempo real. Consulta la [configuración y demostración en Docker](modules/kafka/README.md).
 
 ## Local Setup
 

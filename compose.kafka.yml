@@ -53,7 +53,13 @@ services:
         condition: service_completed_successfully
     environment:
       KAFKA_BROKERS: kafka:29092
+      KAFKA_METRICS_STATE_FILE: /app/data/metrics-state.json
+    ports:
+      - "127.0.0.1:9102:9102"
+    volumes:
+      - kafka-metrics:/app/data
     restart: on-failure
 
 volumes:
   kafka-data:
+  kafka-metrics:
