@@ -28,16 +28,21 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <Providers>
           <main className="shell">
             <header className="topbar">
-              <Link className="brand" href="/workspaces">
+              <Link className="brand" href={user ? "/workspaces" : "/login"}>
                 Auth DCN
               </Link>
-              <nav className="toolbar" aria-label="Primary">
-                <Link href="/workspaces">Workspaces</Link>
-                {user ? <Link href="/notifications">Avisos</Link> : null}
-                {isActivityAdmin(user) ? <Link href="/admin/activity">Dashboard</Link> : null}
-                <Link href="/diagnostics/supabase">Supabase</Link>
-                {user ? null : <Link href="/login">Sign in</Link>}
-              </nav>
+              {user ? (
+                <nav className="toolbar" aria-label="Primary">
+                  <Link href="/workspaces">Workspaces</Link>
+                  <Link href="/notifications">Avisos</Link>
+                  {isActivityAdmin(user) ? (
+                    <>
+                      <Link href="/admin/activity">Dashboard</Link>
+                      <Link href="/diagnostics/supabase">Supabase</Link>
+                    </>
+                  ) : null}
+                </nav>
+              ) : null}
             </header>
             {children}
           </main>

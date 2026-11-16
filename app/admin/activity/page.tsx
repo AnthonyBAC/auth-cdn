@@ -4,6 +4,8 @@ import { ActivityDashboard } from "@/components/admin/activity-dashboard";
 import { isActivityAdmin } from "@/lib/auth/activity-admin";
 import { requireUser } from "@/lib/auth/require-user";
 
+import { getActivityMetricsConfig } from "@/modules/kafka/activity-config";
+
 export default async function ActivityPage() {
   const session = await requireUser();
   if (session.error) {
@@ -11,12 +13,14 @@ export default async function ActivityPage() {
   }
   if (!isActivityAdmin(session.user)) redirect("/workspaces");
 
+  const config = getActivityMetricsConfig();
+
   return (
     <div className="grid">
       <h1 style={{ margin: 0 }}>Dashboard de actividad</h1>
-      {process.env.KAFKA_ENABLED === "true" && (process.env.KAFKA_METRICS_TOKEN?.length ?? 0) >= 32
+      {config.enabled
         ? <ActivityDashboard />
-        : <p className="panel">Las métricas de Kafka no están configuradas en este entorno.</p>}
+        : <p className="panel">{config.message}</p>}
     </div>
   );
 }

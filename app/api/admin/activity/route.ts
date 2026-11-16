@@ -6,6 +6,8 @@ import { apiError } from "@/lib/api/errors";
 import { isActivityAdmin } from "@/lib/auth/activity-admin";
 import { requireUser } from "@/lib/auth/require-user";
 
+import { getActivityMetricsConfig } from "@/modules/kafka/activity-config";
+
 const movementCount = z.number().int().nonnegative();
 const totals = { totalMovements: movementCount, movementsLastMinute: movementCount };
 const metricsSchema = z.object({
@@ -27,15 +29,13 @@ export async function GET() {
   if (session.error) return session.error;
   if (!isActivityAdmin(session.user)) return apiError("FORBIDDEN", "El dashboard requiere acceso administrativo.");
 
-  const token = process.env.KAFKA_METRICS_TOKEN;
-  if (process.env.KAFKA_ENABLED !== "true" || !token || token.length < 32) {
-    return apiError("SERVICE_UNAVAILABLE", "Las métricas de Kafka no están configuradas.");
-  }
+  const config = getActivityMetricsConfig();
+  if (!config.enabled) return apiError("SERVICE_UNAVAILABLE", config.message);
 
   try {
-    const response = await fetch(process.env.KAFKA_METRICS_URL || "http://127.0.0.1:9102/metrics", {
+    const response = await fetch(config.url, {
       cache: "no-store",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${config.token}` },
       signal: AbortSignal.timeout(1_500)
     });
     if (!response.ok) return apiError("BAD_GATEWAY", "Las métricas no están disponibles.");
