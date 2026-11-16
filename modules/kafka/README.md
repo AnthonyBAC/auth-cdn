@@ -19,12 +19,14 @@ El tablero publica `CARD_MOVED` cuando Supabase confirma una solicitud de movimi
    docker compose -f compose.kafka.yml logs -f kafka-consumer
    ```
 
-4. En el tablero, mueve una tarjeta a otra lista con un usuario `owner` o `editor`. Abre [las métricas locales](http://127.0.0.1:9102/metrics) y revisa cómo cambian los contadores del tablero y de la lista destino.
+4. En el tablero, mueve una tarjeta a otra lista con un usuario `owner` o `editor`. Observa cómo se actualizan el contador y la barra de la lista destino en **Actividad en tiempo real**, dentro del tablero.
 5. Para comprobar la recuperación, detén solo el consumidor con `docker compose -f compose.kafka.yml stop kafka-consumer`, mueve otra tarjeta y vuelve a iniciarlo con `docker compose -f compose.kafka.yml start kafka-consumer`. El mismo grupo reanuda el consumo según su offset confirmado.
 
 El servicio `kafka-init` crea el topic `auth-cdn.card-events.v1` con una partición y una réplica. Sale con código 0 al completar su trabajo. `kafka` y `kafka-consumer` quedan en ejecución. El broker publica el puerto 9092 solo en el equipo local. El volumen del broker conserva los registros y offsets al ejecutar `docker compose -f compose.kafka.yml down`.
 
 ## Métricas en tiempo real
+
+El panel del tablero consulta las métricas cada dos segundos cuando `KAFKA_ENABLED=true`. Usa los nombres de las listas del tablero y conserva la última lectura si el consumidor se desconecta. La ruta de Next.js comprueba que la sesión tenga acceso al tablero antes de devolver sus métricas. El servidor usa `KAFKA_METRICS_URL` cuando el consumidor está en una dirección distinta de la local.
 
 `GET http://127.0.0.1:9102/metrics` devuelve el total de movimientos y el total del último minuto, tanto globales como por tablero. Cada tablero muestra además el acumulado por lista destino. La ventana de 60 segundos usa la hora del evento y se calcula al consultar, así que disminuye aunque no lleguen movimientos nuevos.
 
