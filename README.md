@@ -18,6 +18,10 @@ Supabase-backed Trello-style MVP built with Next.js App Router, Ant Design, and 
 
 El transporte vigente usa la API REST oficial de IBM MQ desde Vercel, con Supabase Cron y recuperación durable en SQL. Las operaciones del usuario conservan sesión JWT/MFA y permisos. Empiece por el [mapa del módulo IBM MQ](modules/ibm-mq/README.md). Consulte [último informe de pruebas](modules/ibm-mq/docs/evidencias/2026-10-20-preview-refactor/requisitos-ev2-pruebas-y-resultados.md) y [configuración sin secretos](modules/ibm-mq/config/mq-rest-config.example.txt). El código MQI de `modules/ibm-mq/legacy/` queda como referencia; no se ejecuta en producción junto con REST.
 
+## Apache Kafka local
+
+La actividad de movimientos de tarjetas se puede publicar en Kafka desde el tablero. Consulta la [configuración y demostración en Docker](modules/kafka/README.md).
+
 ## Local Setup
 
 1. Install dependencies:

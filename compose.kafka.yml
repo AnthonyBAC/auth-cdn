@@ -1,0 +1,59 @@
+services:
+  kafka:
+    image: apache/kafka:4.4.0
+    ports:
+      - "127.0.0.1:9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: INTERNAL://:29092,EXTERNAL://:9092,CONTROLLER://:29093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://127.0.0.1:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_HEAP_OPTS: -Xms256m -Xmx512m
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD", "/opt/kafka/bin/kafka-topics.sh", "--bootstrap-server", "kafka:29092", "--list"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 10s
+
+  kafka-init:
+    image: apache/kafka:4.4.0
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: ["/opt/kafka/bin/kafka-topics.sh"]
+    command:
+      - --bootstrap-server
+      - kafka:29092
+      - --create
+      - --if-not-exists
+      - --topic
+      - auth-cdn.card-events.v1
+      - --partitions
+      - "1"
+      - --replication-factor
+      - "1"
+
+  kafka-consumer:
+    build:
+      context: .
+      dockerfile: modules/kafka/Dockerfile
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+    environment:
+      KAFKA_BROKERS: kafka:29092
+    restart: on-failure
+
+volumes:
+  kafka-data:

@@ -28,6 +28,7 @@
     "@supabase/supabase-js": "^2.45.4",
     "antd": "^5.22.5",
     "jose": "6.2.13",
+    "kafkajs": "2.2.4",
     "next": "^15.0.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
