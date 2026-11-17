@@ -1,0 +1,65 @@
+{
+  "origin": "https://auth-pawu47st3-anthonys-projects-0d8acba7.vercel.app",
+  "records": [
+    {
+      "id": "PREVIEW-LOGIN",
+      "title": "PREVIEW-LOGIN",
+      "at": "2026-10-20T18:23:01.667Z",
+      "result": "PASS",
+      "kind": "LIVE_ACCESS_CHECK",
+      "evidence": {
+        "request": {
+          "method": "GET",
+          "path": "/login",
+          "credentialsProvided": false
+        },
+        "status": 200,
+        "body": {
+          "contentType": "text/html; charset=utf-8",
+          "bytes": 14951
+        }
+      }
+    },
+    {
+      "id": "NO-JWT",
+      "title": "NO-JWT",
+      "at": "2026-10-20T18:23:02.178Z",
+      "result": "PASS",
+      "kind": "LIVE_ACCESS_CHECK",
+      "evidence": {
+        "request": {
+          "method": "GET",
+          "path": "/api/notifications",
+          "credentialsProvided": false
+        },
+        "status": 401,
+        "body": {
+          "error": {
+            "code": "UNAUTHENTICATED",
+            "message": "Sign in to continue.",
+            "details": {}
+          }
+        }
+      }
+    },
+    {
+      "id": "POC-NO-LOCAL-SECRET",
+      "title": "POC-NO-LOCAL-SECRET",
+      "at": "2026-10-20T18:23:03.550Z",
+      "result": "LIMITED",
+      "kind": "LIVE_ACCESS_CHECK",
+      "evidence": {
+        "request": {
+          "method": "GET",
+          "path": "/api/mq/poc",
+          "credentialsProvided": false
+        },
+        "status": 401,
+        "body": {
+          "error": "UNAUTHORIZED"
+        },
+        "note": "No existe MQ_POC_SECRET en el archivo local. Se comprobó rechazo sin secreto; no se verificó la llamada autorizada del diagnóstico. La API de procesamiento y el Request/Reply sí se validan con sus credenciales."
+      }
+    }
+  ]
+}

@@ -1,0 +1,227 @@
+{
+  "runTag": "MQ-E2E-20261020181439",
+  "origin": "https://auth-pawu47st3-anthonys-projects-0d8acba7.vercel.app",
+  "cards": {
+    "normal": {
+      "id": "781ea7cf-f469-44eb-9eeb-ffd32f244912",
+      "title": "MQ-E2E-20261020181439 normal",
+      "description": "Datos aislados para evidencia de mensajería REST.",
+      "position": 0,
+      "list_id": "a1ad2af9-cfa5-4005-809c-4365bc6f86ff",
+      "created_by_user_id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+      "due_at": "2026-10-20T18:36:15.957+00:00",
+      "notify_at": "2026-10-20T18:16:21.957+00:00",
+      "completed_at": null,
+      "schedule_version": 2,
+      "assignee_ids": []
+    },
+    "completar": {
+      "id": "e2f1e1f2-cd30-4755-b263-fea751992017",
+      "title": "MQ-E2E-20261020181439 completar",
+      "description": "Datos aislados para evidencia de mensajería REST.",
+      "position": 1,
+      "list_id": "a1ad2af9-cfa5-4005-809c-4365bc6f86ff",
+      "created_by_user_id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+      "due_at": "2026-10-20T18:36:17.3+00:00",
+      "notify_at": "2026-10-20T18:16:23.3+00:00",
+      "completed_at": null,
+      "schedule_version": 2,
+      "assignee_ids": []
+    },
+    "cancelar": {
+      "id": "162d9735-3d5e-4d5d-9adc-5ec910e864c4",
+      "title": "MQ-E2E-20261020181439 cancelar",
+      "description": "Datos aislados para evidencia de mensajería REST.",
+      "position": 2,
+      "list_id": "a1ad2af9-cfa5-4005-809c-4365bc6f86ff",
+      "created_by_user_id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+      "due_at": "2026-10-20T18:36:18.728+00:00",
+      "notify_at": "2026-10-20T18:16:24.728+00:00",
+      "completed_at": null,
+      "schedule_version": 2,
+      "assignee_ids": []
+    },
+    "alerta": {
+      "id": "40fa8c16-8134-4e80-8abb-43d21d3fa5a8",
+      "title": "MQ-E2E-20261020181439 alerta",
+      "description": "Datos aislados para evidencia de mensajería REST.",
+      "position": 3,
+      "list_id": "a1ad2af9-cfa5-4005-809c-4365bc6f86ff",
+      "created_by_user_id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+      "due_at": "2026-10-20T18:39:31.333+00:00",
+      "notify_at": "2026-10-20T18:21:31.333+00:00",
+      "completed_at": null,
+      "schedule_version": 2,
+      "assignee_ids": []
+    },
+    "expiracion-sql": {
+      "id": "4e9b8f30-868f-4998-bcf7-c0c0362dfe37",
+      "title": "MQ-E2E-20261020181439 expiracion-sql",
+      "description": "Datos aislados para evidencia de mensajería REST.",
+      "position": 4,
+      "list_id": "a1ad2af9-cfa5-4005-809c-4365bc6f86ff",
+      "created_by_user_id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+      "due_at": "2026-10-20T18:39:34.19+00:00",
+      "notify_at": "2026-10-20T18:21:34.19+00:00",
+      "completed_at": null,
+      "schedule_version": 2,
+      "assignee_ids": []
+    },
+    "vencimiento": {
+      "id": "819e0ad9-fa08-4f78-95ea-5dfb22ccac31",
+      "title": "MQ-E2E-20261020181439 vencimiento",
+      "description": "Datos aislados para evidencia de mensajería REST.",
+      "position": 5,
+      "list_id": "a1ad2af9-cfa5-4005-809c-4365bc6f86ff",
+      "created_by_user_id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+      "due_at": "2026-10-20T18:20:15.272+00:00",
+      "notify_at": "2026-10-20T18:19:50.272+00:00",
+      "completed_at": null,
+      "schedule_version": 2,
+      "assignee_ids": []
+    },
+    "version-antigua": {
+      "id": "f0c43e09-1517-4a8c-8cf1-0fd8a0a95c23",
+      "title": "MQ-E2E-20261020181439 version-antigua",
+      "description": "Datos aislados para evidencia de mensajería REST.",
+      "position": 6,
+      "list_id": "a1ad2af9-cfa5-4005-809c-4365bc6f86ff",
+      "created_by_user_id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+      "due_at": "2026-10-20T18:50:55.347+00:00",
+      "notify_at": "2026-10-20T18:23:55.347+00:00",
+      "completed_at": null,
+      "schedule_version": 3,
+      "assignee_ids": []
+    },
+    "cron-autonomo": {
+      "id": "26d1cf68-ee61-472c-a2fb-16325e12ec4b",
+      "title": "MQ-E2E-20261020181439 cron-autonomo",
+      "description": "Datos aislados para evidencia de mensajería REST.",
+      "position": 10,
+      "list_id": "a1ad2af9-cfa5-4005-809c-4365bc6f86ff",
+      "created_by_user_id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+      "due_at": "2026-10-20T18:59:17.793+00:00",
+      "notify_at": "2026-10-20T18:30:11.892+00:00",
+      "completed_at": null,
+      "schedule_version": 2,
+      "assignee_ids": []
+    }
+  },
+  "boards": [
+    {
+      "id": "9dbe1264-eccd-4342-a7d8-3524727a333a",
+      "title": "MQ-E2E-20261020181439 tablero 1",
+      "position": 0
+    },
+    {
+      "id": "5e3fddbf-3724-45dd-a1e4-664416ab4136",
+      "title": "MQ-E2E-20261020181439 tablero 2",
+      "position": 1
+    }
+  ],
+  "ownerId": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+  "workspaceId": "1f4af17f-2074-4bcc-bcb2-ed118f3b84df",
+  "listId": "a1ad2af9-cfa5-4005-809c-4365bc6f86ff",
+  "requestedScreenshots": [
+    {
+      "name": "03-workspace-ensayo.png",
+      "url": "/workspaces/1f4af17f-2074-4bcc-bcb2-ed118f3b84df"
+    },
+    {
+      "name": "04-tablero-ensayo.png",
+      "url": "/boards/9dbe1264-eccd-4342-a7d8-3524727a333a"
+    },
+    {
+      "name": "05-avisos-owner.png",
+      "url": "/notifications"
+    },
+    {
+      "name": "06-avisos-entregados.png",
+      "url": "/notifications"
+    },
+    {
+      "name": "08-tablero-despues-casos.png",
+      "url": "/boards/9dbe1264-eccd-4342-a7d8-3524727a333a"
+    },
+    {
+      "name": "09-avisos-despues-casos.png",
+      "url": "/notifications"
+    },
+    {
+      "name": "10-alerta-fallo.png",
+      "url": "/notifications"
+    },
+    {
+      "name": "11-avisos-vencimiento.png",
+      "url": "/notifications"
+    },
+    {
+      "name": "12-tablero-final.png",
+      "url": "/boards/9dbe1264-eccd-4342-a7d8-3524727a333a"
+    }
+  ],
+  "noticeIds": [
+    "34416025-503d-47d6-9639-ac8f97c6abe5"
+  ],
+  "quarantines": [
+    {
+      "name": "malformed",
+      "inboxId": "18dbf8d7-cb1d-4134-9888-5ebacd5d86ce",
+      "messageId": "ID:414d51204155544843444e514d2020203736d56a22b32140",
+      "output": {
+        "body": "{\"schemaVersion\":1,\"type\":\"MQ_REST_QUARANTINE\",\"inboxId\":\"18dbf8d7-cb1d-4134-9888-5ebacd5d86ce\",\"sourceQueue\":\"AUTHCDN.REMINDERS.Q\",\"messageId\":\"ID:414D51204155544843444E514D2020203736D56A22B32140\",\"reason\":\"MALFORMED_JSON\",\"attempts\":1,\"originalBody\":\"{\\\"run\\\":\\\"MQ-E2E-20261020181439\\\",\\\"broken\\\":\"}",
+        "queue": "AUTHCDN.REMINDERS.BOQ",
+        "purpose": "QUARANTINE"
+      }
+    },
+    {
+      "name": "invalid-contract",
+      "inboxId": "79169929-376f-4e9b-b87e-3ed5abfdc81e",
+      "messageId": "ID:414d51204155544843444e514d2020203736d56a19491e40",
+      "output": {
+        "body": "{\"schemaVersion\":1,\"type\":\"MQ_REST_QUARANTINE\",\"inboxId\":\"79169929-376f-4e9b-b87e-3ed5abfdc81e\",\"sourceQueue\":\"AUTHCDN.REMINDERS.Q\",\"messageId\":\"ID:414D51204155544843444E514D2020203736D56A19491E40\",\"reason\":\"INVALID_REMINDER\",\"attempts\":1,\"originalBody\":\"{\\\"schemaVersion\\\":999,\\\"testRun\\\":\\\"MQ-E2E-20261020181439\\\"}\"}",
+        "queue": "AUTHCDN.REMINDERS.BOQ",
+        "purpose": "QUARANTINE"
+      }
+    },
+    {
+      "name": "permanent-mismatch",
+      "inboxId": "96319b8a-4ab5-4a45-a02d-17acab8503ff",
+      "messageId": "ID:414d51204155544843444e514d2020203736d56a23b32140",
+      "output": {
+        "body": "{\"schemaVersion\":1,\"type\":\"MQ_REST_QUARANTINE\",\"inboxId\":\"96319b8a-4ab5-4a45-a02d-17acab8503ff\",\"sourceQueue\":\"AUTHCDN.REMINDERS.Q\",\"messageId\":\"ID:414D51204155544843444E514D2020203736D56A23B32140\",\"reason\":\"PERMANENT_ERROR\",\"attempts\":1,\"originalBody\":\"{\\\"cardId\\\":\\\"781ea7cf-f469-44eb-9eeb-ffd32f244912\\\",\\\"eventId\\\":\\\"baa9427c-8199-4364-beb6-02299000ad5e\\\",\\\"eventType\\\":\\\"TASK_REMINDER_DUE\\\",\\\"expiresAt\\\":\\\"2026-10-20T18:36:15.957Z\\\",\\\"occurredAt\\\":\\\"2026-10-20T18:16:29.787Z\\\",\\\"reminderId\\\":\\\"2438f624-0c7a-4a37-ab5a-f371bb625646\\\",\\\"workspaceId\\\":\\\"7a9f7996-b421-47ac-b003-cc05acb10f7b\\\",\\\"schemaVersion\\\":1,\\\"scheduleVersion\\\":2}\"}",
+        "queue": "AUTHCDN.REMINDERS.BOQ",
+        "purpose": "QUARANTINE"
+      }
+    },
+    {
+      "name": "invalid-reply-destination",
+      "inboxId": "6384fb61-86a8-4451-8b97-df91410d62bd",
+      "messageId": "ID:414d51204155544843444e514d2020203736d56a1a491e40",
+      "output": {
+        "body": "{\"schemaVersion\":1,\"type\":\"MQ_REST_QUARANTINE\",\"inboxId\":\"6384fb61-86a8-4451-8b97-df91410d62bd\",\"sourceQueue\":\"AUTHCDN.SUMMARY.REQUEST.Q\",\"messageId\":\"ID:414D51204155544843444E514D2020203736D56A1A491E40\",\"reason\":\"INVALID_REPLY_DESTINATION\",\"attempts\":1,\"originalBody\":\"{\\\"schemaVersion\\\":1,\\\"requestId\\\":\\\"09992ccc-ae7d-48b6-933d-6f6106e03188\\\",\\\"boardId\\\":\\\"9dbe1264-eccd-4342-a7d8-3524727a333a\\\",\\\"userId\\\":\\\"45e0ff79-940c-4230-bd97-bb9e0572e0f0\\\",\\\"createdAt\\\":\\\"2026-10-20T18:17:05.864Z\\\",\\\"expiresAt\\\":\\\"2026-10-20T18:18:05.864Z\\\"}\"}",
+        "queue": "AUTHCDN.REMINDERS.BOQ",
+        "purpose": "QUARANTINE"
+      }
+    },
+    {
+      "name": "retry-recovery",
+      "inboxId": "d787888a-3961-488d-bedf-0efc3c5179dd",
+      "messageId": "ID:5960DA422F4E0D423A9D999F672FF40C6C56F3E4FDB267B4",
+      "output": {
+        "queue": "AUTHCDN.REMINDERS.BOQ",
+        "body": "{\"schemaVersion\":1,\"type\":\"MQ_REST_QUARANTINE\",\"testRun\":\"MQ-E2E-20261020181439\",\"inboxId\":\"d787888a-3961-488d-bedf-0efc3c5179dd\",\"reason\":\"E2E_INJECTED_OUTPUT_FAILURE\",\"originalBody\":\"{\\\"testRun\\\":\\\"MQ-E2E-20261020181439\\\",\\\"case\\\":\\\"lease-and-retry\\\",\\\"note\\\":\\\"Fixture SQL: no es un MsgId emitido por IBM.\\\"}\"}",
+        "purpose": "QUARANTINE"
+      }
+    }
+  ],
+  "injectedJobs": [
+    {
+      "id": "d787888a-3961-488d-bedf-0efc3c5179dd",
+      "messageId": "ID:5960DA422F4E0D423A9D999F672FF40C6C56F3E4FDB267B4",
+      "purpose": "lease-and-retry"
+    }
+  ],
+  "cronCardId": "26d1cf68-ee61-472c-a2fb-16325e12ec4b",
+  "cronScheduledAt": "2026-10-20T18:29:19.177Z"
+}

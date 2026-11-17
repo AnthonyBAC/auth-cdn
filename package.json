@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -12,19 +15,27 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "mq:scheduler": "node --env-file=.env.local modules/ibm-mq/legacy/scripts/mq-scheduler.mjs",
+    "test:mq:rest": "vitest run modules/ibm-mq/tests/unit/rest.test.ts modules/ibm-mq/tests/unit/inbox.test.ts modules/ibm-mq/tests/unit/cloud.test.ts modules/ibm-mq/tests/unit/endpoints-rest.test.ts modules/ibm-mq/tests/integration/rest-inbox.test.ts modules/ibm-mq/tests/integration/consumidor.test.ts",
+    "mq:probe": "node --env-file=.env.local modules/ibm-mq/scripts/mq-rest-probe.mjs",
+    "mq:keys": "node modules/ibm-mq/scripts/generate-message-signing-keys.mjs",
+    "test:mq": "vitest run modules/ibm-mq/tests"
   },
   "dependencies": {
     "@ant-design/icons": "^5.5.2",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.45.4",
     "antd": "^5.22.5",
+    "jose": "6.2.13",
+    "kafkajs": "2.2.4",
     "next": "^15.0.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.10",
     "@playwright/test": "^1.49.1",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",

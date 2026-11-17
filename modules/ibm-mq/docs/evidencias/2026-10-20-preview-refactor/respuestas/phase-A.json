@@ -1,0 +1,583 @@
+{
+  "origin": "https://auth-pawu47st3-anthonys-projects-0d8acba7.vercel.app",
+  "runTag": "MQ-E2E-20261020181439",
+  "records": [
+    {
+      "id": "AUTH-PASSWORD",
+      "title": "Autenticación Supabase sin registrar tokens",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:14:40.154Z",
+      "evidence": {
+        "status": 200,
+        "projectHost": "vqeusrctsfqykzwwrucn.supabase.co"
+      }
+    },
+    {
+      "id": "AUTH-OWNER",
+      "title": "JWT válido en el nuevo preview",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:14:41.957Z",
+      "evidence": {
+        "request": {
+          "method": "GET",
+          "path": "/api/auth/session",
+          "body": null
+        },
+        "status": 200,
+        "body": {
+          "user": {
+            "id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+            "email": "owner@example.com",
+            "name": "Demo Owner"
+          }
+        }
+      }
+    },
+    {
+      "id": "FIXTURE-WS",
+      "title": "Crear workspace aislado",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:14:43.585Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/workspaces",
+          "body": {
+            "name": "MQ-E2E-20261020181439"
+          }
+        },
+        "status": 201,
+        "body": {
+          "workspace": {
+            "id": "1f4af17f-2074-4bcc-bcb2-ed118f3b84df",
+            "name": "MQ-E2E-20261020181439",
+            "role": "owner"
+          }
+        }
+      }
+    },
+    {
+      "id": "FIXTURE-BOARD-0",
+      "title": "Crear tablero aislado",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:14:45.149Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/workspaces/1f4af17f-2074-4bcc-bcb2-ed118f3b84df/boards",
+          "body": {
+            "title": "MQ-E2E-20261020181439 tablero 1"
+          }
+        },
+        "status": 201,
+        "body": {
+          "board": {
+            "id": "9dbe1264-eccd-4342-a7d8-3524727a333a",
+            "title": "MQ-E2E-20261020181439 tablero 1",
+            "position": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "FIXTURE-BOARD-1",
+      "title": "Crear tablero aislado",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:14:46.757Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/workspaces/1f4af17f-2074-4bcc-bcb2-ed118f3b84df/boards",
+          "body": {
+            "title": "MQ-E2E-20261020181439 tablero 2"
+          }
+        },
+        "status": 201,
+        "body": {
+          "board": {
+            "id": "5e3fddbf-3724-45dd-a1e4-664416ab4136",
+            "title": "MQ-E2E-20261020181439 tablero 2",
+            "position": 1
+          }
+        }
+      }
+    },
+    {
+      "id": "FIXTURE-LIST",
+      "title": "Crear lista de ensayo",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:14:48.702Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/boards/9dbe1264-eccd-4342-a7d8-3524727a333a/lists",
+          "body": {
+            "title": "Casos de mensajería REST"
+          }
+        },
+        "status": 201,
+        "body": {
+          "list": {
+            "id": "a1ad2af9-cfa5-4005-809c-4365bc6f86ff",
+            "title": "Casos de mensajería REST",
+            "position": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "CARD-normal",
+      "title": "Crear tarjeta de ensayo normal",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:14:50.544Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/lists/a1ad2af9-cfa5-4005-809c-4365bc6f86ff/cards",
+          "body": {
+            "title": "MQ-E2E-20261020181439 normal",
+            "description": "Datos aislados para evidencia de mensajería REST."
+          }
+        },
+        "status": 201,
+        "body": {
+          "card": {
+            "id": "781ea7cf-f469-44eb-9eeb-ffd32f244912",
+            "title": "MQ-E2E-20261020181439 normal",
+            "description": "Datos aislados para evidencia de mensajería REST.",
+            "position": 0,
+            "list_id": "a1ad2af9-cfa5-4005-809c-4365bc6f86ff",
+            "created_by_user_id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+            "due_at": null,
+            "notify_at": null,
+            "completed_at": null,
+            "schedule_version": 1
+          }
+        }
+      }
+    },
+    {
+      "id": "CARD-completar",
+      "title": "Crear tarjeta de ensayo completar",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:14:52.366Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/lists/a1ad2af9-cfa5-4005-809c-4365bc6f86ff/cards",
+          "body": {
+            "title": "MQ-E2E-20261020181439 completar",
+            "description": "Datos aislados para evidencia de mensajería REST."
+          }
+        },
+        "status": 201,
+        "body": {
+          "card": {
+            "id": "e2f1e1f2-cd30-4755-b263-fea751992017",
+            "title": "MQ-E2E-20261020181439 completar",
+            "description": "Datos aislados para evidencia de mensajería REST.",
+            "position": 1,
+            "list_id": "a1ad2af9-cfa5-4005-809c-4365bc6f86ff",
+            "created_by_user_id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+            "due_at": null,
+            "notify_at": null,
+            "completed_at": null,
+            "schedule_version": 1
+          }
+        }
+      }
+    },
+    {
+      "id": "CARD-cancelar",
+      "title": "Crear tarjeta de ensayo cancelar",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:14:54.540Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/lists/a1ad2af9-cfa5-4005-809c-4365bc6f86ff/cards",
+          "body": {
+            "title": "MQ-E2E-20261020181439 cancelar",
+            "description": "Datos aislados para evidencia de mensajería REST."
+          }
+        },
+        "status": 201,
+        "body": {
+          "card": {
+            "id": "162d9735-3d5e-4d5d-9adc-5ec910e864c4",
+            "title": "MQ-E2E-20261020181439 cancelar",
+            "description": "Datos aislados para evidencia de mensajería REST.",
+            "position": 2,
+            "list_id": "a1ad2af9-cfa5-4005-809c-4365bc6f86ff",
+            "created_by_user_id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+            "due_at": null,
+            "notify_at": null,
+            "completed_at": null,
+            "schedule_version": 1
+          }
+        }
+      }
+    },
+    {
+      "id": "VALIDATION-DATES",
+      "title": "Rechazar aviso posterior al vencimiento",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:14:55.610Z",
+      "evidence": {
+        "request": {
+          "method": "PATCH",
+          "path": "/api/cards/781ea7cf-f469-44eb-9eeb-ffd32f244912/schedule",
+          "body": {
+            "expectedVersion": 1,
+            "dueAt": "2026-10-20T18:24:54.542Z",
+            "notifyAt": "2026-10-20T18:26:34.542Z",
+            "assigneeIds": []
+          }
+        },
+        "status": 400,
+        "body": {
+          "error": {
+            "code": "BAD_REQUEST",
+            "message": "Revisa los datos de la tarjeta.",
+            "details": {
+              "formErrors": [],
+              "fieldErrors": {
+                "notifyAt": [
+                  "El aviso debe ser anterior al vencimiento."
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "VALIDATION-ID",
+      "title": "Rechazar boardId inválido",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:14:56.796Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/boards/not-a-uuid/summary",
+          "body": null
+        },
+        "status": 400,
+        "body": {
+          "error": {
+            "code": "BAD_REQUEST",
+            "message": "Board id is invalid.",
+            "details": {}
+          }
+        }
+      }
+    },
+    {
+      "id": "AUTH-UNKNOWN-BOARD",
+      "title": "Rechazar tablero inexistente",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:14:58.294Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/boards/394f1d2f-7190-4242-8e7f-4006c2cac3ee/summary",
+          "body": null
+        },
+        "status": 404,
+        "body": {
+          "error": {
+            "code": "NOT_FOUND",
+            "message": "Board not found.",
+            "details": {}
+          }
+        }
+      }
+    },
+    {
+      "id": "AUTH-TAMPERED",
+      "title": "JWT manipulado no entrega avisos",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:14:58.817Z",
+      "evidence": {
+        "request": {
+          "method": "GET",
+          "path": "/api/notifications",
+          "body": null
+        },
+        "status": 401,
+        "body": {
+          "error": {
+            "code": "UNAUTHENTICATED",
+            "message": "Sign in to continue.",
+            "details": {}
+          }
+        }
+      }
+    },
+    {
+      "id": "SUMMARY-9dbe1264-eccd-4342-a7d8-3524727a333a",
+      "title": "Request/Reply de resumen",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:15:05.651Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/boards/9dbe1264-eccd-4342-a7d8-3524727a333a/summary",
+          "body": null
+        },
+        "status": 200,
+        "body": {
+          "summary": {
+            "totalActive": 3,
+            "pending": 3,
+            "completed": 0,
+            "overdue": 0
+          },
+          "requestId": "c9b85d2e-0d6b-47a5-b673-5005da441128",
+          "generatedAt": "2026-10-20T18:15:02.110Z"
+        }
+      }
+    },
+    {
+      "id": "SUMMARY-5e3fddbf-3724-45dd-a1e4-664416ab4136",
+      "title": "Request/Reply de resumen",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:15:09.285Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/boards/5e3fddbf-3724-45dd-a1e4-664416ab4136/summary",
+          "body": null
+        },
+        "status": 200,
+        "body": {
+          "summary": {
+            "totalActive": 0,
+            "pending": 0,
+            "completed": 0,
+            "overdue": 0
+          },
+          "requestId": "539dcd1c-60d0-4214-9390-2ab08840a3e0",
+          "generatedAt": "2026-10-20T18:15:07.223Z"
+        }
+      }
+    },
+    {
+      "id": "SUMMARY-CONCURRENT",
+      "title": "Dos solicitudes simultáneas con requestId distintos",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:15:13.933Z",
+      "evidence": [
+        {
+          "request": {
+            "method": "POST",
+            "path": "/api/boards/9dbe1264-eccd-4342-a7d8-3524727a333a/summary",
+            "body": null
+          },
+          "status": 200,
+          "body": {
+            "summary": {
+              "totalActive": 3,
+              "pending": 3,
+              "completed": 0,
+              "overdue": 0
+            },
+            "requestId": "43d58ec1-bd76-40a9-9104-fde5aea2620b",
+            "generatedAt": "2026-10-20T18:15:11.058Z"
+          }
+        },
+        {
+          "request": {
+            "method": "POST",
+            "path": "/api/boards/5e3fddbf-3724-45dd-a1e4-664416ab4136/summary",
+            "body": null
+          },
+          "status": 200,
+          "body": {
+            "summary": {
+              "totalActive": 0,
+              "pending": 0,
+              "completed": 0,
+              "overdue": 0
+            },
+            "requestId": "96689907-9cd3-48ec-9851-a906ca83a66f",
+            "generatedAt": "2026-10-20T18:15:10.886Z"
+          }
+        }
+      ]
+    },
+    {
+      "id": "CRON-CONFIG",
+      "title": "Ciclo protegido con secreto local",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:15:20.134Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/mq/tick",
+          "body": {}
+        },
+        "status": 200,
+        "body": {
+          "published": 0,
+          "captured": 0,
+          "worked": 3,
+          "errors": 0
+        }
+      }
+    },
+    {
+      "id": "SUMMARY-SQL-TRACE",
+      "title": "Traza de solicitudes y respuestas de los tableros de ensayo",
+      "result": "PASS",
+      "kind": "LIVE_SQL",
+      "at": "2026-10-20T18:15:21.243Z",
+      "evidence": {
+        "status": 200,
+        "body": [
+          {
+            "id": "caf934e4-ae80-4d7f-bcbc-a10a6e6524d1",
+            "queue_name": "AUTHCDN.SUMMARY.REPLY.Q",
+            "message_id": "ID:414D51204155544843444E514D2020203736D56A1FB32140",
+            "correlation_id": "ID:414D51204155544843444E514D2020203736D56A15491E40",
+            "reply_to": null,
+            "state": "DONE",
+            "attempts": 1,
+            "output_attempts": 0,
+            "body": "{\"schemaVersion\":1,\"requestId\":\"43d58ec1-bd76-40a9-9104-fde5aea2620b\",\"boardId\":\"9dbe1264-eccd-4342-a7d8-3524727a333a\",\"generatedAt\":\"2026-10-20T18:15:11.058Z\",\"status\":\"OK\",\"stats\":{\"totalActive\":3,\"pending\":3,\"completed\":0,\"overdue\":0}}",
+            "output": null,
+            "created_at": "2026-10-20T18:15:11.507252+00:00"
+          },
+          {
+            "id": "18807548-f031-4c2d-b0a8-0af4bce58b35",
+            "queue_name": "AUTHCDN.SUMMARY.REPLY.Q",
+            "message_id": "ID:414D51204155544843444E514D2020203736D56A17491E40",
+            "correlation_id": "ID:414D51204155544843444E514D2020203736D56A16491E40",
+            "reply_to": null,
+            "state": "DONE",
+            "attempts": 1,
+            "output_attempts": 0,
+            "body": "{\"schemaVersion\":1,\"requestId\":\"96689907-9cd3-48ec-9851-a906ca83a66f\",\"boardId\":\"5e3fddbf-3724-45dd-a1e4-664416ab4136\",\"generatedAt\":\"2026-10-20T18:15:10.886Z\",\"status\":\"OK\",\"stats\":{\"totalActive\":0,\"pending\":0,\"completed\":0,\"overdue\":0}}",
+            "output": null,
+            "created_at": "2026-10-20T18:15:11.314064+00:00"
+          },
+          {
+            "id": "478bc0a3-0358-4170-bcb9-2092c7c94d75",
+            "queue_name": "AUTHCDN.SUMMARY.REQUEST.Q",
+            "message_id": "ID:414D51204155544843444E514D2020203736D56A16491E40",
+            "correlation_id": null,
+            "reply_to": "AUTHCDN.SUMMARY.REPLY.Q@AUTHCDNQM",
+            "state": "DONE",
+            "attempts": 1,
+            "output_attempts": 1,
+            "body": "{\"schemaVersion\":1,\"requestId\":\"96689907-9cd3-48ec-9851-a906ca83a66f\",\"boardId\":\"5e3fddbf-3724-45dd-a1e4-664416ab4136\",\"userId\":\"45e0ff79-940c-4230-bd97-bb9e0572e0f0\",\"createdAt\":\"2026-10-20T18:15:10.057Z\",\"expiresAt\":\"2026-10-20T18:15:40.057Z\"}",
+            "output": {
+              "body": "{\"schemaVersion\":1,\"requestId\":\"96689907-9cd3-48ec-9851-a906ca83a66f\",\"boardId\":\"5e3fddbf-3724-45dd-a1e4-664416ab4136\",\"generatedAt\":\"2026-10-20T18:15:10.886Z\",\"status\":\"OK\",\"stats\":{\"totalActive\":0,\"pending\":0,\"completed\":0,\"overdue\":0}}",
+              "queue": "AUTHCDN.SUMMARY.REPLY.Q",
+              "expiresAt": "2026-10-20T18:16:10.886Z",
+              "correlationId": "ID:414D51204155544843444E514D2020203736D56A16491E40"
+            },
+            "created_at": "2026-10-20T18:15:10.225511+00:00"
+          },
+          {
+            "id": "52dc46fc-1a2f-4eea-94b5-d1dfdd7644f0",
+            "queue_name": "AUTHCDN.SUMMARY.REQUEST.Q",
+            "message_id": "ID:414D51204155544843444E514D2020203736D56A15491E40",
+            "correlation_id": null,
+            "reply_to": "AUTHCDN.SUMMARY.REPLY.Q@AUTHCDNQM",
+            "state": "DONE",
+            "attempts": 1,
+            "output_attempts": 1,
+            "body": "{\"schemaVersion\":1,\"requestId\":\"43d58ec1-bd76-40a9-9104-fde5aea2620b\",\"boardId\":\"9dbe1264-eccd-4342-a7d8-3524727a333a\",\"userId\":\"45e0ff79-940c-4230-bd97-bb9e0572e0f0\",\"createdAt\":\"2026-10-20T18:15:09.655Z\",\"expiresAt\":\"2026-10-20T18:15:39.655Z\"}",
+            "output": {
+              "body": "{\"schemaVersion\":1,\"requestId\":\"43d58ec1-bd76-40a9-9104-fde5aea2620b\",\"boardId\":\"9dbe1264-eccd-4342-a7d8-3524727a333a\",\"generatedAt\":\"2026-10-20T18:15:11.058Z\",\"status\":\"OK\",\"stats\":{\"totalActive\":3,\"pending\":3,\"completed\":0,\"overdue\":0}}",
+              "queue": "AUTHCDN.SUMMARY.REPLY.Q",
+              "expiresAt": "2026-10-20T18:16:11.058Z",
+              "correlationId": "ID:414D51204155544843444E514D2020203736D56A15491E40"
+            },
+            "created_at": "2026-10-20T18:15:10.015874+00:00"
+          },
+          {
+            "id": "9b9ad4e6-bb65-4b96-81e9-6830b81b6533",
+            "queue_name": "AUTHCDN.SUMMARY.REPLY.Q",
+            "message_id": "ID:414D51204155544843444E514D2020203736D56A1EB32140",
+            "correlation_id": "ID:414D51204155544843444E514D2020203736D56A14491E40",
+            "reply_to": null,
+            "state": "DONE",
+            "attempts": 1,
+            "output_attempts": 0,
+            "body": "{\"schemaVersion\":1,\"requestId\":\"539dcd1c-60d0-4214-9390-2ab08840a3e0\",\"boardId\":\"5e3fddbf-3724-45dd-a1e4-664416ab4136\",\"generatedAt\":\"2026-10-20T18:15:07.223Z\",\"status\":\"OK\",\"stats\":{\"totalActive\":0,\"pending\":0,\"completed\":0,\"overdue\":0}}",
+            "output": null,
+            "created_at": "2026-10-20T18:15:07.630665+00:00"
+          },
+          {
+            "id": "f104dae3-aa90-431d-9433-cfd367d477b0",
+            "queue_name": "AUTHCDN.SUMMARY.REQUEST.Q",
+            "message_id": "ID:414D51204155544843444E514D2020203736D56A14491E40",
+            "correlation_id": null,
+            "reply_to": "AUTHCDN.SUMMARY.REPLY.Q@AUTHCDNQM",
+            "state": "DONE",
+            "attempts": 1,
+            "output_attempts": 1,
+            "body": "{\"schemaVersion\":1,\"requestId\":\"539dcd1c-60d0-4214-9390-2ab08840a3e0\",\"boardId\":\"5e3fddbf-3724-45dd-a1e4-664416ab4136\",\"userId\":\"45e0ff79-940c-4230-bd97-bb9e0572e0f0\",\"createdAt\":\"2026-10-20T18:15:06.447Z\",\"expiresAt\":\"2026-10-20T18:15:36.447Z\"}",
+            "output": {
+              "body": "{\"schemaVersion\":1,\"requestId\":\"539dcd1c-60d0-4214-9390-2ab08840a3e0\",\"boardId\":\"5e3fddbf-3724-45dd-a1e4-664416ab4136\",\"generatedAt\":\"2026-10-20T18:15:07.223Z\",\"status\":\"OK\",\"stats\":{\"totalActive\":0,\"pending\":0,\"completed\":0,\"overdue\":0}}",
+              "queue": "AUTHCDN.SUMMARY.REPLY.Q",
+              "expiresAt": "2026-10-20T18:16:07.223Z",
+              "correlationId": "ID:414D51204155544843444E514D2020203736D56A14491E40"
+            },
+            "created_at": "2026-10-20T18:15:06.593415+00:00"
+          },
+          {
+            "id": "ad549f5d-6ad1-4dcb-9897-832de2b4258d",
+            "queue_name": "AUTHCDN.SUMMARY.REPLY.Q",
+            "message_id": "ID:414D51204155544843444E514D2020203736D56A13491E40",
+            "correlation_id": "ID:414D51204155544843444E514D2020203736D56A12491E40",
+            "reply_to": null,
+            "state": "DONE",
+            "attempts": 1,
+            "output_attempts": 0,
+            "body": "{\"schemaVersion\":1,\"requestId\":\"c9b85d2e-0d6b-47a5-b673-5005da441128\",\"boardId\":\"9dbe1264-eccd-4342-a7d8-3524727a333a\",\"generatedAt\":\"2026-10-20T18:15:02.110Z\",\"status\":\"OK\",\"stats\":{\"totalActive\":3,\"pending\":3,\"completed\":0,\"overdue\":0}}",
+            "output": null,
+            "created_at": "2026-10-20T18:15:02.832968+00:00"
+          },
+          {
+            "id": "d08e2b51-9fae-40d2-8fbd-00fc132e764b",
+            "queue_name": "AUTHCDN.SUMMARY.REQUEST.Q",
+            "message_id": "ID:414D51204155544843444E514D2020203736D56A12491E40",
+            "correlation_id": null,
+            "reply_to": "AUTHCDN.SUMMARY.REPLY.Q@AUTHCDNQM",
+            "state": "DONE",
+            "attempts": 1,
+            "output_attempts": 1,
+            "body": "{\"schemaVersion\":1,\"requestId\":\"c9b85d2e-0d6b-47a5-b673-5005da441128\",\"boardId\":\"9dbe1264-eccd-4342-a7d8-3524727a333a\",\"userId\":\"45e0ff79-940c-4230-bd97-bb9e0572e0f0\",\"createdAt\":\"2026-10-20T18:14:59.441Z\",\"expiresAt\":\"2026-10-20T18:15:29.441Z\"}",
+            "output": {
+              "body": "{\"schemaVersion\":1,\"requestId\":\"c9b85d2e-0d6b-47a5-b673-5005da441128\",\"boardId\":\"9dbe1264-eccd-4342-a7d8-3524727a333a\",\"generatedAt\":\"2026-10-20T18:15:02.110Z\",\"status\":\"OK\",\"stats\":{\"totalActive\":3,\"pending\":3,\"completed\":0,\"overdue\":0}}",
+              "queue": "AUTHCDN.SUMMARY.REPLY.Q",
+              "expiresAt": "2026-10-20T18:16:02.110Z",
+              "correlationId": "ID:414D51204155544843444E514D2020203736D56A12491E40"
+            },
+            "created_at": "2026-10-20T18:15:00.491257+00:00"
+          }
+        ]
+      }
+    }
+  ]
+}

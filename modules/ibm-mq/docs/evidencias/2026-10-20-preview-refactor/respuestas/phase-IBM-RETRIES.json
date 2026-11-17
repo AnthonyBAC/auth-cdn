@@ -1,0 +1,25 @@
+{
+  "records": [
+    {
+      "id": "IBM-CONSOLE-FIVE-RETRIES",
+      "result": "PASS",
+      "title": "Cinco reintentos reales confirmados en IBM Console",
+      "at": "2026-10-20T18:43:50.200Z",
+      "evidence": {
+        "queue": "AUTHCDN.REMINDERS.BOQ",
+        "body": {
+          "schemaVersion": 1,
+          "type": "MQ_REST_QUARANTINE",
+          "inboxId": "bfea6a53-b5fd-4e56-b65f-338714a1eade",
+          "sourceQueue": "AUTHCDN.REMINDERS.Q",
+          "messageId": "ID:414D51204155544843444E514D2020203736D56A21491E40",
+          "reason": "RETRIES_EXHAUSTED",
+          "attempts": 5,
+          "originalBody": "{\"schemaVersion\":1,\"eventId\":\"62defd24-21d7-404a-b93c-48cd35e646e9\",\"eventType\":\"TASK_REMINDER_DUE\",\"reminderId\":\"9c850be0-ce57-4c0c-8099-04f3abb37a3a\",\"cardId\":\"c78e0a88-9b33-4985-b5de-63a1e510cf8c\",\"workspaceId\":\"1f4af17f-2074-4bcc-bcb2-ed118f3b84df\",\"scheduleVersion\":2,\"occurredAt\":\"2026-10-20T18:22:39.834Z\",\"expiresAt\":\"2026-10-20T19:22:34.947Z\"}"
+        },
+        "screenshot": "45-ibm-boq-cinco-intentos.png",
+        "persistenceScreenshot": "22-ibm-boq-persistencia.png"
+      }
+    }
+  ]
+}

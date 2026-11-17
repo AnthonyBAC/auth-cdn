@@ -1,0 +1,498 @@
+{
+  "origin": "https://auth-pawu47st3-anthonys-projects-0d8acba7.vercel.app",
+  "runTag": "MQ-E2E-20261020181439",
+  "records": [
+    {
+      "id": "AUTH-PASSWORD",
+      "title": "Autenticación Supabase sin registrar tokens",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:17:37.197Z",
+      "evidence": {
+        "status": 200,
+        "projectHost": "vqeusrctsfqykzwwrucn.supabase.co"
+      }
+    },
+    {
+      "id": "AUTH-OWNER",
+      "title": "JWT válido en el nuevo preview",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:17:38.513Z",
+      "evidence": {
+        "request": {
+          "method": "GET",
+          "path": "/api/auth/session",
+          "body": null
+        },
+        "status": 200,
+        "body": {
+          "user": {
+            "id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+            "email": "owner@example.com",
+            "name": "Demo Owner"
+          }
+        }
+      }
+    },
+    {
+      "id": "LEASE-EXCLUSION",
+      "title": "Reserva vigente excluye al segundo worker",
+      "result": "PASS",
+      "kind": "LIVE_SQL_FIXTURE",
+      "at": "2026-10-20T18:17:39.097Z",
+      "evidence": {
+        "capture": {
+          "status": 200,
+          "body": "d787888a-3961-488d-bedf-0efc3c5179dd"
+        },
+        "first": {
+          "status": 200,
+          "body": {
+            "id": "d787888a-3961-488d-bedf-0efc3c5179dd",
+            "body": "{\"testRun\":\"MQ-E2E-20261020181439\",\"case\":\"lease-and-retry\",\"note\":\"Fixture SQL: no es un MsgId emitido por IBM.\"}",
+            "qmgr": "AUTHCDNQM",
+            "state": "PENDING",
+            "output": null,
+            "attempts": 1,
+            "reply_to": null,
+            "created_at": "2026-10-20T18:17:37.736461+00:00",
+            "last_error": null,
+            "lock_token": "[REDACTED]",
+            "message_id": "ID:5960DA422F4E0D423A9D999F672FF40C6C56F3E4FDB267B4",
+            "queue_name": "AUTHCDN.REMINDERS.Q",
+            "completed_at": null,
+            "locked_until": "2026-10-20T18:19:37.947963+00:00",
+            "correlation_id": null,
+            "next_attempt_at": "2026-10-20T18:17:37.736461+00:00",
+            "output_attempts": 0
+          }
+        },
+        "second": {
+          "status": 200,
+          "body": null
+        }
+      }
+    },
+    {
+      "id": "CAPTURE-ID-COLLISION",
+      "title": "Reutilizar MsgId con cuerpo distinto se rechaza",
+      "result": "PASS",
+      "kind": "LIVE_SQL_FIXTURE",
+      "at": "2026-10-20T18:17:39.593Z",
+      "evidence": {
+        "status": 400,
+        "body": {
+          "code": "P0001",
+          "details": null,
+          "hint": null,
+          "message": "MQ_MESSAGE_ID_COLLISION"
+        }
+      }
+    },
+    {
+      "id": "LEASE-NO-TOKEN",
+      "title": "No se modifica trabajo sin token de reserva",
+      "result": "PASS",
+      "kind": "LIVE_SQL_FIXTURE",
+      "at": "2026-10-20T18:17:39.767Z",
+      "evidence": {
+        "status": 200,
+        "body": false
+      }
+    },
+    {
+      "id": "LEASE-RECOVERY",
+      "title": "Reserva vencida cambia token y rechaza el anterior",
+      "result": "PASS",
+      "kind": "LIVE_SQL_FIXTURE",
+      "at": "2026-10-20T18:17:40.583Z",
+      "evidence": {
+        "reclaimed": {
+          "status": 200,
+          "body": {
+            "id": "d787888a-3961-488d-bedf-0efc3c5179dd",
+            "body": "{\"testRun\":\"MQ-E2E-20261020181439\",\"case\":\"lease-and-retry\",\"note\":\"Fixture SQL: no es un MsgId emitido por IBM.\"}",
+            "qmgr": "AUTHCDNQM",
+            "state": "PENDING",
+            "output": null,
+            "attempts": 2,
+            "reply_to": null,
+            "created_at": "2026-10-20T18:17:37.736461+00:00",
+            "last_error": null,
+            "lock_token": "[REDACTED]",
+            "message_id": "ID:5960DA422F4E0D423A9D999F672FF40C6C56F3E4FDB267B4",
+            "queue_name": "AUTHCDN.REMINDERS.Q",
+            "completed_at": null,
+            "locked_until": "2026-10-20T18:19:39.405233+00:00",
+            "correlation_id": null,
+            "next_attempt_at": "2026-10-20T18:17:37.736461+00:00",
+            "output_attempts": 0
+          }
+        },
+        "staleUpdate": {
+          "status": 200,
+          "body": false
+        },
+        "tokenChanged": true
+      }
+    },
+    {
+      "id": "RETRY-PREPARE",
+      "title": "Inyectar destino inválido solo en salida del fixture",
+      "result": "PASS",
+      "kind": "LIVE_SQL_FIXTURE",
+      "at": "2026-10-20T18:17:40.771Z",
+      "evidence": {
+        "result": {
+          "status": 200,
+          "body": true
+        },
+        "note": "No se alteran credenciales, colas ni conectividad global. El adaptador rechaza la cola fuera de allowlist."
+      }
+    },
+    {
+      "id": "RETRY-CLOUD-1",
+      "title": "Ciclo cloud de recuperación",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:17:46.280Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/mq/tick",
+          "body": {}
+        },
+        "status": 502,
+        "body": {
+          "published": 0,
+          "captured": 0,
+          "worked": 1,
+          "errors": 1
+        }
+      }
+    },
+    {
+      "id": "RETRY-STATE-1",
+      "title": "Intento fallido de salida 1",
+      "result": "PASS",
+      "kind": "LIVE_CLOUD_FAULT_FIXTURE",
+      "at": "2026-10-20T18:17:46.478Z",
+      "evidence": {
+        "inbox": {
+          "status": 200,
+          "body": [
+            {
+              "id": "d787888a-3961-488d-bedf-0efc3c5179dd",
+              "queue_name": "AUTHCDN.REMINDERS.Q",
+              "message_id": "ID:5960DA422F4E0D423A9D999F672FF40C6C56F3E4FDB267B4",
+              "correlation_id": null,
+              "reply_to": null,
+              "body": "{\"testRun\":\"MQ-E2E-20261020181439\",\"case\":\"lease-and-retry\",\"note\":\"Fixture SQL: no es un MsgId emitido por IBM.\"}",
+              "state": "OUTPUT",
+              "attempts": 2,
+              "output_attempts": 1,
+              "output": {
+                "body": "{\"schemaVersion\":1,\"type\":\"MQ_REST_QUARANTINE\",\"testRun\":\"MQ-E2E-20261020181439\",\"inboxId\":\"d787888a-3961-488d-bedf-0efc3c5179dd\",\"reason\":\"E2E_INJECTED_OUTPUT_FAILURE\",\"originalBody\":\"{\\\"testRun\\\":\\\"MQ-E2E-20261020181439\\\",\\\"case\\\":\\\"lease-and-retry\\\",\\\"note\\\":\\\"Fixture SQL: no es un MsgId emitido por IBM.\\\"}\"}",
+                "queue": "E2E.INVALID.TARGET",
+                "purpose": "QUARANTINE"
+              },
+              "next_attempt_at": "2026-10-20T18:17:52.094623+00:00",
+              "last_error": "PROCESSING_OR_DELIVERY_UNCONFIRMED"
+            }
+          ]
+        },
+        "observedBackoffSeconds": 5.616,
+        "cycleStatus": 502
+      }
+    },
+    {
+      "id": "RETRY-CLOUD-2",
+      "title": "Ciclo cloud de recuperación",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:17:50.890Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/mq/tick",
+          "body": {}
+        },
+        "status": 502,
+        "body": {
+          "published": 0,
+          "captured": 0,
+          "worked": 1,
+          "errors": 1
+        }
+      }
+    },
+    {
+      "id": "RETRY-STATE-2",
+      "title": "Intento fallido de salida 2",
+      "result": "PASS",
+      "kind": "LIVE_CLOUD_FAULT_FIXTURE",
+      "at": "2026-10-20T18:17:51.096Z",
+      "evidence": {
+        "inbox": {
+          "status": 200,
+          "body": [
+            {
+              "id": "d787888a-3961-488d-bedf-0efc3c5179dd",
+              "queue_name": "AUTHCDN.REMINDERS.Q",
+              "message_id": "ID:5960DA422F4E0D423A9D999F672FF40C6C56F3E4FDB267B4",
+              "correlation_id": null,
+              "reply_to": null,
+              "body": "{\"testRun\":\"MQ-E2E-20261020181439\",\"case\":\"lease-and-retry\",\"note\":\"Fixture SQL: no es un MsgId emitido por IBM.\"}",
+              "state": "OUTPUT",
+              "attempts": 2,
+              "output_attempts": 2,
+              "output": {
+                "body": "{\"schemaVersion\":1,\"type\":\"MQ_REST_QUARANTINE\",\"testRun\":\"MQ-E2E-20261020181439\",\"inboxId\":\"d787888a-3961-488d-bedf-0efc3c5179dd\",\"reason\":\"E2E_INJECTED_OUTPUT_FAILURE\",\"originalBody\":\"{\\\"testRun\\\":\\\"MQ-E2E-20261020181439\\\",\\\"case\\\":\\\"lease-and-retry\\\",\\\"note\\\":\\\"Fixture SQL: no es un MsgId emitido por IBM.\\\"}\"}",
+                "queue": "E2E.INVALID.TARGET",
+                "purpose": "QUARANTINE"
+              },
+              "next_attempt_at": "2026-10-20T18:17:57.032548+00:00",
+              "last_error": "PROCESSING_OR_DELIVERY_UNCONFIRMED"
+            }
+          ]
+        },
+        "observedBackoffSeconds": 5.936,
+        "cycleStatus": 502
+      }
+    },
+    {
+      "id": "RETRY-CLOUD-3",
+      "title": "Ciclo cloud de recuperación",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:17:55.563Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/mq/tick",
+          "body": {}
+        },
+        "status": 502,
+        "body": {
+          "published": 0,
+          "captured": 0,
+          "worked": 1,
+          "errors": 1
+        }
+      }
+    },
+    {
+      "id": "RETRY-STATE-3",
+      "title": "Intento fallido de salida 3",
+      "result": "PASS",
+      "kind": "LIVE_CLOUD_FAULT_FIXTURE",
+      "at": "2026-10-20T18:17:55.759Z",
+      "evidence": {
+        "inbox": {
+          "status": 200,
+          "body": [
+            {
+              "id": "d787888a-3961-488d-bedf-0efc3c5179dd",
+              "queue_name": "AUTHCDN.REMINDERS.Q",
+              "message_id": "ID:5960DA422F4E0D423A9D999F672FF40C6C56F3E4FDB267B4",
+              "correlation_id": null,
+              "reply_to": null,
+              "body": "{\"testRun\":\"MQ-E2E-20261020181439\",\"case\":\"lease-and-retry\",\"note\":\"Fixture SQL: no es un MsgId emitido por IBM.\"}",
+              "state": "OUTPUT",
+              "attempts": 2,
+              "output_attempts": 3,
+              "output": {
+                "body": "{\"schemaVersion\":1,\"type\":\"MQ_REST_QUARANTINE\",\"testRun\":\"MQ-E2E-20261020181439\",\"inboxId\":\"d787888a-3961-488d-bedf-0efc3c5179dd\",\"reason\":\"E2E_INJECTED_OUTPUT_FAILURE\",\"originalBody\":\"{\\\"testRun\\\":\\\"MQ-E2E-20261020181439\\\",\\\"case\\\":\\\"lease-and-retry\\\",\\\"note\\\":\\\"Fixture SQL: no es un MsgId emitido por IBM.\\\"}\"}",
+                "queue": "E2E.INVALID.TARGET",
+                "purpose": "QUARANTINE"
+              },
+              "next_attempt_at": "2026-10-20T18:18:11.643907+00:00",
+              "last_error": "PROCESSING_OR_DELIVERY_UNCONFIRMED"
+            }
+          ]
+        },
+        "observedBackoffSeconds": 15.884,
+        "cycleStatus": 502
+      }
+    },
+    {
+      "id": "RETRY-CLOUD-4",
+      "title": "Ciclo cloud de recuperación",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:18:00.288Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/mq/tick",
+          "body": {}
+        },
+        "status": 502,
+        "body": {
+          "published": 0,
+          "captured": 0,
+          "worked": 1,
+          "errors": 1
+        }
+      }
+    },
+    {
+      "id": "RETRY-STATE-4",
+      "title": "Intento fallido de salida 4",
+      "result": "PASS",
+      "kind": "LIVE_CLOUD_FAULT_FIXTURE",
+      "at": "2026-10-20T18:18:00.557Z",
+      "evidence": {
+        "inbox": {
+          "status": 200,
+          "body": [
+            {
+              "id": "d787888a-3961-488d-bedf-0efc3c5179dd",
+              "queue_name": "AUTHCDN.REMINDERS.Q",
+              "message_id": "ID:5960DA422F4E0D423A9D999F672FF40C6C56F3E4FDB267B4",
+              "correlation_id": null,
+              "reply_to": null,
+              "body": "{\"testRun\":\"MQ-E2E-20261020181439\",\"case\":\"lease-and-retry\",\"note\":\"Fixture SQL: no es un MsgId emitido por IBM.\"}",
+              "state": "OUTPUT",
+              "attempts": 2,
+              "output_attempts": 4,
+              "output": {
+                "body": "{\"schemaVersion\":1,\"type\":\"MQ_REST_QUARANTINE\",\"testRun\":\"MQ-E2E-20261020181439\",\"inboxId\":\"d787888a-3961-488d-bedf-0efc3c5179dd\",\"reason\":\"E2E_INJECTED_OUTPUT_FAILURE\",\"originalBody\":\"{\\\"testRun\\\":\\\"MQ-E2E-20261020181439\\\",\\\"case\\\":\\\"lease-and-retry\\\",\\\"note\\\":\\\"Fixture SQL: no es un MsgId emitido por IBM.\\\"}\"}",
+                "queue": "E2E.INVALID.TARGET",
+                "purpose": "QUARANTINE"
+              },
+              "next_attempt_at": "2026-10-20T18:18:36.50782+00:00",
+              "last_error": "PROCESSING_OR_DELIVERY_UNCONFIRMED"
+            }
+          ]
+        },
+        "observedBackoffSeconds": 35.95,
+        "cycleStatus": 502
+      }
+    },
+    {
+      "id": "RETRY-CLOUD-5",
+      "title": "Ciclo cloud de recuperación",
+      "result": "FAIL",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:18:05.319Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/mq/tick",
+          "body": {}
+        },
+        "status": 200,
+        "body": {
+          "published": 0,
+          "captured": 0,
+          "worked": 0,
+          "errors": 0
+        }
+      }
+    },
+    {
+      "id": "RETRY-STATE-5",
+      "title": "Intento fallido de salida 5",
+      "result": "PASS",
+      "kind": "LIVE_CLOUD_FAULT_FIXTURE",
+      "at": "2026-10-20T18:18:05.530Z",
+      "evidence": {
+        "inbox": {
+          "status": 200,
+          "body": [
+            {
+              "id": "d787888a-3961-488d-bedf-0efc3c5179dd",
+              "queue_name": "AUTHCDN.REMINDERS.Q",
+              "message_id": "ID:5960DA422F4E0D423A9D999F672FF40C6C56F3E4FDB267B4",
+              "correlation_id": null,
+              "reply_to": null,
+              "body": "{\"testRun\":\"MQ-E2E-20261020181439\",\"case\":\"lease-and-retry\",\"note\":\"Fixture SQL: no es un MsgId emitido por IBM.\"}",
+              "state": "OUTPUT",
+              "attempts": 2,
+              "output_attempts": 5,
+              "output": {
+                "body": "{\"schemaVersion\":1,\"type\":\"MQ_REST_QUARANTINE\",\"testRun\":\"MQ-E2E-20261020181439\",\"inboxId\":\"d787888a-3961-488d-bedf-0efc3c5179dd\",\"reason\":\"E2E_INJECTED_OUTPUT_FAILURE\",\"originalBody\":\"{\\\"testRun\\\":\\\"MQ-E2E-20261020181439\\\",\\\"case\\\":\\\"lease-and-retry\\\",\\\"note\\\":\\\"Fixture SQL: no es un MsgId emitido por IBM.\\\"}\"}",
+                "queue": "E2E.INVALID.TARGET",
+                "purpose": "QUARANTINE"
+              },
+              "next_attempt_at": "2026-10-20T18:19:20.735444+00:00",
+              "last_error": "PROCESSING_OR_DELIVERY_UNCONFIRMED"
+            }
+          ]
+        },
+        "observedBackoffSeconds": 75.205,
+        "cycleStatus": 200
+      }
+    },
+    {
+      "id": "RETRY-NO-LOSS",
+      "title": "Cinco ciclos fallidos conservan payload y contador persistente",
+      "result": "PASS",
+      "kind": "LIVE_CLOUD_FAULT_FIXTURE",
+      "at": "2026-10-20T18:18:05.532Z",
+      "evidence": {
+        "counts": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "note": "Se aceleró next_attempt_at únicamente en este fixture; las esperas calculadas quedaron registradas. Es fallo de salida, no cinco fallos de la RPC de negocio."
+      }
+    },
+    {
+      "id": "RETRY-RECOVERED-CLOUD",
+      "title": "Ciclo cloud de recuperación",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:18:10.552Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/mq/tick",
+          "body": {}
+        },
+        "status": 200,
+        "body": {
+          "published": 0,
+          "captured": 0,
+          "worked": 1,
+          "errors": 0
+        }
+      }
+    },
+    {
+      "id": "RETRY-RECOVERED",
+      "title": "Corregir salida permite terminar sin perder cuerpo",
+      "result": "PASS",
+      "kind": "LIVE_CLOUD_FAULT_FIXTURE",
+      "at": "2026-10-20T18:18:10.762Z",
+      "evidence": {
+        "status": 200,
+        "body": [
+          {
+            "id": "d787888a-3961-488d-bedf-0efc3c5179dd",
+            "queue_name": "AUTHCDN.REMINDERS.Q",
+            "message_id": "ID:5960DA422F4E0D423A9D999F672FF40C6C56F3E4FDB267B4",
+            "correlation_id": null,
+            "reply_to": null,
+            "body": "{\"testRun\":\"MQ-E2E-20261020181439\",\"case\":\"lease-and-retry\",\"note\":\"Fixture SQL: no es un MsgId emitido por IBM.\"}",
+            "state": "DONE",
+            "attempts": 2,
+            "output_attempts": 6,
+            "output": {
+              "body": "{\"schemaVersion\":1,\"type\":\"MQ_REST_QUARANTINE\",\"testRun\":\"MQ-E2E-20261020181439\",\"inboxId\":\"d787888a-3961-488d-bedf-0efc3c5179dd\",\"reason\":\"E2E_INJECTED_OUTPUT_FAILURE\",\"originalBody\":\"{\\\"testRun\\\":\\\"MQ-E2E-20261020181439\\\",\\\"case\\\":\\\"lease-and-retry\\\",\\\"note\\\":\\\"Fixture SQL: no es un MsgId emitido por IBM.\\\"}\"}",
+              "queue": "AUTHCDN.REMINDERS.BOQ",
+              "purpose": "QUARANTINE"
+            },
+            "next_attempt_at": "2026-10-20T18:18:04.95+00:00",
+            "last_error": null
+          }
+        ]
+      }
+    }
+  ]
+}

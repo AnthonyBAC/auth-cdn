@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/lib/api/errors";
 import { requireUser } from "@/lib/auth/require-user";
 import { cardMoveInput } from "@/lib/validation/domain";
+import { publishCardMoved } from "@/modules/kafka/producer";
 
 export async function POST(request: Request, { params }: { params: Promise<{ cardId: string }> }) {
   const session = await requireUser();
@@ -23,6 +24,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ car
     .eq("id", cardId)
     .select("id, list_id, position")
     .single();
-  if (error) return apiError("FORBIDDEN", "You do not have permission to move this card.");
+  if (error || !data) return apiError("FORBIDDEN", "You do not have permission to move this card.");
+  await publishCardMoved({
+    cardId: data.id,
+    boardId: card.board_id,
+    destinationListId: data.list_id
+  });
   return NextResponse.json({ card: data });
 }

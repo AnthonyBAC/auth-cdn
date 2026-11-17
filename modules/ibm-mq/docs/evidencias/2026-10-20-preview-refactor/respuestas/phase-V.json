@@ -1,0 +1,222 @@
+{
+  "origin": "https://auth-pawu47st3-anthonys-projects-0d8acba7.vercel.app",
+  "runTag": "MQ-E2E-20261020181439",
+  "records": [
+    {
+      "id": "AUTH-PASSWORD",
+      "title": "Autenticación Supabase sin registrar tokens",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:17:32.018Z",
+      "evidence": {
+        "status": 200,
+        "projectHost": "vqeusrctsfqykzwwrucn.supabase.co"
+      }
+    },
+    {
+      "id": "AUTH-OWNER",
+      "title": "JWT válido en el nuevo preview",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:17:33.390Z",
+      "evidence": {
+        "request": {
+          "method": "GET",
+          "path": "/api/auth/session",
+          "body": null
+        },
+        "status": 200,
+        "body": {
+          "user": {
+            "id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+            "email": "owner@example.com",
+            "name": "Demo Owner"
+          }
+        }
+      }
+    },
+    {
+      "id": "DUPLICATE-VERIFIED",
+      "title": "Verificación del MsgId sin distinguir mayúsculas hexadecimales",
+      "result": "PASS",
+      "kind": "LIVE_SQL",
+      "at": "2026-10-20T18:17:34.505Z",
+      "evidence": {
+        "inbox": {
+          "status": 200,
+          "body": [
+            {
+              "id": "9247b039-5e8f-4ac1-a0de-d9f07d12318a",
+              "queue_name": "AUTHCDN.REMINDERS.Q",
+              "message_id": "ID:414D51204155544843444E514D2020203736D56A21B32140",
+              "correlation_id": null,
+              "reply_to": null,
+              "body": "{\"cardId\":\"781ea7cf-f469-44eb-9eeb-ffd32f244912\",\"eventId\":\"baa9427c-8199-4364-beb6-02299000ad5e\",\"eventType\":\"TASK_REMINDER_DUE\",\"expiresAt\":\"2026-10-20T18:36:15.957Z\",\"occurredAt\":\"2026-10-20T18:16:29.787Z\",\"reminderId\":\"2438f624-0c7a-4a37-ab5a-f371bb625646\",\"workspaceId\":\"1f4af17f-2074-4bcc-bcb2-ed118f3b84df\",\"schemaVersion\":1,\"scheduleVersion\":2}",
+              "state": "DONE",
+              "attempts": 1,
+              "output_attempts": 0,
+              "output": null,
+              "next_attempt_at": "2026-10-20T18:16:56.031316+00:00",
+              "last_error": null
+            }
+          ]
+        },
+        "notifications": {
+          "status": 200,
+          "body": [
+            {
+              "id": "34416025-503d-47d6-9639-ac8f97c6abe5",
+              "event_id": "baa9427c-8199-4364-beb6-02299000ad5e",
+              "card_id": "781ea7cf-f469-44eb-9eeb-ffd32f244912"
+            }
+          ]
+        },
+        "note": "La verificación anterior usó igualdad de texto sensible a mayúsculas; el adaptador normaliza los MsgId."
+      }
+    },
+    {
+      "id": "BOQ-VERIFIED-POISON-SEND-malformed",
+      "title": "Verificar salida de cuarentena persistida y completada",
+      "result": "PASS",
+      "kind": "LIVE_SQL",
+      "at": "2026-10-20T18:17:34.724Z",
+      "evidence": {
+        "status": 200,
+        "body": [
+          {
+            "id": "18dbf8d7-cb1d-4134-9888-5ebacd5d86ce",
+            "queue_name": "AUTHCDN.REMINDERS.Q",
+            "message_id": "ID:414D51204155544843444E514D2020203736D56A22B32140",
+            "correlation_id": null,
+            "reply_to": null,
+            "body": "{\"run\":\"MQ-E2E-20261020181439\",\"broken\":",
+            "state": "DONE",
+            "attempts": 1,
+            "output_attempts": 1,
+            "output": {
+              "body": "{\"schemaVersion\":1,\"type\":\"MQ_REST_QUARANTINE\",\"inboxId\":\"18dbf8d7-cb1d-4134-9888-5ebacd5d86ce\",\"sourceQueue\":\"AUTHCDN.REMINDERS.Q\",\"messageId\":\"ID:414D51204155544843444E514D2020203736D56A22B32140\",\"reason\":\"MALFORMED_JSON\",\"attempts\":1,\"originalBody\":\"{\\\"run\\\":\\\"MQ-E2E-20261020181439\\\",\\\"broken\\\":\"}",
+              "queue": "AUTHCDN.REMINDERS.BOQ",
+              "purpose": "QUARANTINE"
+            },
+            "next_attempt_at": "2026-10-20T18:17:06.65195+00:00",
+            "last_error": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "BOQ-VERIFIED-POISON-SEND-invalid-contract",
+      "title": "Verificar salida de cuarentena persistida y completada",
+      "result": "PASS",
+      "kind": "LIVE_SQL",
+      "at": "2026-10-20T18:17:34.916Z",
+      "evidence": {
+        "status": 200,
+        "body": [
+          {
+            "id": "79169929-376f-4e9b-b87e-3ed5abfdc81e",
+            "queue_name": "AUTHCDN.REMINDERS.Q",
+            "message_id": "ID:414D51204155544843444E514D2020203736D56A19491E40",
+            "correlation_id": null,
+            "reply_to": null,
+            "body": "{\"schemaVersion\":999,\"testRun\":\"MQ-E2E-20261020181439\"}",
+            "state": "DONE",
+            "attempts": 1,
+            "output_attempts": 1,
+            "output": {
+              "body": "{\"schemaVersion\":1,\"type\":\"MQ_REST_QUARANTINE\",\"inboxId\":\"79169929-376f-4e9b-b87e-3ed5abfdc81e\",\"sourceQueue\":\"AUTHCDN.REMINDERS.Q\",\"messageId\":\"ID:414D51204155544843444E514D2020203736D56A19491E40\",\"reason\":\"INVALID_REMINDER\",\"attempts\":1,\"originalBody\":\"{\\\"schemaVersion\\\":999,\\\"testRun\\\":\\\"MQ-E2E-20261020181439\\\"}\"}",
+              "queue": "AUTHCDN.REMINDERS.BOQ",
+              "purpose": "QUARANTINE"
+            },
+            "next_attempt_at": "2026-10-20T18:17:07.763451+00:00",
+            "last_error": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "BOQ-VERIFIED-POISON-SEND-permanent-mismatch",
+      "title": "Verificar salida de cuarentena persistida y completada",
+      "result": "PASS",
+      "kind": "LIVE_SQL",
+      "at": "2026-10-20T18:17:35.096Z",
+      "evidence": {
+        "status": 200,
+        "body": [
+          {
+            "id": "96319b8a-4ab5-4a45-a02d-17acab8503ff",
+            "queue_name": "AUTHCDN.REMINDERS.Q",
+            "message_id": "ID:414D51204155544843444E514D2020203736D56A23B32140",
+            "correlation_id": null,
+            "reply_to": null,
+            "body": "{\"cardId\":\"781ea7cf-f469-44eb-9eeb-ffd32f244912\",\"eventId\":\"baa9427c-8199-4364-beb6-02299000ad5e\",\"eventType\":\"TASK_REMINDER_DUE\",\"expiresAt\":\"2026-10-20T18:36:15.957Z\",\"occurredAt\":\"2026-10-20T18:16:29.787Z\",\"reminderId\":\"2438f624-0c7a-4a37-ab5a-f371bb625646\",\"workspaceId\":\"7a9f7996-b421-47ac-b003-cc05acb10f7b\",\"schemaVersion\":1,\"scheduleVersion\":2}",
+            "state": "DONE",
+            "attempts": 1,
+            "output_attempts": 1,
+            "output": {
+              "body": "{\"schemaVersion\":1,\"type\":\"MQ_REST_QUARANTINE\",\"inboxId\":\"96319b8a-4ab5-4a45-a02d-17acab8503ff\",\"sourceQueue\":\"AUTHCDN.REMINDERS.Q\",\"messageId\":\"ID:414D51204155544843444E514D2020203736D56A23B32140\",\"reason\":\"PERMANENT_ERROR\",\"attempts\":1,\"originalBody\":\"{\\\"cardId\\\":\\\"781ea7cf-f469-44eb-9eeb-ffd32f244912\\\",\\\"eventId\\\":\\\"baa9427c-8199-4364-beb6-02299000ad5e\\\",\\\"eventType\\\":\\\"TASK_REMINDER_DUE\\\",\\\"expiresAt\\\":\\\"2026-10-20T18:36:15.957Z\\\",\\\"occurredAt\\\":\\\"2026-10-20T18:16:29.787Z\\\",\\\"reminderId\\\":\\\"2438f624-0c7a-4a37-ab5a-f371bb625646\\\",\\\"workspaceId\\\":\\\"7a9f7996-b421-47ac-b003-cc05acb10f7b\\\",\\\"schemaVersion\\\":1,\\\"scheduleVersion\\\":2}\"}",
+              "queue": "AUTHCDN.REMINDERS.BOQ",
+              "purpose": "QUARANTINE"
+            },
+            "next_attempt_at": "2026-10-20T18:17:08.536793+00:00",
+            "last_error": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "BOQ-VERIFIED-REPLY-ALLOWLIST-SEND",
+      "title": "Verificar salida de cuarentena persistida y completada",
+      "result": "PASS",
+      "kind": "LIVE_SQL",
+      "at": "2026-10-20T18:17:35.299Z",
+      "evidence": {
+        "status": 200,
+        "body": [
+          {
+            "id": "6384fb61-86a8-4451-8b97-df91410d62bd",
+            "queue_name": "AUTHCDN.SUMMARY.REQUEST.Q",
+            "message_id": "ID:414D51204155544843444E514D2020203736D56A1A491E40",
+            "correlation_id": null,
+            "reply_to": "E2E.UNTRUSTED.REPLY.Q@AUTHCDNQM",
+            "body": "{\"schemaVersion\":1,\"requestId\":\"09992ccc-ae7d-48b6-933d-6f6106e03188\",\"boardId\":\"9dbe1264-eccd-4342-a7d8-3524727a333a\",\"userId\":\"45e0ff79-940c-4230-bd97-bb9e0572e0f0\",\"createdAt\":\"2026-10-20T18:17:05.864Z\",\"expiresAt\":\"2026-10-20T18:18:05.864Z\"}",
+            "state": "DONE",
+            "attempts": 1,
+            "output_attempts": 1,
+            "output": {
+              "body": "{\"schemaVersion\":1,\"type\":\"MQ_REST_QUARANTINE\",\"inboxId\":\"6384fb61-86a8-4451-8b97-df91410d62bd\",\"sourceQueue\":\"AUTHCDN.SUMMARY.REQUEST.Q\",\"messageId\":\"ID:414D51204155544843444E514D2020203736D56A1A491E40\",\"reason\":\"INVALID_REPLY_DESTINATION\",\"attempts\":1,\"originalBody\":\"{\\\"schemaVersion\\\":1,\\\"requestId\\\":\\\"09992ccc-ae7d-48b6-933d-6f6106e03188\\\",\\\"boardId\\\":\\\"9dbe1264-eccd-4342-a7d8-3524727a333a\\\",\\\"userId\\\":\\\"45e0ff79-940c-4230-bd97-bb9e0572e0f0\\\",\\\"createdAt\\\":\\\"2026-10-20T18:17:05.864Z\\\",\\\"expiresAt\\\":\\\"2026-10-20T18:18:05.864Z\\\"}\"}",
+              "queue": "AUTHCDN.REMINDERS.BOQ",
+              "purpose": "QUARANTINE"
+            },
+            "next_attempt_at": "2026-10-20T18:17:06.912768+00:00",
+            "last_error": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "BOQ-BROWSE-PERMISSION",
+      "title": "Comprobación de permiso de lectura BOQ para evidencia",
+      "result": "LIMITED",
+      "kind": "LIVE_MQ",
+      "at": "2026-10-20T18:17:36.608Z",
+      "evidence": {
+        "status": 403,
+        "body": {
+          "error": [
+            {
+              "msgId": "MQWB0103E",
+              "action": "Obtain the necessary authorization to perform the operation and resubmit the request.",
+              "completionCode": 2,
+              "reasonCode": 2035,
+              "type": "rest",
+              "message": "MQWB0103E: Not authorized to browse from 'AUTHCDN.REMINDERS.BOQ'.",
+              "explanation": "The authenticated principal is not authorized to perform the requested REST API operation."
+            }
+          ]
+        },
+        "note": "El consumidor requiere PUT en BOQ; GET/BROWSE no es necesario para el traslado. Si recibe 403, comprobar profundidad/cuerpo desde consola administrativa."
+      }
+    }
+  ]
+}

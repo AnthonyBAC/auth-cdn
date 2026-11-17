@@ -1,0 +1,43 @@
+{
+  "records": [
+    {
+      "id": "SHARED-CRON-RETRY-CONCURRENCY",
+      "title": "Otro worker procesa el quinto intento; la llamada sin reserva responde 200 sin trabajo",
+      "result": "PASS",
+      "at": "2026-10-20T18:19:21.970Z",
+      "kind": "LIVE_CONCURRENCY_AUDIT",
+      "evidence": {
+        "manualFifthTick": {
+          "request": {
+            "method": "POST",
+            "path": "/api/mq/tick",
+            "body": {}
+          },
+          "status": 200,
+          "body": {
+            "published": 0,
+            "captured": 0,
+            "worked": 0,
+            "errors": 0
+          }
+        },
+        "attempts": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "backgroundResponses": [
+          {
+            "content": "{\"published\":0,\"captured\":0,\"worked\":1,\"errors\":1}",
+            "created": "2026-10-20 18:18:00.020858+00",
+            "id": 1014,
+            "status_code": 502
+          }
+        ],
+        "note": "El chequeo original exigía 502 en cada llamada manual y marcó FAIL en la quinta. Los cinco fallos están confirmados en el contador; el Cron ya activo ejecutó el quinto y la llamada manual no adquirió trabajo. La salida se recuperó al corregir el destino."
+      }
+    }
+  ]
+}

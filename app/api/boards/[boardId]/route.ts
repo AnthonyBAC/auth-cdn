@@ -11,9 +11,12 @@ export async function GET(_: Request, { params }: { params: Promise<{ boardId: s
 
   const { data: board, error } = await session.supabase
     .from("boards")
-    .select("id, workspace_id, title, lists(id, title, position, cards(id, title, description, position, list_id, created_at, updated_at))")
+    .select("id, workspace_id, title, workspaces!inner(archived_at), lists(id, title, position, cards(id, title, description, position, list_id, created_at, updated_at, created_by_user_id, due_at, notify_at, completed_at, schedule_version, card_assignees(user_id)))")
     .eq("id", boardId)
     .is("archived_at", null)
+    .is("workspaces.archived_at", null)
+    .is("lists.archived_at", null)
+    .is("lists.cards.archived_at", null)
     .single();
 
   if (error) return apiError("NOT_FOUND", "Board not found.");

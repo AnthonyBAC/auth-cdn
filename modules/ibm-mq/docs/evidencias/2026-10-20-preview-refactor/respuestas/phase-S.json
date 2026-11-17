@@ -1,0 +1,320 @@
+{
+  "origin": "https://auth-pawu47st3-anthonys-projects-0d8acba7.vercel.app",
+  "runTag": "MQ-E2E-20261020181439",
+  "records": [
+    {
+      "id": "AUTH-PASSWORD",
+      "title": "Autenticación Supabase sin registrar tokens",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:20:30.213Z",
+      "evidence": {
+        "status": 200,
+        "projectHost": "vqeusrctsfqykzwwrucn.supabase.co"
+      }
+    },
+    {
+      "id": "AUTH-OWNER",
+      "title": "JWT válido en el nuevo preview",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:20:31.606Z",
+      "evidence": {
+        "request": {
+          "method": "GET",
+          "path": "/api/auth/session",
+          "body": null
+        },
+        "status": 200,
+        "body": {
+          "user": {
+            "id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+            "email": "owner@example.com",
+            "name": "Demo Owner"
+          }
+        }
+      }
+    },
+    {
+      "id": "SECURITY-IDENTITY",
+      "title": "Crear identidad desechable sin enviar correo",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:20:31.962Z",
+      "evidence": {
+        "userId": "40807d87-2809-4c24-93d0-25607bc34043",
+        "email": "mq-e2e-10967d038ce4@example.com"
+      }
+    },
+    {
+      "id": "SECURITY-NONMEMBER",
+      "title": "Usuario autenticado ajeno al workspace no obtiene resumen",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:20:33.900Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/boards/9dbe1264-eccd-4342-a7d8-3524727a333a/summary",
+          "body": null
+        },
+        "status": 404,
+        "body": {
+          "error": {
+            "code": "NOT_FOUND",
+            "message": "Board not found.",
+            "details": {}
+          }
+        }
+      }
+    },
+    {
+      "id": "SECURITY-OTHER-NOTICES",
+      "title": "Otra identidad no recibe avisos del owner",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:20:35.158Z",
+      "evidence": {
+        "request": {
+          "method": "GET",
+          "path": "/api/notifications",
+          "body": null
+        },
+        "status": 200,
+        "body": {
+          "notifications": []
+        }
+      }
+    },
+    {
+      "id": "SECURITY-OTHER-READ",
+      "title": "Otra identidad no marca el aviso del owner como leído",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:20:36.614Z",
+      "evidence": {
+        "request": {
+          "method": "PATCH",
+          "path": "/api/notifications/34416025-503d-47d6-9639-ac8f97c6abe5",
+          "body": null
+        },
+        "status": 404,
+        "body": {
+          "error": {
+            "code": "NOT_FOUND",
+            "message": "Notification not found.",
+            "details": {}
+          }
+        }
+      }
+    },
+    {
+      "id": "SECURITY-USER-NOT-WORKER",
+      "title": "JWT del owner no sustituye el secreto de Cron",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:20:37.408Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/mq/tick",
+          "body": {}
+        },
+        "status": 401,
+        "body": {
+          "error": "UNAUTHORIZED"
+        }
+      }
+    },
+    {
+      "id": "SECURITY-VIEWER-FIXTURE",
+      "title": "Asignar viewer solo en workspace de ensayo",
+      "result": "PASS",
+      "kind": "LIVE_SQL",
+      "at": "2026-10-20T18:20:37.608Z",
+      "evidence": {
+        "status": 201,
+        "body": [
+          {
+            "id": "ab1e0d90-774a-4a7c-a29a-4bbc016b29a7",
+            "workspace_id": "1f4af17f-2074-4bcc-bcb2-ed118f3b84df",
+            "user_id": "40807d87-2809-4c24-93d0-25607bc34043",
+            "role": "viewer",
+            "status": "active",
+            "created_at": "2026-10-20T18:20:36.635929+00:00",
+            "updated_at": "2026-10-20T18:20:36.635929+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "id": "SECURITY-VIEWER-WRITE",
+      "title": "Viewer no puede programar avisos",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:20:39.275Z",
+      "evidence": {
+        "request": {
+          "method": "PATCH",
+          "path": "/api/cards/781ea7cf-f469-44eb-9eeb-ffd32f244912/schedule",
+          "body": {
+            "expectedVersion": 2,
+            "dueAt": "2026-10-20T18:40:37.610Z",
+            "notifyAt": "2026-10-20T18:21:37.610Z",
+            "assigneeIds": []
+          }
+        },
+        "status": 403,
+        "body": {
+          "error": {
+            "code": "FORBIDDEN",
+            "message": "No puedes realizar esta operación sobre la tarjeta.",
+            "details": {}
+          }
+        }
+      }
+    },
+    {
+      "id": "SECURITY-VIEWER-READ",
+      "title": "Viewer conserva lectura del tablero",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:20:40.783Z",
+      "evidence": {
+        "status": 200,
+        "boardId": "9dbe1264-eccd-4342-a7d8-3524727a333a"
+      }
+    },
+    {
+      "id": "SECURITY-INBOX-RLS",
+      "title": "JWT de usuario no puede leer inbox interno",
+      "result": "PASS",
+      "kind": "LIVE_SQL",
+      "at": "2026-10-20T18:20:41.184Z",
+      "evidence": {
+        "error": {
+          "code": "42501",
+          "message": "permission denied for table mq_rest_inbox"
+        }
+      }
+    },
+    {
+      "id": "SECURITY-WORKER-RPC",
+      "title": "JWT de usuario no ejecuta funciones del worker",
+      "result": "PASS",
+      "kind": "LIVE_SQL",
+      "at": "2026-10-20T18:20:41.376Z",
+      "evidence": {
+        "error": {
+          "code": "42501",
+          "message": "permission denied for function mq_rest_claim"
+        }
+      }
+    },
+    {
+      "id": "SECURITY-REMOVE-MEMBER",
+      "title": "Retirar miembro de ensayo",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:20:43.248Z",
+      "evidence": {
+        "request": {
+          "method": "DELETE",
+          "path": "/api/workspaces/1f4af17f-2074-4bcc-bcb2-ed118f3b84df/members/40807d87-2809-4c24-93d0-25607bc34043",
+          "body": null
+        },
+        "status": 204,
+        "body": ""
+      }
+    },
+    {
+      "id": "SECURITY-REVOKED",
+      "title": "Membresía retirada invalida nuevas solicitudes",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:20:44.893Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/boards/9dbe1264-eccd-4342-a7d8-3524727a333a/summary",
+          "body": null
+        },
+        "status": 404,
+        "body": {
+          "error": {
+            "code": "NOT_FOUND",
+            "message": "Board not found.",
+            "details": {}
+          }
+        }
+      }
+    },
+    {
+      "id": "SECURITY-MFA-ENROLL",
+      "title": "MFA habilitado solo para la identidad desechable",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:20:45.750Z",
+      "evidence": {
+        "factorId": "b7a7e358-5b57-4747-934d-452d9146c90a"
+      }
+    },
+    {
+      "id": "SECURITY-MFA-PENDING",
+      "title": "JWT AAL1 con MFA habilitado recibe 403",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:20:47.419Z",
+      "evidence": {
+        "request": {
+          "method": "GET",
+          "path": "/api/auth/session",
+          "body": null
+        },
+        "status": 403,
+        "body": {
+          "error": {
+            "code": "FORBIDDEN",
+            "message": "Complete the two-factor challenge to continue.",
+            "details": {
+              "aal": "aal1"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "SECURITY-MFA-VERIFIED",
+      "title": "JWT AAL2 después del desafío permite sesión",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:20:49.320Z",
+      "evidence": {
+        "request": {
+          "method": "GET",
+          "path": "/api/auth/session",
+          "body": null
+        },
+        "status": 200,
+        "body": {
+          "user": {
+            "id": "40807d87-2809-4c24-93d0-25607bc34043",
+            "email": "mq-e2e-10967d038ce4@example.com",
+            "name": "MQ-E2E-20261020181439 seguridad"
+          }
+        }
+      }
+    },
+    {
+      "id": "SECURITY-CLEANUP",
+      "title": "Eliminar únicamente identidad temporal de ensayo",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:20:49.585Z",
+      "evidence": {
+        "userId": "40807d87-2809-4c24-93d0-25607bc34043",
+        "error": null
+      }
+    }
+  ]
+}

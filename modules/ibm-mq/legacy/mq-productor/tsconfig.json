@@ -1,0 +1,13 @@
+{
+  "extends": "../../../../tsconfig.json",
+  "compilerOptions": {
+    "incremental": false
+  },
+  "include": [
+    "./**/*.ts",
+    "../../domain/contrato.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

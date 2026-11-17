@@ -1,0 +1,8 @@
+**
+!package.json
+!pnpm-lock.yaml
+!modules/
+!modules/kafka/
+!modules/kafka/events.ts
+!modules/kafka/consumer.mjs
+!modules/kafka/metrics.ts

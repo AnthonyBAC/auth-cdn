@@ -1,0 +1,233 @@
+{
+  "origin": "https://auth-pawu47st3-anthonys-projects-0d8acba7.vercel.app",
+  "runTag": "MQ-E2E-20261020181439",
+  "records": [
+    {
+      "id": "AUTH-PASSWORD",
+      "title": "Autenticación Supabase sin registrar tokens",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:19:42.190Z",
+      "evidence": {
+        "status": 200,
+        "projectHost": "vqeusrctsfqykzwwrucn.supabase.co"
+      }
+    },
+    {
+      "id": "AUTH-OWNER",
+      "title": "JWT válido en el nuevo preview",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:19:43.360Z",
+      "evidence": {
+        "request": {
+          "method": "GET",
+          "path": "/api/auth/session",
+          "body": null
+        },
+        "status": 200,
+        "body": {
+          "user": {
+            "id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+            "email": "owner@example.com",
+            "name": "Demo Owner"
+          }
+        }
+      }
+    },
+    {
+      "id": "CARD-vencimiento",
+      "title": "Crear tarjeta de ensayo vencimiento",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:19:45.269Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/lists/a1ad2af9-cfa5-4005-809c-4365bc6f86ff/cards",
+          "body": {
+            "title": "MQ-E2E-20261020181439 vencimiento",
+            "description": "Datos aislados para evidencia de mensajería REST."
+          }
+        },
+        "status": 201,
+        "body": {
+          "card": {
+            "id": "819e0ad9-fa08-4f78-95ea-5dfb22ccac31",
+            "title": "MQ-E2E-20261020181439 vencimiento",
+            "description": "Datos aislados para evidencia de mensajería REST.",
+            "position": 5,
+            "list_id": "a1ad2af9-cfa5-4005-809c-4365bc6f86ff",
+            "created_by_user_id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+            "due_at": null,
+            "notify_at": null,
+            "completed_at": null,
+            "schedule_version": 1
+          }
+        }
+      }
+    },
+    {
+      "id": "SCHEDULE-vencimiento",
+      "title": "Programar vencimiento",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:19:46.631Z",
+      "evidence": {
+        "request": {
+          "method": "PATCH",
+          "path": "/api/cards/819e0ad9-fa08-4f78-95ea-5dfb22ccac31/schedule",
+          "body": {
+            "expectedVersion": 1,
+            "dueAt": "2026-10-20T18:20:15.272Z",
+            "notifyAt": "2026-10-20T18:19:50.272Z",
+            "assigneeIds": []
+          }
+        },
+        "status": 200,
+        "body": {
+          "card": {
+            "id": "819e0ad9-fa08-4f78-95ea-5dfb22ccac31",
+            "due_at": "2026-10-20T18:20:15.272+00:00",
+            "notify_at": "2026-10-20T18:19:50.272+00:00",
+            "assignee_ids": [],
+            "completed_at": null,
+            "schedule_version": 2
+          }
+        }
+      }
+    },
+    {
+      "id": "OVERDUE-EARLY-TICK",
+      "title": "Ciclo cloud de recuperación",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:19:58.163Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/mq/tick",
+          "body": {}
+        },
+        "status": 200,
+        "body": {
+          "published": 1,
+          "captured": 1,
+          "worked": 1,
+          "errors": 0
+        }
+      }
+    },
+    {
+      "id": "OVERDUE-PREVENTIVE",
+      "title": "Aviso preventivo antes del vencimiento",
+      "result": "PASS",
+      "kind": "LIVE_SQL",
+      "at": "2026-10-20T18:19:58.373Z",
+      "evidence": {
+        "status": 200,
+        "body": [
+          {
+            "id": "05c7c201-022b-47af-a5d7-10a7c70decca",
+            "event_id": "c5266882-6620-419e-9b0b-74a6cffd7876",
+            "message": "La tarjeta \"MQ-E2E-20261020181439 vencimiento\" vence el 2026-10-20T18:20:15Z.",
+            "created_at": "2026-10-20T18:19:54.041034+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "id": "OVERDUE-DUE-TICK",
+      "title": "Ciclo cloud de recuperación",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:20:24.723Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/mq/tick",
+          "body": {}
+        },
+        "status": 200,
+        "body": {
+          "published": 1,
+          "captured": 1,
+          "worked": 1,
+          "errors": 0
+        }
+      }
+    },
+    {
+      "id": "OVERDUE-DELIVERY",
+      "title": "Un aviso preventivo y otro vencido, sin duplicados",
+      "result": "PASS",
+      "kind": "LIVE_SQL",
+      "at": "2026-10-20T18:20:25.094Z",
+      "evidence": {
+        "notifications": {
+          "status": 200,
+          "body": [
+            {
+              "id": "05c7c201-022b-47af-a5d7-10a7c70decca",
+              "event_id": "c5266882-6620-419e-9b0b-74a6cffd7876",
+              "message": "La tarjeta \"MQ-E2E-20261020181439 vencimiento\" vence el 2026-10-20T18:20:15Z.",
+              "created_at": "2026-10-20T18:19:54.041034+00:00"
+            },
+            {
+              "id": "2aab643a-8e90-49fa-a78a-316ec24a7f18",
+              "event_id": "daa62d4c-8cf2-4a76-beec-df954c26ff14",
+              "message": "La tarjeta \"MQ-E2E-20261020181439 vencimiento\" está vencida.",
+              "created_at": "2026-10-20T18:20:19.536008+00:00"
+            }
+          ]
+        },
+        "reminders": {
+          "status": 200,
+          "body": [
+            {
+              "id": "6ca13bcc-9f4e-4c38-840c-01f51e3205a2",
+              "kind": "TASK_OVERDUE",
+              "status": "PROCESSED",
+              "due_at": "2026-10-20T18:20:15.272+00:00",
+              "expires_at": "2026-10-21T18:20:15.272+00:00",
+              "processed_at": "2026-10-20T18:20:19.537434+00:00"
+            },
+            {
+              "id": "d9b0ead2-ec34-4d8a-8aad-bef9bd006d3d",
+              "kind": "TASK_REMINDER_DUE",
+              "status": "PROCESSED",
+              "due_at": "2026-10-20T18:20:15.272+00:00",
+              "expires_at": "2026-10-20T18:20:15.272+00:00",
+              "processed_at": "2026-10-20T18:19:54.042311+00:00"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "SUMMARY-AFTER-OVERDUE",
+      "title": "Resumen refleja la tarjeta vencida",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:20:29.538Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/boards/9dbe1264-eccd-4342-a7d8-3524727a333a/summary",
+          "body": null
+        },
+        "status": 200,
+        "body": {
+          "summary": {
+            "totalActive": 6,
+            "pending": 4,
+            "completed": 1,
+            "overdue": 1
+          },
+          "requestId": "0824bb53-096c-47b9-822e-e5a54f907dd5",
+          "generatedAt": "2026-10-20T18:20:26.877Z"
+        }
+      }
+    }
+  ]
+}

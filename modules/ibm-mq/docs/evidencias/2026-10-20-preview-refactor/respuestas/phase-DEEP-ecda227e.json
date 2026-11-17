@@ -1,0 +1,1195 @@
+{
+  "origin": "https://auth-pawu47st3-anthonys-projects-0d8acba7.vercel.app",
+  "run": "ecda227e",
+  "records": [
+    {
+      "id": "AUTH-DEEP",
+      "title": "JWT de la cuenta autorizada",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:21:36.711Z",
+      "evidence": {
+        "request": {
+          "method": "GET",
+          "path": "/api/auth/session",
+          "body": null
+        },
+        "elapsedMs": 1218,
+        "status": 200,
+        "body": {
+          "user": {
+            "id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+            "email": "owner@example.com",
+            "name": "Demo Owner"
+          }
+        }
+      }
+    },
+    {
+      "id": "CREATE-cinco-reintentos-consumidor",
+      "title": "Crear tarjeta aislada cinco-reintentos-consumidor",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:21:38.286Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/lists/a1ad2af9-cfa5-4005-809c-4365bc6f86ff/cards",
+          "body": {
+            "title": "MQ-E2E-20261020181439 ecda227e cinco-reintentos-consumidor",
+            "description": "Ensayo aislado de fallos reales y recuperación."
+          }
+        },
+        "elapsedMs": 1573,
+        "status": 201,
+        "body": {
+          "card": {
+            "id": "c78e0a88-9b33-4985-b5de-63a1e510cf8c",
+            "title": "MQ-E2E-20261020181439 ecda227e cinco-reintentos-consumidor",
+            "description": "Ensayo aislado de fallos reales y recuperación.",
+            "position": 7,
+            "list_id": "a1ad2af9-cfa5-4005-809c-4365bc6f86ff",
+            "created_by_user_id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+            "due_at": null,
+            "notify_at": null,
+            "completed_at": null,
+            "schedule_version": 1
+          }
+        }
+      }
+    },
+    {
+      "id": "CREATE-interrupcion-real-rpc",
+      "title": "Crear tarjeta aislada interrupcion-real-rpc",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:21:40.006Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/lists/a1ad2af9-cfa5-4005-809c-4365bc6f86ff/cards",
+          "body": {
+            "title": "MQ-E2E-20261020181439 ecda227e interrupcion-real-rpc",
+            "description": "Ensayo aislado de fallos reales y recuperación."
+          }
+        },
+        "elapsedMs": 1718,
+        "status": 201,
+        "body": {
+          "card": {
+            "id": "447981e5-495a-46de-9763-71357a5682c6",
+            "title": "MQ-E2E-20261020181439 ecda227e interrupcion-real-rpc",
+            "description": "Ensayo aislado de fallos reales y recuperación.",
+            "position": 8,
+            "list_id": "a1ad2af9-cfa5-4005-809c-4365bc6f86ff",
+            "created_by_user_id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+            "due_at": null,
+            "notify_at": null,
+            "completed_at": null,
+            "schedule_version": 1
+          }
+        }
+      }
+    },
+    {
+      "id": "CREATE-alerta-cinco-fallos",
+      "title": "Crear tarjeta aislada alerta-cinco-fallos",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:21:41.512Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/lists/a1ad2af9-cfa5-4005-809c-4365bc6f86ff/cards",
+          "body": {
+            "title": "MQ-E2E-20261020181439 ecda227e alerta-cinco-fallos",
+            "description": "Ensayo aislado de fallos reales y recuperación."
+          }
+        },
+        "elapsedMs": 1505,
+        "status": 201,
+        "body": {
+          "card": {
+            "id": "00a44acf-89f6-439e-aaa3-3f62c9d01e6d",
+            "title": "MQ-E2E-20261020181439 ecda227e alerta-cinco-fallos",
+            "description": "Ensayo aislado de fallos reales y recuperación.",
+            "position": 9,
+            "list_id": "a1ad2af9-cfa5-4005-809c-4365bc6f86ff",
+            "created_by_user_id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+            "due_at": null,
+            "notify_at": null,
+            "completed_at": null,
+            "schedule_version": 1
+          }
+        }
+      }
+    },
+    {
+      "id": "FAULT-SCOPE",
+      "title": "Fallos temporales restringidos a fixtures propios",
+      "result": "PASS",
+      "kind": "LIVE_SQL_SCOPED_FAULT",
+      "at": "2026-10-20T18:21:54.878Z",
+      "evidence": [
+        {
+          "setup": {
+            "canSignalBackend": true,
+            "faultsExpireAt": "2026-10-20T18:41:35.489Z",
+            "scopeCards": [
+              "c78e0a88-9b33-4985-b5de-63a1e510cf8c",
+              "447981e5-495a-46de-9763-71357a5682c6"
+            ],
+            "summaryBoard": "5e3fddbf-3724-45dd-a1e4-664416ab4136"
+          }
+        }
+      ]
+    },
+    {
+      "id": "SUMMARY-REAL-TIMEOUT",
+      "title": "Request/Reply supera la espera en Vercel y responde 504",
+      "result": "PASS",
+      "kind": "LIVE_CLOUD_SCOPED_FAULT",
+      "at": "2026-10-20T18:22:23.645Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/boards/5e3fddbf-3724-45dd-a1e4-664416ab4136/summary",
+          "body": null
+        },
+        "elapsedMs": 28765,
+        "status": 504,
+        "body": {
+          "error": {
+            "code": "GATEWAY_TIMEOUT",
+            "message": "El resumen superó el tiempo de espera.",
+            "details": {
+              "code": "GATEWAY_TIMEOUT"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "SUMMARY-TIMEOUT-PENDING",
+      "title": "La solicitud demorada sigue persistida",
+      "result": "PASS",
+      "kind": "LIVE_SQL",
+      "at": "2026-10-20T18:22:23.964Z",
+      "evidence": {
+        "status": 200,
+        "body": [
+          {
+            "id": "6ef1074c-8c59-412e-a7c2-8eec42238bcb",
+            "message_id": "ID:414D51204155544843444E514D2020203736D56A1F491E40",
+            "body": "{\"schemaVersion\":1,\"requestId\":\"5427631e-f15f-4d79-bc03-5b2672023156\",\"boardId\":\"5e3fddbf-3724-45dd-a1e4-664416ab4136\",\"userId\":\"45e0ff79-940c-4230-bd97-bb9e0572e0f0\",\"createdAt\":\"2026-10-20T18:21:55.609Z\",\"expiresAt\":\"2026-10-20T18:22:25.609Z\"}",
+            "state": "PENDING",
+            "attempts": 0,
+            "next_attempt_at": "2026-10-20T18:23:25.845339+00:00"
+          }
+        ]
+      }
+    },
+    {
+      "id": "SUMMARY-AFTER-TIMEOUT",
+      "title": "Nueva solicitud funciona después de retirar la demora",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:22:34.945Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/boards/5e3fddbf-3724-45dd-a1e4-664416ab4136/summary",
+          "body": null
+        },
+        "elapsedMs": 4134,
+        "status": 200,
+        "body": {
+          "summary": {
+            "totalActive": 0,
+            "pending": 0,
+            "completed": 0,
+            "overdue": 0
+          },
+          "requestId": "b91ba2cd-6e20-4c33-89e3-34dff56ef1ba",
+          "generatedAt": "2026-10-20T18:22:32.520Z"
+        }
+      }
+    },
+    {
+      "id": "SCHEDULE-c78e0a88-9b33-4985-b5de-63a1e510cf8c",
+      "title": "Programación por API con JWT",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:22:36.422Z",
+      "evidence": {
+        "request": {
+          "method": "PATCH",
+          "path": "/api/cards/c78e0a88-9b33-4985-b5de-63a1e510cf8c/schedule",
+          "body": {
+            "expectedVersion": 1,
+            "dueAt": "2026-10-20T19:22:34.947Z",
+            "notifyAt": "2026-10-20T18:22:37.947Z",
+            "assigneeIds": []
+          }
+        },
+        "elapsedMs": 1474,
+        "status": 200,
+        "body": {
+          "card": {
+            "id": "c78e0a88-9b33-4985-b5de-63a1e510cf8c",
+            "due_at": "2026-10-20T19:22:34.947+00:00",
+            "notify_at": "2026-10-20T18:22:37.947+00:00",
+            "assignee_ids": [],
+            "completed_at": null,
+            "schedule_version": 2
+          }
+        }
+      }
+    },
+    {
+      "id": "CONSUMER-RETRY-9",
+      "title": "Intentos reales de process_reminder_event y rollback",
+      "result": "PASS",
+      "kind": "LIVE_CLOUD_SCOPED_FAULT",
+      "at": "2026-10-20T18:22:45.647Z",
+      "evidence": {
+        "tick": {
+          "request": {
+            "method": "POST",
+            "path": "/api/mq/tick",
+            "body": {}
+          },
+          "elapsedMs": 5342,
+          "status": 502,
+          "body": {
+            "published": 1,
+            "captured": 1,
+            "worked": 3,
+            "errors": 1
+          }
+        },
+        "inbox": {
+          "status": 200,
+          "body": [
+            {
+              "id": "bfea6a53-b5fd-4e56-b65f-338714a1eade",
+              "message_id": "ID:414D51204155544843444E514D2020203736D56A21491E40",
+              "body": "{\"schemaVersion\":1,\"eventId\":\"62defd24-21d7-404a-b93c-48cd35e646e9\",\"eventType\":\"TASK_REMINDER_DUE\",\"reminderId\":\"9c850be0-ce57-4c0c-8099-04f3abb37a3a\",\"cardId\":\"c78e0a88-9b33-4985-b5de-63a1e510cf8c\",\"workspaceId\":\"1f4af17f-2074-4bcc-bcb2-ed118f3b84df\",\"scheduleVersion\":2,\"occurredAt\":\"2026-10-20T18:22:39.834Z\",\"expiresAt\":\"2026-10-20T19:22:34.947Z\"}",
+              "state": "PENDING",
+              "attempts": 1,
+              "output_attempts": 0,
+              "output": null,
+              "next_attempt_at": "2026-10-20T18:22:46.821265+00:00",
+              "last_error": "PROCESSING_OR_DELIVERY_UNCONFIRMED"
+            }
+          ]
+        },
+        "notifications": {
+          "status": 200,
+          "body": []
+        }
+      }
+    },
+    {
+      "id": "CONSUMER-RETRY-10",
+      "title": "Intentos reales de process_reminder_event y rollback",
+      "result": "PASS",
+      "kind": "LIVE_CLOUD_SCOPED_FAULT",
+      "at": "2026-10-20T18:22:52.290Z",
+      "evidence": {
+        "tick": {
+          "request": {
+            "method": "POST",
+            "path": "/api/mq/tick",
+            "body": {}
+          },
+          "elapsedMs": 4566,
+          "status": 502,
+          "body": {
+            "published": 0,
+            "captured": 0,
+            "worked": 1,
+            "errors": 1
+          }
+        },
+        "inbox": {
+          "status": 200,
+          "body": [
+            {
+              "id": "bfea6a53-b5fd-4e56-b65f-338714a1eade",
+              "message_id": "ID:414D51204155544843444E514D2020203736D56A21491E40",
+              "body": "{\"schemaVersion\":1,\"eventId\":\"62defd24-21d7-404a-b93c-48cd35e646e9\",\"eventType\":\"TASK_REMINDER_DUE\",\"reminderId\":\"9c850be0-ce57-4c0c-8099-04f3abb37a3a\",\"cardId\":\"c78e0a88-9b33-4985-b5de-63a1e510cf8c\",\"workspaceId\":\"1f4af17f-2074-4bcc-bcb2-ed118f3b84df\",\"scheduleVersion\":2,\"occurredAt\":\"2026-10-20T18:22:39.834Z\",\"expiresAt\":\"2026-10-20T19:22:34.947Z\"}",
+              "state": "PENDING",
+              "attempts": 2,
+              "output_attempts": 0,
+              "output": null,
+              "next_attempt_at": "2026-10-20T18:22:57.703138+00:00",
+              "last_error": "PROCESSING_OR_DELIVERY_UNCONFIRMED"
+            }
+          ]
+        },
+        "notifications": {
+          "status": 200,
+          "body": []
+        }
+      }
+    },
+    {
+      "id": "CONSUMER-RETRY-11",
+      "title": "Intentos reales de process_reminder_event y rollback",
+      "result": "PASS",
+      "kind": "LIVE_CLOUD_SCOPED_FAULT",
+      "at": "2026-10-20T18:23:03.646Z",
+      "evidence": {
+        "tick": {
+          "request": {
+            "method": "POST",
+            "path": "/api/mq/tick",
+            "body": {}
+          },
+          "elapsedMs": 4950,
+          "status": 502,
+          "body": {
+            "published": 0,
+            "captured": 0,
+            "worked": 1,
+            "errors": 1
+          }
+        },
+        "inbox": {
+          "status": 200,
+          "body": [
+            {
+              "id": "bfea6a53-b5fd-4e56-b65f-338714a1eade",
+              "message_id": "ID:414D51204155544843444E514D2020203736D56A21491E40",
+              "body": "{\"schemaVersion\":1,\"eventId\":\"62defd24-21d7-404a-b93c-48cd35e646e9\",\"eventType\":\"TASK_REMINDER_DUE\",\"reminderId\":\"9c850be0-ce57-4c0c-8099-04f3abb37a3a\",\"cardId\":\"c78e0a88-9b33-4985-b5de-63a1e510cf8c\",\"workspaceId\":\"1f4af17f-2074-4bcc-bcb2-ed118f3b84df\",\"scheduleVersion\":2,\"occurredAt\":\"2026-10-20T18:22:39.834Z\",\"expiresAt\":\"2026-10-20T19:22:34.947Z\"}",
+              "state": "PENDING",
+              "attempts": 3,
+              "output_attempts": 0,
+              "output": null,
+              "next_attempt_at": "2026-10-20T18:23:18.760628+00:00",
+              "last_error": "PROCESSING_OR_DELIVERY_UNCONFIRMED"
+            }
+          ]
+        },
+        "notifications": {
+          "status": 200,
+          "body": []
+        }
+      }
+    },
+    {
+      "id": "CONSUMER-RETRY-12",
+      "title": "Intentos reales de process_reminder_event y rollback",
+      "result": "PASS",
+      "kind": "LIVE_CLOUD_SCOPED_FAULT",
+      "at": "2026-10-20T18:23:24.903Z",
+      "evidence": {
+        "tick": {
+          "request": {
+            "method": "POST",
+            "path": "/api/mq/tick",
+            "body": {}
+          },
+          "elapsedMs": 5194,
+          "status": 502,
+          "body": {
+            "published": 0,
+            "captured": 0,
+            "worked": 1,
+            "errors": 1
+          }
+        },
+        "inbox": {
+          "status": 200,
+          "body": [
+            {
+              "id": "bfea6a53-b5fd-4e56-b65f-338714a1eade",
+              "message_id": "ID:414D51204155544843444E514D2020203736D56A21491E40",
+              "body": "{\"schemaVersion\":1,\"eventId\":\"62defd24-21d7-404a-b93c-48cd35e646e9\",\"eventType\":\"TASK_REMINDER_DUE\",\"reminderId\":\"9c850be0-ce57-4c0c-8099-04f3abb37a3a\",\"cardId\":\"c78e0a88-9b33-4985-b5de-63a1e510cf8c\",\"workspaceId\":\"1f4af17f-2074-4bcc-bcb2-ed118f3b84df\",\"scheduleVersion\":2,\"occurredAt\":\"2026-10-20T18:22:39.834Z\",\"expiresAt\":\"2026-10-20T19:22:34.947Z\"}",
+              "state": "PENDING",
+              "attempts": 4,
+              "output_attempts": 0,
+              "output": null,
+              "next_attempt_at": "2026-10-20T18:23:59.707251+00:00",
+              "last_error": "PROCESSING_OR_DELIVERY_UNCONFIRMED"
+            }
+          ]
+        },
+        "notifications": {
+          "status": 200,
+          "body": []
+        }
+      }
+    },
+    {
+      "id": "CONSUMER-RETRY-13",
+      "title": "Intentos reales de process_reminder_event y rollback",
+      "result": "PASS",
+      "kind": "LIVE_CLOUD_SCOPED_FAULT",
+      "at": "2026-10-20T18:23:50.000Z",
+      "evidence": {
+        "tick": {
+          "request": {
+            "method": "POST",
+            "path": "/api/mq/tick",
+            "body": {}
+          },
+          "elapsedMs": 4688,
+          "status": 200,
+          "body": {
+            "published": 0,
+            "captured": 0,
+            "worked": 0,
+            "errors": 0
+          }
+        },
+        "inbox": {
+          "status": 200,
+          "body": [
+            {
+              "id": "bfea6a53-b5fd-4e56-b65f-338714a1eade",
+              "message_id": "ID:414D51204155544843444E514D2020203736D56A21491E40",
+              "body": "{\"schemaVersion\":1,\"eventId\":\"62defd24-21d7-404a-b93c-48cd35e646e9\",\"eventType\":\"TASK_REMINDER_DUE\",\"reminderId\":\"9c850be0-ce57-4c0c-8099-04f3abb37a3a\",\"cardId\":\"c78e0a88-9b33-4985-b5de-63a1e510cf8c\",\"workspaceId\":\"1f4af17f-2074-4bcc-bcb2-ed118f3b84df\",\"scheduleVersion\":2,\"occurredAt\":\"2026-10-20T18:22:39.834Z\",\"expiresAt\":\"2026-10-20T19:22:34.947Z\"}",
+              "state": "PENDING",
+              "attempts": 4,
+              "output_attempts": 0,
+              "output": null,
+              "next_attempt_at": "2026-10-20T18:23:59.707251+00:00",
+              "last_error": "PROCESSING_OR_DELIVERY_UNCONFIRMED"
+            }
+          ]
+        },
+        "notifications": {
+          "status": 200,
+          "body": []
+        }
+      }
+    },
+    {
+      "id": "CONSUMER-RETRY-14",
+      "title": "Intentos reales de process_reminder_event y rollback",
+      "result": "PASS",
+      "kind": "LIVE_CLOUD_SCOPED_FAULT",
+      "at": "2026-10-20T18:24:06.432Z",
+      "evidence": {
+        "tick": {
+          "request": {
+            "method": "POST",
+            "path": "/api/mq/tick",
+            "body": {}
+          },
+          "elapsedMs": 5842,
+          "status": 200,
+          "body": {
+            "published": 0,
+            "captured": 0,
+            "worked": 1,
+            "errors": 0
+          }
+        },
+        "inbox": {
+          "status": 200,
+          "body": [
+            {
+              "id": "bfea6a53-b5fd-4e56-b65f-338714a1eade",
+              "message_id": "ID:414D51204155544843444E514D2020203736D56A21491E40",
+              "body": "{\"schemaVersion\":1,\"eventId\":\"62defd24-21d7-404a-b93c-48cd35e646e9\",\"eventType\":\"TASK_REMINDER_DUE\",\"reminderId\":\"9c850be0-ce57-4c0c-8099-04f3abb37a3a\",\"cardId\":\"c78e0a88-9b33-4985-b5de-63a1e510cf8c\",\"workspaceId\":\"1f4af17f-2074-4bcc-bcb2-ed118f3b84df\",\"scheduleVersion\":2,\"occurredAt\":\"2026-10-20T18:22:39.834Z\",\"expiresAt\":\"2026-10-20T19:22:34.947Z\"}",
+              "state": "DONE",
+              "attempts": 5,
+              "output_attempts": 1,
+              "output": {
+                "body": "{\"schemaVersion\":1,\"type\":\"MQ_REST_QUARANTINE\",\"inboxId\":\"bfea6a53-b5fd-4e56-b65f-338714a1eade\",\"sourceQueue\":\"AUTHCDN.REMINDERS.Q\",\"messageId\":\"ID:414D51204155544843444E514D2020203736D56A21491E40\",\"reason\":\"RETRIES_EXHAUSTED\",\"attempts\":5,\"originalBody\":\"{\\\"schemaVersion\\\":1,\\\"eventId\\\":\\\"62defd24-21d7-404a-b93c-48cd35e646e9\\\",\\\"eventType\\\":\\\"TASK_REMINDER_DUE\\\",\\\"reminderId\\\":\\\"9c850be0-ce57-4c0c-8099-04f3abb37a3a\\\",\\\"cardId\\\":\\\"c78e0a88-9b33-4985-b5de-63a1e510cf8c\\\",\\\"workspaceId\\\":\\\"1f4af17f-2074-4bcc-bcb2-ed118f3b84df\\\",\\\"scheduleVersion\\\":2,\\\"occurredAt\\\":\\\"2026-10-20T18:22:39.834Z\\\",\\\"expiresAt\\\":\\\"2026-10-20T19:22:34.947Z\\\"}\"}",
+                "queue": "AUTHCDN.REMINDERS.BOQ",
+                "purpose": "QUARANTINE"
+              },
+              "next_attempt_at": "2026-10-20T18:23:59.707251+00:00",
+              "last_error": null
+            }
+          ]
+        },
+        "notifications": {
+          "status": 200,
+          "body": []
+        }
+      }
+    },
+    {
+      "id": "CONSUMER-FIVE-EXHAUSTED",
+      "title": "Cinco fallos reales del consumidor terminan en BOQ sin aviso duplicado",
+      "result": "PASS",
+      "kind": "LIVE_CLOUD_SCOPED_FAULT",
+      "at": "2026-10-20T18:24:13.551Z",
+      "evidence": {
+        "inbox": {
+          "status": 200,
+          "body": [
+            {
+              "id": "bfea6a53-b5fd-4e56-b65f-338714a1eade",
+              "message_id": "ID:414D51204155544843444E514D2020203736D56A21491E40",
+              "body": "{\"schemaVersion\":1,\"eventId\":\"62defd24-21d7-404a-b93c-48cd35e646e9\",\"eventType\":\"TASK_REMINDER_DUE\",\"reminderId\":\"9c850be0-ce57-4c0c-8099-04f3abb37a3a\",\"cardId\":\"c78e0a88-9b33-4985-b5de-63a1e510cf8c\",\"workspaceId\":\"1f4af17f-2074-4bcc-bcb2-ed118f3b84df\",\"scheduleVersion\":2,\"occurredAt\":\"2026-10-20T18:22:39.834Z\",\"expiresAt\":\"2026-10-20T19:22:34.947Z\"}",
+              "state": "DONE",
+              "attempts": 5,
+              "output_attempts": 1,
+              "output": {
+                "body": "{\"schemaVersion\":1,\"type\":\"MQ_REST_QUARANTINE\",\"inboxId\":\"bfea6a53-b5fd-4e56-b65f-338714a1eade\",\"sourceQueue\":\"AUTHCDN.REMINDERS.Q\",\"messageId\":\"ID:414D51204155544843444E514D2020203736D56A21491E40\",\"reason\":\"RETRIES_EXHAUSTED\",\"attempts\":5,\"originalBody\":\"{\\\"schemaVersion\\\":1,\\\"eventId\\\":\\\"62defd24-21d7-404a-b93c-48cd35e646e9\\\",\\\"eventType\\\":\\\"TASK_REMINDER_DUE\\\",\\\"reminderId\\\":\\\"9c850be0-ce57-4c0c-8099-04f3abb37a3a\\\",\\\"cardId\\\":\\\"c78e0a88-9b33-4985-b5de-63a1e510cf8c\\\",\\\"workspaceId\\\":\\\"1f4af17f-2074-4bcc-bcb2-ed118f3b84df\\\",\\\"scheduleVersion\\\":2,\\\"occurredAt\\\":\\\"2026-10-20T18:22:39.834Z\\\",\\\"expiresAt\\\":\\\"2026-10-20T19:22:34.947Z\\\"}\"}",
+                "queue": "AUTHCDN.REMINDERS.BOQ",
+                "purpose": "QUARANTINE"
+              },
+              "next_attempt_at": "2026-10-20T18:23:59.707251+00:00",
+              "last_error": null
+            }
+          ]
+        },
+        "actualRpcFailures": {
+          "is_called": true,
+          "last_value": 5
+        },
+        "notifications": {
+          "status": 200,
+          "body": []
+        }
+      }
+    },
+    {
+      "id": "SCHEDULE-447981e5-495a-46de-9763-71357a5682c6",
+      "title": "Programación por API con JWT",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:24:21.320Z",
+      "evidence": {
+        "request": {
+          "method": "PATCH",
+          "path": "/api/cards/447981e5-495a-46de-9763-71357a5682c6/schedule",
+          "body": {
+            "expectedVersion": 1,
+            "dueAt": "2026-10-20T19:24:19.848Z",
+            "notifyAt": "2026-10-20T18:24:22.848Z",
+            "assigneeIds": []
+          }
+        },
+        "elapsedMs": 1471,
+        "status": 200,
+        "body": {
+          "card": {
+            "id": "447981e5-495a-46de-9763-71357a5682c6",
+            "due_at": "2026-10-20T19:24:19.848+00:00",
+            "notify_at": "2026-10-20T18:24:22.848+00:00",
+            "assignee_ids": [],
+            "completed_at": null,
+            "schedule_version": 2
+          }
+        }
+      }
+    },
+    {
+      "id": "INTERRUPTION-ACTUAL-PROCESS",
+      "title": "Interrumpir solo el backend que procesa la tarjeta de ensayo",
+      "result": "PASS",
+      "kind": "LIVE_CLOUD_SCOPED_FAULT",
+      "at": "2026-10-20T18:24:27.810Z",
+      "evidence": {
+        "status": 200,
+        "body": {
+          "pid": 456056,
+          "queryStart": "2026-10-20T18:24:26.359123+00:00",
+          "terminated": true,
+          "backendStart": "2026-10-20T18:24:18.103658+00:00",
+          "reminderStatus": "QUEUED",
+          "applicationName": "authcdn-e2e-interrupt-ecda227e",
+          "fixtureNotifications": 0
+        }
+      }
+    },
+    {
+      "id": "INTERRUPTION-ROLLBACK",
+      "title": "Tras la interrupción: cuerpo durable y ninguna notificación parcial",
+      "result": "PASS",
+      "kind": "LIVE_CLOUD_SCOPED_FAULT",
+      "at": "2026-10-20T18:24:31.287Z",
+      "evidence": {
+        "signal": {
+          "status": 200,
+          "body": {
+            "pid": 456056,
+            "queryStart": "2026-10-20T18:24:26.359123+00:00",
+            "terminated": true,
+            "backendStart": "2026-10-20T18:24:18.103658+00:00",
+            "reminderStatus": "QUEUED",
+            "applicationName": "authcdn-e2e-interrupt-ecda227e",
+            "fixtureNotifications": 0
+          }
+        },
+        "tick": {
+          "request": {
+            "method": "POST",
+            "path": "/api/mq/tick",
+            "body": {}
+          },
+          "elapsedMs": 6000,
+          "status": 502,
+          "body": {
+            "published": 1,
+            "captured": 1,
+            "worked": 1,
+            "errors": 1
+          }
+        },
+        "inbox": {
+          "status": 200,
+          "body": [
+            {
+              "id": "378c2480-dabf-4860-941d-3c82d4cef36f",
+              "message_id": "ID:414D51204155544843444E514D2020203736D56A2EB32140",
+              "body": "{\"schemaVersion\":1,\"eventId\":\"bc4a65aa-0c40-4779-a6cd-66e85cec0bbc\",\"eventType\":\"TASK_REMINDER_DUE\",\"reminderId\":\"861876f0-fe56-4e53-8c79-3702df6fa0e2\",\"cardId\":\"447981e5-495a-46de-9763-71357a5682c6\",\"workspaceId\":\"1f4af17f-2074-4bcc-bcb2-ed118f3b84df\",\"scheduleVersion\":2,\"occurredAt\":\"2026-10-20T18:24:25.096Z\",\"expiresAt\":\"2026-10-20T19:24:19.848Z\"}",
+              "state": "PENDING",
+              "attempts": 1,
+              "output_attempts": 0,
+              "output": null,
+              "next_attempt_at": "2026-10-20T18:25:56.912306+00:00",
+              "last_error": "PROCESSING_OR_DELIVERY_UNCONFIRMED"
+            }
+          ]
+        },
+        "notifications": {
+          "status": 200,
+          "body": []
+        }
+      }
+    },
+    {
+      "id": "INTERRUPTION-RECOVERED",
+      "title": "Otra invocación recupera el trabajo interrumpido y entrega un solo aviso",
+      "result": "PASS",
+      "kind": "LIVE_CLOUD_SCOPED_FAULT",
+      "at": "2026-10-20T18:24:43.016Z",
+      "evidence": {
+        "tick": {
+          "request": {
+            "method": "POST",
+            "path": "/api/mq/tick",
+            "body": {}
+          },
+          "elapsedMs": 4704,
+          "status": 200,
+          "body": {
+            "published": 0,
+            "captured": 0,
+            "worked": 1,
+            "errors": 0
+          }
+        },
+        "inbox": {
+          "status": 200,
+          "body": [
+            {
+              "id": "378c2480-dabf-4860-941d-3c82d4cef36f",
+              "message_id": "ID:414D51204155544843444E514D2020203736D56A2EB32140",
+              "body": "{\"schemaVersion\":1,\"eventId\":\"bc4a65aa-0c40-4779-a6cd-66e85cec0bbc\",\"eventType\":\"TASK_REMINDER_DUE\",\"reminderId\":\"861876f0-fe56-4e53-8c79-3702df6fa0e2\",\"cardId\":\"447981e5-495a-46de-9763-71357a5682c6\",\"workspaceId\":\"1f4af17f-2074-4bcc-bcb2-ed118f3b84df\",\"scheduleVersion\":2,\"occurredAt\":\"2026-10-20T18:24:25.096Z\",\"expiresAt\":\"2026-10-20T19:24:19.848Z\"}",
+              "state": "DONE",
+              "attempts": 2,
+              "output_attempts": 0,
+              "output": null,
+              "next_attempt_at": "2026-10-20T18:24:37.66+00:00",
+              "last_error": null
+            }
+          ]
+        },
+        "notifications": {
+          "status": 200,
+          "body": [
+            {
+              "id": "47e78e00-5c1b-425a-b351-4565652c6b48",
+              "event_id": "bc4a65aa-0c40-4779-a6cd-66e85cec0bbc",
+              "message": "La tarjeta \"MQ-E2E-20261020181439 ecda227e interrupcion-real-rpc\" vence el 2026-10-20T19:24:19Z.",
+              "created_at": "2026-10-20T18:24:38.171233+00:00"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "SCHEDULE-00a44acf-89f6-439e-aaa3-3f62c9d01e6d",
+      "title": "Programación por API con JWT",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:24:44.550Z",
+      "evidence": {
+        "request": {
+          "method": "PATCH",
+          "path": "/api/cards/00a44acf-89f6-439e-aaa3-3f62c9d01e6d/schedule",
+          "body": {
+            "expectedVersion": 1,
+            "dueAt": "2026-10-20T19:24:43.017Z",
+            "notifyAt": "2026-10-20T18:26:43.017Z",
+            "assigneeIds": []
+          }
+        },
+        "elapsedMs": 1533,
+        "status": 200,
+        "body": {
+          "card": {
+            "id": "00a44acf-89f6-439e-aaa3-3f62c9d01e6d",
+            "due_at": "2026-10-20T19:24:43.017+00:00",
+            "notify_at": "2026-10-20T18:26:43.017+00:00",
+            "assignee_ids": [],
+            "completed_at": null,
+            "schedule_version": 2
+          }
+        }
+      }
+    },
+    {
+      "id": "PUBLISHER-FAULT-PREPARE",
+      "title": "Payload de fixture con TTL vencido para provocar fallos reales de publicación",
+      "result": "PASS",
+      "kind": "LIVE_SQL_SCOPED_FAULT",
+      "at": "2026-10-20T18:24:51.372Z",
+      "evidence": {
+        "prepare": [
+          {
+            "event_id": "bf4e57cf-cda1-4e29-9ef7-34717e85beee"
+          }
+        ],
+        "payload": {
+          "schemaVersion": 1,
+          "eventId": "bf4e57cf-cda1-4e29-9ef7-34717e85beee",
+          "eventType": "TASK_REMINDER_DUE",
+          "reminderId": "ebf5e810-e897-494c-9e2d-0dc623c61bf8",
+          "cardId": "00a44acf-89f6-439e-aaa3-3f62c9d01e6d",
+          "workspaceId": "1f4af17f-2074-4bcc-bcb2-ed118f3b84df",
+          "scheduleVersion": 2,
+          "occurredAt": "2026-10-20T18:22:44.797Z",
+          "expiresAt": "2026-10-20T18:23:44.797Z"
+        },
+        "note": "No se inyecta FAILED ni attempts. El transporte de Vercel rechaza el TTL antes de enviar HTTP a IBM; no simula una caída del broker."
+      }
+    },
+    {
+      "id": "PUBLISHER-RETRY-22",
+      "title": "Intento del productor con vencimiento inválido",
+      "result": "PASS",
+      "kind": "LIVE_CLOUD_SCOPED_FAULT",
+      "at": "2026-10-20T18:24:56.272Z",
+      "evidence": {
+        "tick": {
+          "request": {
+            "method": "POST",
+            "path": "/api/mq/tick",
+            "body": {}
+          },
+          "elapsedMs": 4672,
+          "status": 502,
+          "body": {
+            "published": 0,
+            "captured": 0,
+            "worked": 0,
+            "errors": 1
+          }
+        },
+        "outbox": {
+          "status": 200,
+          "body": [
+            {
+              "event_id": "bf4e57cf-cda1-4e29-9ef7-34717e85beee",
+              "status": "PENDING",
+              "attempts": 1,
+              "last_error": "MQ_PUBLICATION_UNCONFIRMED",
+              "next_attempt_at": "2026-10-20T18:24:56.791938+00:00"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "PUBLISHER-RETRY-23",
+      "title": "Intento del productor con vencimiento inválido",
+      "result": "PASS",
+      "kind": "LIVE_CLOUD_SCOPED_FAULT",
+      "at": "2026-10-20T18:25:01.938Z",
+      "evidence": {
+        "tick": {
+          "request": {
+            "method": "POST",
+            "path": "/api/mq/tick",
+            "body": {}
+          },
+          "elapsedMs": 4413,
+          "status": 502,
+          "body": {
+            "published": 0,
+            "captured": 0,
+            "worked": 0,
+            "errors": 1
+          }
+        },
+        "outbox": {
+          "status": 200,
+          "body": [
+            {
+              "event_id": "bf4e57cf-cda1-4e29-9ef7-34717e85beee",
+              "status": "PENDING",
+              "attempts": 2,
+              "last_error": "MQ_PUBLICATION_UNCONFIRMED",
+              "next_attempt_at": "2026-10-20T18:25:07.704604+00:00"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "PUBLISHER-RETRY-24",
+      "title": "Intento del productor con vencimiento inválido",
+      "result": "PASS",
+      "kind": "LIVE_CLOUD_SCOPED_FAULT",
+      "at": "2026-10-20T18:25:13.032Z",
+      "evidence": {
+        "tick": {
+          "request": {
+            "method": "POST",
+            "path": "/api/mq/tick",
+            "body": {}
+          },
+          "elapsedMs": 4623,
+          "status": 502,
+          "body": {
+            "published": 0,
+            "captured": 0,
+            "worked": 0,
+            "errors": 1
+          }
+        },
+        "outbox": {
+          "status": 200,
+          "body": [
+            {
+              "event_id": "bf4e57cf-cda1-4e29-9ef7-34717e85beee",
+              "status": "PENDING",
+              "attempts": 3,
+              "last_error": "MQ_PUBLICATION_UNCONFIRMED",
+              "next_attempt_at": "2026-10-20T18:25:28.805705+00:00"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "PUBLISHER-RETRY-25",
+      "title": "Intento del productor con vencimiento inválido",
+      "result": "PASS",
+      "kind": "LIVE_CLOUD_SCOPED_FAULT",
+      "at": "2026-10-20T18:25:34.257Z",
+      "evidence": {
+        "tick": {
+          "request": {
+            "method": "POST",
+            "path": "/api/mq/tick",
+            "body": {}
+          },
+          "elapsedMs": 4743,
+          "status": 502,
+          "body": {
+            "published": 0,
+            "captured": 0,
+            "worked": 0,
+            "errors": 1
+          }
+        },
+        "outbox": {
+          "status": 200,
+          "body": [
+            {
+              "event_id": "bf4e57cf-cda1-4e29-9ef7-34717e85beee",
+              "status": "PENDING",
+              "attempts": 4,
+              "last_error": "MQ_PUBLICATION_UNCONFIRMED",
+              "next_attempt_at": "2026-10-20T18:26:09.946428+00:00"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "PUBLISHER-RETRY-26",
+      "title": "Intento del productor con vencimiento inválido",
+      "result": "PASS",
+      "kind": "LIVE_CLOUD_SCOPED_FAULT",
+      "at": "2026-10-20T18:25:58.978Z",
+      "evidence": {
+        "tick": {
+          "request": {
+            "method": "POST",
+            "path": "/api/mq/tick",
+            "body": {}
+          },
+          "elapsedMs": 4529,
+          "status": 200,
+          "body": {
+            "published": 0,
+            "captured": 0,
+            "worked": 0,
+            "errors": 0
+          }
+        },
+        "outbox": {
+          "status": 200,
+          "body": [
+            {
+              "event_id": "bf4e57cf-cda1-4e29-9ef7-34717e85beee",
+              "status": "PENDING",
+              "attempts": 4,
+              "last_error": "MQ_PUBLICATION_UNCONFIRMED",
+              "next_attempt_at": "2026-10-20T18:26:09.946428+00:00"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "PUBLISHER-RETRY-27",
+      "title": "Intento del productor con vencimiento inválido",
+      "result": "PASS",
+      "kind": "LIVE_CLOUD_SCOPED_FAULT",
+      "at": "2026-10-20T18:26:15.717Z",
+      "evidence": {
+        "tick": {
+          "request": {
+            "method": "POST",
+            "path": "/api/mq/tick",
+            "body": {}
+          },
+          "elapsedMs": 5065,
+          "status": 502,
+          "body": {
+            "published": 0,
+            "captured": 0,
+            "worked": 0,
+            "errors": 1
+          }
+        },
+        "outbox": {
+          "status": 200,
+          "body": [
+            {
+              "event_id": "bf4e57cf-cda1-4e29-9ef7-34717e85beee",
+              "status": "FAILED",
+              "attempts": 5,
+              "last_error": "MQ_PUBLICATION_UNCONFIRMED",
+              "next_attempt_at": "2026-10-20T18:27:31.16284+00:00"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "PUBLISHER-FIVE-FAILED",
+      "title": "Cinco intentos reales del productor alcanzan FAILED",
+      "result": "PASS",
+      "kind": "LIVE_CLOUD_SCOPED_FAULT",
+      "at": "2026-10-20T18:26:15.932Z",
+      "evidence": {
+        "status": 200,
+        "body": [
+          {
+            "event_id": "bf4e57cf-cda1-4e29-9ef7-34717e85beee",
+            "status": "FAILED",
+            "attempts": 5,
+            "last_error": "MQ_PUBLICATION_UNCONFIRMED"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ALERT-REAL-CHAIN",
+      "title": "Cron de mantenimiento genera la alerta después de cinco fallos",
+      "result": "PASS",
+      "kind": "LIVE_AUTOMATION",
+      "at": "2026-10-20T18:27:03.344Z",
+      "evidence": {
+        "outbox": {
+          "status": 200,
+          "body": [
+            {
+              "event_id": "bf4e57cf-cda1-4e29-9ef7-34717e85beee",
+              "status": "FAILED",
+              "attempts": 5,
+              "last_error": "MQ_PUBLICATION_UNCONFIRMED"
+            }
+          ]
+        },
+        "notifications": {
+          "status": 200,
+          "body": [
+            {
+              "id": "dfcb882f-9bae-4278-bc80-094f544f2307",
+              "event_id": "2ab94028-4e88-b77a-d26b-5de7506f9ce8",
+              "message": "No se pudo entregar un recordatorio tras agotar los reintentos. Solicita revisión al responsable del tablero.",
+              "created_at": "2026-10-20T18:27:00.037123+00:00"
+            }
+          ]
+        },
+        "note": "FAILED fue producido por los reintentos, no insertado manualmente."
+      }
+    },
+    {
+      "id": "ALERT-NO-DUPLICATE",
+      "title": "Nuevos ciclos conservan una alerta",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:27:08.565Z",
+      "evidence": {
+        "tick": {
+          "request": {
+            "method": "POST",
+            "path": "/api/mq/tick",
+            "body": {}
+          },
+          "elapsedMs": 4831,
+          "status": 200,
+          "body": {
+            "published": 0,
+            "captured": 0,
+            "worked": 0,
+            "errors": 0
+          }
+        },
+        "notifications": {
+          "status": 200,
+          "body": [
+            {
+              "id": "dfcb882f-9bae-4278-bc80-094f544f2307",
+              "event_id": "2ab94028-4e88-b77a-d26b-5de7506f9ce8",
+              "message": "No se pudo entregar un recordatorio tras agotar los reintentos. Solicita revisión al responsable del tablero.",
+              "created_at": "2026-10-20T18:27:00.037123+00:00"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "FAULT-CLEANUP",
+      "title": "Retirar todas las inyecciones temporales",
+      "result": "PASS",
+      "kind": "LIVE_CLOUD_SCOPED_FAULT",
+      "at": "2026-10-20T18:27:15.411Z",
+      "evidence": {
+        "prefix": "mq_e2e_deep_ecda227e"
+      }
+    },
+    {
+      "id": "CLEANUP-c78e0a88-9b33-4985-b5de-63a1e510cf8c",
+      "title": "Cancelar solo programación futura de ensayo",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:27:17.342Z",
+      "evidence": {
+        "request": {
+          "method": "PATCH",
+          "path": "/api/cards/c78e0a88-9b33-4985-b5de-63a1e510cf8c/schedule",
+          "body": {
+            "expectedVersion": 2,
+            "dueAt": null,
+            "notifyAt": null,
+            "assigneeIds": []
+          }
+        },
+        "elapsedMs": 1705,
+        "status": 200,
+        "body": {
+          "card": {
+            "id": "c78e0a88-9b33-4985-b5de-63a1e510cf8c",
+            "due_at": null,
+            "notify_at": null,
+            "assignee_ids": [],
+            "completed_at": null,
+            "schedule_version": 3
+          }
+        }
+      }
+    },
+    {
+      "id": "CLEANUP-447981e5-495a-46de-9763-71357a5682c6",
+      "title": "Cancelar solo programación futura de ensayo",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:27:18.847Z",
+      "evidence": {
+        "request": {
+          "method": "PATCH",
+          "path": "/api/cards/447981e5-495a-46de-9763-71357a5682c6/schedule",
+          "body": {
+            "expectedVersion": 2,
+            "dueAt": null,
+            "notifyAt": null,
+            "assigneeIds": []
+          }
+        },
+        "elapsedMs": 1322,
+        "status": 200,
+        "body": {
+          "card": {
+            "id": "447981e5-495a-46de-9763-71357a5682c6",
+            "due_at": null,
+            "notify_at": null,
+            "assignee_ids": [],
+            "completed_at": null,
+            "schedule_version": 3
+          }
+        }
+      }
+    },
+    {
+      "id": "CLEANUP-00a44acf-89f6-439e-aaa3-3f62c9d01e6d",
+      "title": "Cancelar solo programación futura de ensayo",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:27:20.304Z",
+      "evidence": {
+        "request": {
+          "method": "PATCH",
+          "path": "/api/cards/00a44acf-89f6-439e-aaa3-3f62c9d01e6d/schedule",
+          "body": {
+            "expectedVersion": 2,
+            "dueAt": null,
+            "notifyAt": null,
+            "assigneeIds": []
+          }
+        },
+        "elapsedMs": 1285,
+        "status": 200,
+        "body": {
+          "card": {
+            "id": "00a44acf-89f6-439e-aaa3-3f62c9d01e6d",
+            "due_at": null,
+            "notify_at": null,
+            "assignee_ids": [],
+            "completed_at": null,
+            "schedule_version": 3
+          }
+        }
+      }
+    },
+    {
+      "id": "DEEP-HEALTH",
+      "title": "Salud después de la ronda de fallos",
+      "result": "PASS",
+      "kind": "LIVE_SQL",
+      "at": "2026-10-20T18:27:20.489Z",
+      "evidence": {
+        "status": 200,
+        "body": {
+          "staleInbox": 0,
+          "quarantined": 13,
+          "pendingInbox": 0,
+          "deliveryRetries": 0,
+          "failedPublications": 0
+        }
+      }
+    }
+  ],
+  "createdCardIds": [
+    "c78e0a88-9b33-4985-b5de-63a1e510cf8c",
+    "447981e5-495a-46de-9763-71357a5682c6",
+    "00a44acf-89f6-439e-aaa3-3f62c9d01e6d"
+  ]
+}

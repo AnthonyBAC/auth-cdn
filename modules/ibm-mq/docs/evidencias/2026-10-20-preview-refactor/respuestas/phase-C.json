@@ -1,0 +1,727 @@
+{
+  "origin": "https://auth-pawu47st3-anthonys-projects-0d8acba7.vercel.app",
+  "runTag": "MQ-E2E-20261020181439",
+  "records": [
+    {
+      "id": "AUTH-PASSWORD",
+      "title": "Autenticación Supabase sin registrar tokens",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:16:47.769Z",
+      "evidence": {
+        "status": 200,
+        "projectHost": "vqeusrctsfqykzwwrucn.supabase.co"
+      }
+    },
+    {
+      "id": "AUTH-OWNER",
+      "title": "JWT válido en el nuevo preview",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:16:48.998Z",
+      "evidence": {
+        "request": {
+          "method": "GET",
+          "path": "/api/auth/session",
+          "body": null
+        },
+        "status": 200,
+        "body": {
+          "user": {
+            "id": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+            "email": "owner@example.com",
+            "name": "Demo Owner"
+          }
+        }
+      }
+    },
+    {
+      "id": "BROKER-PUBLISH-ACK",
+      "title": "Outbox confirmado tras publicación persistente",
+      "result": "PASS",
+      "kind": "LIVE_SQL",
+      "at": "2026-10-20T18:16:49.990Z",
+      "evidence": {
+        "status": 200,
+        "body": [
+          {
+            "event_id": "baa9427c-8199-4364-beb6-02299000ad5e",
+            "payload": {
+              "cardId": "781ea7cf-f469-44eb-9eeb-ffd32f244912",
+              "eventId": "baa9427c-8199-4364-beb6-02299000ad5e",
+              "eventType": "TASK_REMINDER_DUE",
+              "expiresAt": "2026-10-20T18:36:15.957Z",
+              "occurredAt": "2026-10-20T18:16:29.787Z",
+              "reminderId": "2438f624-0c7a-4a37-ab5a-f371bb625646",
+              "workspaceId": "1f4af17f-2074-4bcc-bcb2-ed118f3b84df",
+              "schemaVersion": 1,
+              "scheduleVersion": 2
+            },
+            "status": "PUBLISHED",
+            "published_at": "2026-10-20T18:16:30.548674+00:00",
+            "attempts": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "DUPLICATE-SEND",
+      "title": "Publicar duplicado con el mismo eventId",
+      "result": "PASS",
+      "kind": "LIVE_MQ",
+      "at": "2026-10-20T18:16:52.176Z",
+      "evidence": {
+        "request": {
+          "role": "producer",
+          "method": "POST",
+          "queue": "AUTHCDN.REMINDERS.Q",
+          "selector": {},
+          "body": {
+            "cardId": "781ea7cf-f469-44eb-9eeb-ffd32f244912",
+            "eventId": "baa9427c-8199-4364-beb6-02299000ad5e",
+            "eventType": "TASK_REMINDER_DUE",
+            "expiresAt": "2026-10-20T18:36:15.957Z",
+            "occurredAt": "2026-10-20T18:16:29.787Z",
+            "reminderId": "2438f624-0c7a-4a37-ab5a-f371bb625646",
+            "workspaceId": "1f4af17f-2074-4bcc-bcb2-ed118f3b84df",
+            "schemaVersion": 1,
+            "scheduleVersion": 2
+          }
+        },
+        "status": 201,
+        "body": "",
+        "metadata": {
+          "ibm-mq-md-messageId": "ID:414d51204155544843444e514d2020203736d56a21b32140"
+        }
+      }
+    },
+    {
+      "id": "BROKER-PERSISTENCE",
+      "title": "Mensaje de prueba visible y persistente antes de consumir",
+      "result": "PASS",
+      "kind": "LIVE_MQ",
+      "at": "2026-10-20T18:16:55.464Z",
+      "evidence": {
+        "request": {
+          "role": "consumer",
+          "method": "GET",
+          "queue": "AUTHCDN.REMINDERS.Q",
+          "selector": {
+            "id": "ID:414d51204155544843444e514d2020203736d56a21b32140"
+          },
+          "body": null
+        },
+        "status": 200,
+        "body": {
+          "cardId": "781ea7cf-f469-44eb-9eeb-ffd32f244912",
+          "eventId": "baa9427c-8199-4364-beb6-02299000ad5e",
+          "eventType": "TASK_REMINDER_DUE",
+          "expiresAt": "2026-10-20T18:36:15.957Z",
+          "occurredAt": "2026-10-20T18:16:29.787Z",
+          "reminderId": "2438f624-0c7a-4a37-ab5a-f371bb625646",
+          "workspaceId": "1f4af17f-2074-4bcc-bcb2-ed118f3b84df",
+          "schemaVersion": 1,
+          "scheduleVersion": 2
+        },
+        "metadata": {
+          "ibm-mq-md-messageId": "ID:414d51204155544843444e514d2020203736d56a21b32140",
+          "ibm-mq-md-persistence": "persistent",
+          "ibm-mq-md-expiry": "unlimited"
+        }
+      }
+    },
+    {
+      "id": "DUPLICATE-TICK",
+      "title": "Ciclo cloud de recuperación",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:17:00.839Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/mq/tick",
+          "body": {}
+        },
+        "status": 200,
+        "body": {
+          "published": 0,
+          "captured": 1,
+          "worked": 1,
+          "errors": 0
+        }
+      }
+    },
+    {
+      "id": "DUPLICATE-IDEMPOTENCY",
+      "title": "Duplicado consumido sin duplicar aviso",
+      "result": "PASS",
+      "kind": "LIVE_SQL",
+      "at": "2026-10-20T18:17:01.250Z",
+      "evidence": {
+        "inbox": {
+          "status": 200,
+          "body": [
+            {
+              "id": "9247b039-5e8f-4ac1-a0de-d9f07d12318a",
+              "queue_name": "AUTHCDN.REMINDERS.Q",
+              "message_id": "ID:414D51204155544843444E514D2020203736D56A21B32140",
+              "correlation_id": null,
+              "reply_to": null,
+              "body": "{\"cardId\":\"781ea7cf-f469-44eb-9eeb-ffd32f244912\",\"eventId\":\"baa9427c-8199-4364-beb6-02299000ad5e\",\"eventType\":\"TASK_REMINDER_DUE\",\"expiresAt\":\"2026-10-20T18:36:15.957Z\",\"occurredAt\":\"2026-10-20T18:16:29.787Z\",\"reminderId\":\"2438f624-0c7a-4a37-ab5a-f371bb625646\",\"workspaceId\":\"1f4af17f-2074-4bcc-bcb2-ed118f3b84df\",\"schemaVersion\":1,\"scheduleVersion\":2}",
+              "state": "DONE",
+              "attempts": 1,
+              "output_attempts": 0,
+              "output": null,
+              "next_attempt_at": "2026-10-20T18:16:56.031316+00:00",
+              "last_error": null
+            }
+          ]
+        },
+        "notifications": {
+          "status": 200,
+          "body": [
+            {
+              "id": "34416025-503d-47d6-9639-ac8f97c6abe5",
+              "event_id": "baa9427c-8199-4364-beb6-02299000ad5e",
+              "card_id": "781ea7cf-f469-44eb-9eeb-ffd32f244912",
+              "message": "La tarjeta \"MQ-E2E-20261020181439 normal\" vence el 2026-10-20T18:36:15Z."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "TTL-PUBLISH",
+      "title": "Publicar mensaje de ensayo con TTL de 1200 ms",
+      "result": "PASS",
+      "kind": "LIVE_MQ",
+      "at": "2026-10-20T18:17:02.480Z",
+      "evidence": {
+        "request": {
+          "role": "consumer",
+          "method": "POST",
+          "queue": "AUTHCDN.SUMMARY.REPLY.Q",
+          "selector": {
+            "expiry": 1200
+          },
+          "body": {
+            "testRun": "MQ-E2E-20261020181439",
+            "case": "broker-ttl"
+          }
+        },
+        "status": 201,
+        "body": "",
+        "metadata": {
+          "ibm-mq-md-messageId": "ID:414d51204155544843444e514d2020203736d56a18491e40"
+        }
+      }
+    },
+    {
+      "id": "TTL-EXPIRY",
+      "title": "IBM elimina por expiración un mensaje que nadie consume",
+      "result": "PASS",
+      "kind": "LIVE_MQ",
+      "at": "2026-10-20T18:17:05.087Z",
+      "evidence": {
+        "before": {
+          "request": {
+            "role": "producer",
+            "method": "GET",
+            "queue": "AUTHCDN.SUMMARY.REPLY.Q",
+            "selector": {
+              "id": "ID:414d51204155544843444e514d2020203736d56a18491e40"
+            },
+            "body": null
+          },
+          "status": 200,
+          "body": {
+            "testRun": "MQ-E2E-20261020181439",
+            "case": "broker-ttl"
+          },
+          "metadata": {
+            "ibm-mq-md-messageId": "ID:414d51204155544843444e514d2020203736d56a18491e40",
+            "ibm-mq-md-persistence": "persistent",
+            "ibm-mq-md-expiry": "500"
+          }
+        },
+        "after": {
+          "request": {
+            "role": "producer",
+            "method": "GET",
+            "queue": "AUTHCDN.SUMMARY.REPLY.Q",
+            "selector": {
+              "id": "ID:414d51204155544843444e514d2020203736d56a18491e40"
+            },
+            "body": null
+          },
+          "status": 204,
+          "body": "",
+          "metadata": {}
+        }
+      }
+    },
+    {
+      "id": "POISON-SEND-malformed",
+      "title": "Enviar ensayo malformed",
+      "result": "PASS",
+      "kind": "LIVE_MQ",
+      "at": "2026-10-20T18:17:05.352Z",
+      "evidence": {
+        "request": {
+          "role": "producer",
+          "method": "POST",
+          "queue": "AUTHCDN.REMINDERS.Q",
+          "selector": {},
+          "body": "{\"run\":\"MQ-E2E-20261020181439\",\"broken\":"
+        },
+        "status": 201,
+        "body": "",
+        "metadata": {
+          "ibm-mq-md-messageId": "ID:414d51204155544843444e514d2020203736d56a22b32140"
+        }
+      }
+    },
+    {
+      "id": "POISON-SEND-invalid-contract",
+      "title": "Enviar ensayo invalid-contract",
+      "result": "PASS",
+      "kind": "LIVE_MQ",
+      "at": "2026-10-20T18:17:05.604Z",
+      "evidence": {
+        "request": {
+          "role": "producer",
+          "method": "POST",
+          "queue": "AUTHCDN.REMINDERS.Q",
+          "selector": {},
+          "body": {
+            "schemaVersion": 999,
+            "testRun": "MQ-E2E-20261020181439"
+          }
+        },
+        "status": 201,
+        "body": "",
+        "metadata": {
+          "ibm-mq-md-messageId": "ID:414d51204155544843444e514d2020203736d56a19491e40"
+        }
+      }
+    },
+    {
+      "id": "POISON-SEND-permanent-mismatch",
+      "title": "Enviar ensayo permanent-mismatch",
+      "result": "PASS",
+      "kind": "LIVE_MQ",
+      "at": "2026-10-20T18:17:05.861Z",
+      "evidence": {
+        "request": {
+          "role": "producer",
+          "method": "POST",
+          "queue": "AUTHCDN.REMINDERS.Q",
+          "selector": {},
+          "body": {
+            "cardId": "781ea7cf-f469-44eb-9eeb-ffd32f244912",
+            "eventId": "baa9427c-8199-4364-beb6-02299000ad5e",
+            "eventType": "TASK_REMINDER_DUE",
+            "expiresAt": "2026-10-20T18:36:15.957Z",
+            "occurredAt": "2026-10-20T18:16:29.787Z",
+            "reminderId": "2438f624-0c7a-4a37-ab5a-f371bb625646",
+            "workspaceId": "7a9f7996-b421-47ac-b003-cc05acb10f7b",
+            "schemaVersion": 1,
+            "scheduleVersion": 2
+          }
+        },
+        "status": 201,
+        "body": "",
+        "metadata": {
+          "ibm-mq-md-messageId": "ID:414d51204155544843444e514d2020203736d56a23b32140"
+        }
+      }
+    },
+    {
+      "id": "REPLY-ALLOWLIST-SEND",
+      "title": "Solicitud con destino ReplyTo no permitido",
+      "result": "PASS",
+      "kind": "LIVE_MQ",
+      "at": "2026-10-20T18:17:06.112Z",
+      "evidence": {
+        "request": {
+          "role": "producer",
+          "method": "POST",
+          "queue": "AUTHCDN.SUMMARY.REQUEST.Q",
+          "selector": {
+            "replyTo": "E2E.UNTRUSTED.REPLY.Q",
+            "expiry": 60000
+          },
+          "body": {
+            "schemaVersion": 1,
+            "requestId": "09992ccc-ae7d-48b6-933d-6f6106e03188",
+            "boardId": "9dbe1264-eccd-4342-a7d8-3524727a333a",
+            "userId": "45e0ff79-940c-4230-bd97-bb9e0572e0f0",
+            "createdAt": "2026-10-20T18:17:05.864Z",
+            "expiresAt": "2026-10-20T18:18:05.864Z"
+          }
+        },
+        "status": 201,
+        "body": "",
+        "metadata": {
+          "ibm-mq-md-messageId": "ID:414d51204155544843444e514d2020203736d56a1a491e40"
+        }
+      }
+    },
+    {
+      "id": "POISON-TICK-1",
+      "title": "Ciclo cloud de recuperación",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:17:12.915Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/mq/tick",
+          "body": {}
+        },
+        "status": 200,
+        "body": {
+          "published": 0,
+          "captured": 4,
+          "worked": 4,
+          "errors": 0
+        }
+      }
+    },
+    {
+      "id": "POISON-TICK-2",
+      "title": "Ciclo cloud de recuperación",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:17:18.378Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/mq/tick",
+          "body": {}
+        },
+        "status": 200,
+        "body": {
+          "published": 0,
+          "captured": 0,
+          "worked": 0,
+          "errors": 0
+        }
+      }
+    },
+    {
+      "id": "BOQ-malformed",
+      "title": "Cuarentena de malformed",
+      "result": "PASS",
+      "kind": "LIVE_SQL",
+      "at": "2026-10-20T18:17:18.583Z",
+      "evidence": {
+        "status": 200,
+        "body": [
+          {
+            "id": "18dbf8d7-cb1d-4134-9888-5ebacd5d86ce",
+            "queue_name": "AUTHCDN.REMINDERS.Q",
+            "message_id": "ID:414D51204155544843444E514D2020203736D56A22B32140",
+            "correlation_id": null,
+            "reply_to": null,
+            "body": "{\"run\":\"MQ-E2E-20261020181439\",\"broken\":",
+            "state": "DONE",
+            "attempts": 1,
+            "output_attempts": 1,
+            "output": {
+              "body": "{\"schemaVersion\":1,\"type\":\"MQ_REST_QUARANTINE\",\"inboxId\":\"18dbf8d7-cb1d-4134-9888-5ebacd5d86ce\",\"sourceQueue\":\"AUTHCDN.REMINDERS.Q\",\"messageId\":\"ID:414D51204155544843444E514D2020203736D56A22B32140\",\"reason\":\"MALFORMED_JSON\",\"attempts\":1,\"originalBody\":\"{\\\"run\\\":\\\"MQ-E2E-20261020181439\\\",\\\"broken\\\":\"}",
+              "queue": "AUTHCDN.REMINDERS.BOQ",
+              "purpose": "QUARANTINE"
+            },
+            "next_attempt_at": "2026-10-20T18:17:06.65195+00:00",
+            "last_error": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "BOQ-invalid-contract",
+      "title": "Cuarentena de invalid-contract",
+      "result": "PASS",
+      "kind": "LIVE_SQL",
+      "at": "2026-10-20T18:17:19.032Z",
+      "evidence": {
+        "status": 200,
+        "body": [
+          {
+            "id": "79169929-376f-4e9b-b87e-3ed5abfdc81e",
+            "queue_name": "AUTHCDN.REMINDERS.Q",
+            "message_id": "ID:414D51204155544843444E514D2020203736D56A19491E40",
+            "correlation_id": null,
+            "reply_to": null,
+            "body": "{\"schemaVersion\":999,\"testRun\":\"MQ-E2E-20261020181439\"}",
+            "state": "DONE",
+            "attempts": 1,
+            "output_attempts": 1,
+            "output": {
+              "body": "{\"schemaVersion\":1,\"type\":\"MQ_REST_QUARANTINE\",\"inboxId\":\"79169929-376f-4e9b-b87e-3ed5abfdc81e\",\"sourceQueue\":\"AUTHCDN.REMINDERS.Q\",\"messageId\":\"ID:414D51204155544843444E514D2020203736D56A19491E40\",\"reason\":\"INVALID_REMINDER\",\"attempts\":1,\"originalBody\":\"{\\\"schemaVersion\\\":999,\\\"testRun\\\":\\\"MQ-E2E-20261020181439\\\"}\"}",
+              "queue": "AUTHCDN.REMINDERS.BOQ",
+              "purpose": "QUARANTINE"
+            },
+            "next_attempt_at": "2026-10-20T18:17:07.763451+00:00",
+            "last_error": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "BOQ-permanent-mismatch",
+      "title": "Cuarentena de permanent-mismatch",
+      "result": "PASS",
+      "kind": "LIVE_SQL",
+      "at": "2026-10-20T18:17:19.215Z",
+      "evidence": {
+        "status": 200,
+        "body": [
+          {
+            "id": "96319b8a-4ab5-4a45-a02d-17acab8503ff",
+            "queue_name": "AUTHCDN.REMINDERS.Q",
+            "message_id": "ID:414D51204155544843444E514D2020203736D56A23B32140",
+            "correlation_id": null,
+            "reply_to": null,
+            "body": "{\"cardId\":\"781ea7cf-f469-44eb-9eeb-ffd32f244912\",\"eventId\":\"baa9427c-8199-4364-beb6-02299000ad5e\",\"eventType\":\"TASK_REMINDER_DUE\",\"expiresAt\":\"2026-10-20T18:36:15.957Z\",\"occurredAt\":\"2026-10-20T18:16:29.787Z\",\"reminderId\":\"2438f624-0c7a-4a37-ab5a-f371bb625646\",\"workspaceId\":\"7a9f7996-b421-47ac-b003-cc05acb10f7b\",\"schemaVersion\":1,\"scheduleVersion\":2}",
+            "state": "DONE",
+            "attempts": 1,
+            "output_attempts": 1,
+            "output": {
+              "body": "{\"schemaVersion\":1,\"type\":\"MQ_REST_QUARANTINE\",\"inboxId\":\"96319b8a-4ab5-4a45-a02d-17acab8503ff\",\"sourceQueue\":\"AUTHCDN.REMINDERS.Q\",\"messageId\":\"ID:414D51204155544843444E514D2020203736D56A23B32140\",\"reason\":\"PERMANENT_ERROR\",\"attempts\":1,\"originalBody\":\"{\\\"cardId\\\":\\\"781ea7cf-f469-44eb-9eeb-ffd32f244912\\\",\\\"eventId\\\":\\\"baa9427c-8199-4364-beb6-02299000ad5e\\\",\\\"eventType\\\":\\\"TASK_REMINDER_DUE\\\",\\\"expiresAt\\\":\\\"2026-10-20T18:36:15.957Z\\\",\\\"occurredAt\\\":\\\"2026-10-20T18:16:29.787Z\\\",\\\"reminderId\\\":\\\"2438f624-0c7a-4a37-ab5a-f371bb625646\\\",\\\"workspaceId\\\":\\\"7a9f7996-b421-47ac-b003-cc05acb10f7b\\\",\\\"schemaVersion\\\":1,\\\"scheduleVersion\\\":2}\"}",
+              "queue": "AUTHCDN.REMINDERS.BOQ",
+              "purpose": "QUARANTINE"
+            },
+            "next_attempt_at": "2026-10-20T18:17:08.536793+00:00",
+            "last_error": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "BOQ-invalid-reply-destination",
+      "title": "Cuarentena de invalid-reply-destination",
+      "result": "PASS",
+      "kind": "LIVE_SQL",
+      "at": "2026-10-20T18:17:19.411Z",
+      "evidence": {
+        "status": 200,
+        "body": [
+          {
+            "id": "6384fb61-86a8-4451-8b97-df91410d62bd",
+            "queue_name": "AUTHCDN.SUMMARY.REQUEST.Q",
+            "message_id": "ID:414D51204155544843444E514D2020203736D56A1A491E40",
+            "correlation_id": null,
+            "reply_to": "E2E.UNTRUSTED.REPLY.Q@AUTHCDNQM",
+            "body": "{\"schemaVersion\":1,\"requestId\":\"09992ccc-ae7d-48b6-933d-6f6106e03188\",\"boardId\":\"9dbe1264-eccd-4342-a7d8-3524727a333a\",\"userId\":\"45e0ff79-940c-4230-bd97-bb9e0572e0f0\",\"createdAt\":\"2026-10-20T18:17:05.864Z\",\"expiresAt\":\"2026-10-20T18:18:05.864Z\"}",
+            "state": "DONE",
+            "attempts": 1,
+            "output_attempts": 1,
+            "output": {
+              "body": "{\"schemaVersion\":1,\"type\":\"MQ_REST_QUARANTINE\",\"inboxId\":\"6384fb61-86a8-4451-8b97-df91410d62bd\",\"sourceQueue\":\"AUTHCDN.SUMMARY.REQUEST.Q\",\"messageId\":\"ID:414D51204155544843444E514D2020203736D56A1A491E40\",\"reason\":\"INVALID_REPLY_DESTINATION\",\"attempts\":1,\"originalBody\":\"{\\\"schemaVersion\\\":1,\\\"requestId\\\":\\\"09992ccc-ae7d-48b6-933d-6f6106e03188\\\",\\\"boardId\\\":\\\"9dbe1264-eccd-4342-a7d8-3524727a333a\\\",\\\"userId\\\":\\\"45e0ff79-940c-4230-bd97-bb9e0572e0f0\\\",\\\"createdAt\\\":\\\"2026-10-20T18:17:05.864Z\\\",\\\"expiresAt\\\":\\\"2026-10-20T18:18:05.864Z\\\"}\"}",
+              "queue": "AUTHCDN.REMINDERS.BOQ",
+              "purpose": "QUARANTINE"
+            },
+            "next_attempt_at": "2026-10-20T18:17:06.912768+00:00",
+            "last_error": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "RECOVERY-CAPTURE",
+      "title": "Persistir antes de retirada y pausar antes del procesamiento",
+      "result": "PASS",
+      "kind": "LIVE_HANDOFF",
+      "at": "2026-10-20T18:17:22.089Z",
+      "evidence": {
+        "read": {
+          "request": {
+            "role": "consumer",
+            "method": "GET",
+            "queue": "AUTHCDN.REMINDERS.Q",
+            "selector": {
+              "id": "ID:414d51204155544843444e514d2020203736d56a27b32140"
+            },
+            "body": null
+          },
+          "status": 200,
+          "body": {
+            "cardId": "781ea7cf-f469-44eb-9eeb-ffd32f244912",
+            "eventId": "baa9427c-8199-4364-beb6-02299000ad5e",
+            "eventType": "TASK_REMINDER_DUE",
+            "expiresAt": "2026-10-20T18:36:15.957Z",
+            "occurredAt": "2026-10-20T18:16:29.787Z",
+            "reminderId": "2438f624-0c7a-4a37-ab5a-f371bb625646",
+            "workspaceId": "1f4af17f-2074-4bcc-bcb2-ed118f3b84df",
+            "schemaVersion": 1,
+            "scheduleVersion": 2
+          },
+          "metadata": {
+            "ibm-mq-md-messageId": "ID:414d51204155544843444e514d2020203736d56a27b32140",
+            "ibm-mq-md-persistence": "persistent",
+            "ibm-mq-md-expiry": "unlimited"
+          }
+        },
+        "captured": {
+          "status": 200,
+          "body": "dec50db5-874b-465c-af5f-bf1d2d012cc8"
+        }
+      }
+    },
+    {
+      "id": "RECOVERY-INTERRUPTION",
+      "title": "Mensaje ya retirado de MQ, payload sigue PENDING en Supabase",
+      "result": "PASS",
+      "kind": "LIVE_HANDOFF",
+      "at": "2026-10-20T18:17:22.978Z",
+      "evidence": {
+        "removed": {
+          "request": {
+            "role": "consumer",
+            "method": "DELETE",
+            "queue": "AUTHCDN.REMINDERS.Q",
+            "selector": {
+              "id": "ID:414d51204155544843444e514d2020203736d56a27b32140"
+            },
+            "body": null
+          },
+          "status": 200,
+          "body": {
+            "cardId": "781ea7cf-f469-44eb-9eeb-ffd32f244912",
+            "eventId": "baa9427c-8199-4364-beb6-02299000ad5e",
+            "eventType": "TASK_REMINDER_DUE",
+            "expiresAt": "2026-10-20T18:36:15.957Z",
+            "occurredAt": "2026-10-20T18:16:29.787Z",
+            "reminderId": "2438f624-0c7a-4a37-ab5a-f371bb625646",
+            "workspaceId": "1f4af17f-2074-4bcc-bcb2-ed118f3b84df",
+            "schemaVersion": 1,
+            "scheduleVersion": 2
+          },
+          "metadata": {
+            "ibm-mq-md-messageId": "ID:414d51204155544843444e514d2020203736d56a27b32140",
+            "ibm-mq-md-persistence": "persistent",
+            "ibm-mq-md-expiry": "unlimited"
+          }
+        },
+        "pending": {
+          "status": 200,
+          "body": [
+            {
+              "id": "dec50db5-874b-465c-af5f-bf1d2d012cc8",
+              "queue_name": "AUTHCDN.REMINDERS.Q",
+              "message_id": "ID:414d51204155544843444e514d2020203736d56a27b32140",
+              "correlation_id": null,
+              "reply_to": null,
+              "body": "{\"cardId\":\"781ea7cf-f469-44eb-9eeb-ffd32f244912\",\"eventId\":\"baa9427c-8199-4364-beb6-02299000ad5e\",\"eventType\":\"TASK_REMINDER_DUE\",\"expiresAt\":\"2026-10-20T18:36:15.957Z\",\"occurredAt\":\"2026-10-20T18:16:29.787Z\",\"reminderId\":\"2438f624-0c7a-4a37-ab5a-f371bb625646\",\"workspaceId\":\"1f4af17f-2074-4bcc-bcb2-ed118f3b84df\",\"schemaVersion\":1,\"scheduleVersion\":2}",
+              "state": "PENDING",
+              "attempts": 0,
+              "output_attempts": 0,
+              "output": null,
+              "next_attempt_at": "2026-10-20T18:19:22.091+00:00",
+              "last_error": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "RECOVERY-TICK",
+      "title": "Ciclo cloud de recuperación",
+      "result": "PASS",
+      "kind": "LIVE_APP",
+      "at": "2026-10-20T18:17:28.426Z",
+      "evidence": {
+        "request": {
+          "method": "POST",
+          "path": "/api/mq/tick",
+          "body": {}
+        },
+        "status": 200,
+        "body": {
+          "published": 0,
+          "captured": 0,
+          "worked": 1,
+          "errors": 0
+        }
+      }
+    },
+    {
+      "id": "RECOVERY-RESUME",
+      "title": "Vercel recupera el mensaje persistido y conserva un aviso",
+      "result": "PASS",
+      "kind": "LIVE_HANDOFF",
+      "at": "2026-10-20T18:17:28.848Z",
+      "evidence": {
+        "inbox": {
+          "status": 200,
+          "body": [
+            {
+              "id": "dec50db5-874b-465c-af5f-bf1d2d012cc8",
+              "queue_name": "AUTHCDN.REMINDERS.Q",
+              "message_id": "ID:414d51204155544843444e514d2020203736d56a27b32140",
+              "correlation_id": null,
+              "reply_to": null,
+              "body": "{\"cardId\":\"781ea7cf-f469-44eb-9eeb-ffd32f244912\",\"eventId\":\"baa9427c-8199-4364-beb6-02299000ad5e\",\"eventType\":\"TASK_REMINDER_DUE\",\"expiresAt\":\"2026-10-20T18:36:15.957Z\",\"occurredAt\":\"2026-10-20T18:16:29.787Z\",\"reminderId\":\"2438f624-0c7a-4a37-ab5a-f371bb625646\",\"workspaceId\":\"1f4af17f-2074-4bcc-bcb2-ed118f3b84df\",\"schemaVersion\":1,\"scheduleVersion\":2}",
+              "state": "DONE",
+              "attempts": 1,
+              "output_attempts": 0,
+              "output": null,
+              "next_attempt_at": "2026-10-20T18:17:21.98+00:00",
+              "last_error": null
+            }
+          ]
+        },
+        "notifications": {
+          "status": 200,
+          "body": [
+            {
+              "id": "34416025-503d-47d6-9639-ac8f97c6abe5",
+              "event_id": "baa9427c-8199-4364-beb6-02299000ad5e",
+              "card_id": "781ea7cf-f469-44eb-9eeb-ffd32f244912"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "RECOVERY-BROKER-EMPTY",
+      "title": "El MsgId recuperado ya no está en IBM MQ",
+      "result": "PASS",
+      "kind": "LIVE_MQ",
+      "at": "2026-10-20T18:17:31.192Z",
+      "evidence": {
+        "request": {
+          "role": "consumer",
+          "method": "GET",
+          "queue": "AUTHCDN.REMINDERS.Q",
+          "selector": {
+            "id": "ID:414d51204155544843444e514d2020203736d56a27b32140"
+          },
+          "body": null
+        },
+        "status": 204,
+        "body": "",
+        "metadata": {}
+      }
+    },
+    {
+      "id": "OPS-HEALTH",
+      "title": "Diagnóstico de pendientes y cuarentenas",
+      "result": "PASS",
+      "kind": "LIVE_SQL",
+      "at": "2026-10-20T18:17:31.388Z",
+      "evidence": {
+        "status": 200,
+        "body": {
+          "staleInbox": 0,
+          "quarantined": 11,
+          "pendingInbox": 0,
+          "deliveryRetries": 0,
+          "failedPublications": 0
+        }
+      }
+    }
+  ]
+}

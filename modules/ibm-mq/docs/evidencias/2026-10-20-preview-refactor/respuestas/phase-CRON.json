@@ -1,0 +1,139 @@
+{
+  "origin": "https://auth-pawu47st3-anthonys-projects-0d8acba7.vercel.app",
+  "job": "authcdn-mq-refactor-e2e-20261020181439",
+  "table": "mq_e2e_cron_20261020181439",
+  "records": [
+    {
+      "id": "CRON-SCHEDULE",
+      "title": "Ensayo cloud temporal hacia el nuevo despliegue, sin cambiar los trabajos permanentes",
+      "result": "PASS",
+      "kind": "LIVE_SCOPED_CRON",
+      "at": "2026-10-20T18:28:01.903Z",
+      "evidence": {
+        "before": {
+          "existingJob": 0,
+          "existingTable": false,
+          "existingVault": 0,
+          "permanentJobs": [
+            {
+              "active": true,
+              "name": "authcdn-mq-rest-minute",
+              "schedule": "* * * * *"
+            },
+            {
+              "active": true,
+              "name": "authcdn-mq-maintenance",
+              "schedule": "* * * * *"
+            }
+          ]
+        },
+        "autoStopMinutes": 3,
+        "configuredAt": "2026-10-20T18:28:00.148563+00:00",
+        "delayAfterMinuteSeconds": 15,
+        "jobs": [
+          {
+            "active": true,
+            "jobid": 4,
+            "name": "authcdn-mq-refactor-e2e-20261020181439",
+            "schedule": "* * * * *"
+          }
+        ],
+        "target": "https://auth-pawu47st3-anthonys-projects-0d8acba7.vercel.app"
+      }
+    },
+    {
+      "id": "CRON-OBSERVE-1",
+      "title": "Respuestas de las peticiones identificadas del Cron temporal al nuevo preview",
+      "result": "PASS",
+      "kind": "LIVE_SCOPED_CRON",
+      "at": "2026-10-20T18:30:18.885Z",
+      "evidence": {
+        "calls": [
+          {
+            "body": "{\"published\":0,\"captured\":0,\"worked\":0,\"errors\":0}",
+            "created": "2026-10-20T18:29:15.055924+00:00",
+            "error": null,
+            "requestId": 1026,
+            "status": 200,
+            "target": "https://auth-pawu47st3-anthonys-projects-0d8acba7.vercel.app",
+            "timedOut": false
+          },
+          {
+            "body": null,
+            "created": "2026-10-20T18:30:15.057565+00:00",
+            "error": null,
+            "requestId": 1028,
+            "status": null,
+            "target": "https://auth-pawu47st3-anthonys-projects-0d8acba7.vercel.app",
+            "timedOut": null
+          }
+        ],
+        "jobs": [
+          {
+            "active": true,
+            "name": "authcdn-mq-refactor-e2e-20261020181439"
+          }
+        ],
+        "permanentJobs": [
+          {
+            "active": true,
+            "name": "authcdn-mq-rest-minute"
+          },
+          {
+            "active": true,
+            "name": "authcdn-mq-maintenance"
+          }
+        ]
+      }
+    },
+    {
+      "id": "CRON-STOP",
+      "title": "Retirar solo la programación temporal, sus dos secretos y la tabla de trazabilidad",
+      "result": "PASS",
+      "kind": "LIVE_SCOPED_CRON",
+      "at": "2026-10-20T18:32:03.770Z",
+      "evidence": {
+        "calls": [
+          {
+            "body": "{\"published\":0,\"captured\":0,\"worked\":0,\"errors\":0}",
+            "created": "2026-10-20T18:29:15.055924+00:00",
+            "requestId": 1026,
+            "status": 200,
+            "target": "https://auth-pawu47st3-anthonys-projects-0d8acba7.vercel.app",
+            "timedOut": false
+          },
+          {
+            "body": "{\"published\":1,\"captured\":1,\"worked\":1,\"errors\":0}",
+            "created": "2026-10-20T18:30:15.057565+00:00",
+            "requestId": 1028,
+            "status": 200,
+            "target": "https://auth-pawu47st3-anthonys-projects-0d8acba7.vercel.app",
+            "timedOut": false
+          },
+          {
+            "body": "{\"published\":0,\"captured\":0,\"worked\":1,\"errors\":0}",
+            "created": "2026-10-20T18:31:15.060003+00:00",
+            "requestId": 1030,
+            "status": 200,
+            "target": "https://auth-pawu47st3-anthonys-projects-0d8acba7.vercel.app",
+            "timedOut": false
+          }
+        ],
+        "permanentJobs": [
+          {
+            "active": true,
+            "name": "authcdn-mq-rest-minute"
+          },
+          {
+            "active": true,
+            "name": "authcdn-mq-maintenance"
+          }
+        ],
+        "remainingJob": 0,
+        "remainingSecrets": 0,
+        "remainingTable": false
+      }
+    }
+  ],
+  "startedAt": "2026-10-20T18:28:01.902Z"
+}
