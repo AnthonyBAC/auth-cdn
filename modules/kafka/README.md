@@ -19,18 +19,17 @@ El tablero publica `CARD_MOVED` cuando Supabase confirma una solicitud de movimi
    docker compose -f compose.kafka.yml logs -f kafka-consumer
    ```
 
-4. En el tablero, mueve una tarjeta a otra lista con un usuario `owner` o `editor`. Desde otra sesión, abre **Dashboard** con la cuenta administradora y observa el contador global y el detalle del tablero.
+4. En el tablero, mueve una tarjeta a otra lista con un usuario `owner` o `editor`. Desde otra sesión, abre **Dashboard** con la cuenta administradora y observa cómo cambia la cantidad de tarjetas en la lista de origen y la lista destino.
 5. Para comprobar la recuperación, detén solo el consumidor con `docker compose -f compose.kafka.yml stop kafka-consumer`, mueve otra tarjeta y vuelve a iniciarlo con `docker compose -f compose.kafka.yml start kafka-consumer`. El mismo grupo reanuda el consumo según su offset confirmado.
 
 El servicio `kafka-init` crea el topic `auth-cdn.card-events.v1` con una partición y una réplica. Sale con código 0 al completar su trabajo. `kafka` y `kafka-consumer` quedan en ejecución. El broker publica el puerto 9092 solo en el equipo local. El volumen del broker conserva los registros y offsets al ejecutar `docker compose -f compose.kafka.yml down`.
 
 ## Métricas en tiempo real
 
-El dashboard `/admin/activity` consulta la actividad cada dos segundos. Solo aparece para cuentas cuyo `app_metadata.activity_admin` es `true` en Supabase Auth. Next.js comprueba ese permiso también en `/api/admin/activity`.
+El dashboard `/admin/activity` muestra las tarjetas actuales de Supabase por tablero y lista, con actualización cada dos segundos. Solo aparece para cuentas cuyo `app_metadata.activity_admin` es `true` en Supabase Auth.
 
-El consumidor requiere el token privado `KAFKA_METRICS_TOKEN` en el encabezado Authorization de cada solicitud a `/metrics`. Next.js usa `KAFKA_METRICS_URL` cuando el consumidor está en una dirección distinta de la local.
+El consumidor de Kafka registra cada `CARD_MOVED` en la terminal. Su endpoint técnico `/metrics` requiere el token privado `KAFKA_METRICS_TOKEN` en el encabezado Authorization y devuelve contadores históricos de movimientos.
 
-El dashboard muestra el total de movimientos y el total del último minuto, tanto globales como por tablero. Al seleccionar un tablero muestra el acumulado por lista destino. La ventana de 60 segundos usa la hora del evento.
 El consumidor mantiene los totales y los offsets procesados en el volumen `kafka-metrics`. El grupo `auth-cdn-board-metrics-v1` toma el historial disponible en el topic durante su primera ejecución. Al reiniciar, restaura el acumulado y descarta offsets ya contabilizados.
 
 ## Contrato y entrega

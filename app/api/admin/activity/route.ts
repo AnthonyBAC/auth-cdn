@@ -1,75 +1,54 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
-import { z } from "zod";
 
 import { apiError } from "@/lib/api/errors";
 import { isActivityAdmin } from "@/lib/auth/activity-admin";
 import { requireUser } from "@/lib/auth/require-user";
-
-import { getActivityMetricsConfig } from "@/modules/kafka/activity-config";
-
-const movementCount = z.number().int().nonnegative();
-const totals = { totalMovements: movementCount, movementsLastMinute: movementCount };
-const metricsSchema = z.object({
-  generatedAt: z.string().datetime(),
-  ...totals,
-  boards: z.array(z.object({
-    boardId: z.string().uuid(),
-    ...totals,
-    byDestinationList: z.record(z.string().uuid(), movementCount)
-  }))
-});
-
-function batches(ids: string[]) {
-  return Array.from({ length: Math.ceil(ids.length / 100) }, (_, index) => ids.slice(index * 100, (index + 1) * 100));
-}
 
 export async function GET() {
   const session = await requireUser();
   if (session.error) return session.error;
   if (!isActivityAdmin(session.user)) return apiError("FORBIDDEN", "El dashboard requiere acceso administrativo.");
 
-  const config = getActivityMetricsConfig();
-  if (!config.enabled) return apiError("SERVICE_UNAVAILABLE", config.message);
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !serviceKey) return apiError("SERVICE_UNAVAILABLE", "Falta configurar el acceso a Supabase.");
 
-  try {
-    const response = await fetch(config.url, {
-      cache: "no-store",
-      headers: { Authorization: `Bearer ${config.token}` },
-      signal: AbortSignal.timeout(1_500)
-    });
-    if (!response.ok) return apiError("BAD_GATEWAY", "Las métricas no están disponibles.");
+  const db = createClient(url, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false }
+  });
+  const pageSize = 100;
+  const boards = [];
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await db.from("boards")
+      .select("id,title,workspaces!inner(archived_at),lists(id,title,position,cards(count))")
+      .is("archived_at", null)
+      .is("workspaces.archived_at", null)
+      .is("lists.archived_at", null)
+      .is("lists.cards.archived_at", null)
+      .order("id")
+      .order("position", { referencedTable: "lists" })
+      .range(offset, offset + pageSize - 1);
 
-    const snapshot = metricsSchema.parse(await response.json());
-    // Resolve display names across workspaces only after verifying the administrative role.
-    const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
-      auth: { persistSession: false, autoRefreshToken: false }
-    });
-    const boardIds = snapshot.boards.map((board) => board.boardId);
-    const listIds = [...new Set(snapshot.boards.flatMap((board) => Object.keys(board.byDestinationList)))];
-    const [boards, lists] = await Promise.all([
-      Promise.all(batches(boardIds).map((ids) => db.from("boards").select("id,title").in("id", ids))),
-      Promise.all(batches(listIds).map((ids) => db.from("lists").select("id,title,board_id").in("id", ids)))
-    ]);
-    if ([...boards, ...lists].some((entry) => entry.error)) {
-      return apiError("BAD_GATEWAY", "No se pudieron consultar los nombres de los tableros y listas.");
+    if (error) return apiError("BAD_GATEWAY", "No se pudo consultar el conteo de tarjetas.");
+
+    for (const board of data) {
+      const lists = board.lists.map((list) => ({
+        id: list.id, title: list.title, count: list.cards[0]?.count ?? 0
+      }));
+      boards.push({
+        boardId: board.id,
+        title: board.title,
+        totalCards: lists.reduce((total, list) => total + list.count, 0),
+        lists
+      });
     }
-
-    const boardNames = new Map(boards.flatMap(({ data }) => (data ?? []).map((board) => [board.id, board.title])));
-    const listNames = new Map(lists.flatMap(({ data }) => (data ?? []).map((list) => [list.id, list])));
-    return NextResponse.json({
-      ...snapshot,
-      boards: snapshot.boards.map(({ boardId, byDestinationList, ...activity }) => ({
-        ...activity,
-        boardId,
-        title: boardNames.get(boardId) ?? "Tablero histórico",
-        lists: Object.entries(byDestinationList).map(([id, count]) => {
-          const list = listNames.get(id);
-          return { id, count, title: list?.board_id === boardId ? list.title : "Lista histórica" };
-        })
-      }))
-    }, { headers: { "Cache-Control": "private, no-store" } });
-  } catch {
-    return apiError("BAD_GATEWAY", "Las métricas no están disponibles.");
+    if (data.length < pageSize) break;
   }
+
+  return NextResponse.json({
+    generatedAt: new Date().toISOString(),
+    totalCards: boards.reduce((total, board) => total + board.totalCards, 0),
+    boards
+  }, { headers: { "Cache-Control": "private, no-store" } });
 }

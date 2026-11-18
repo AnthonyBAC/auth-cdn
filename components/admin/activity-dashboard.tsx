@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import styles from "./activity-dashboard.module.css";
 
 type Row = { id: string; title: string; count: number };
-type Totals = { totalMovements: number; movementsLastMinute: number };
+type Totals = { totalCards: number };
 type Board = Totals & { boardId: string; title: string; lists: Row[] };
 type Activity = Totals & { generatedAt: string; boards: Board[] };
 
@@ -55,7 +55,7 @@ export function ActivityDashboard() {
   const board = activity?.boards.find((entry) => entry.boardId === boardId);
   const totals = board ?? activity;
   const rows = board?.lists ?? activity?.boards.map((entry) => ({
-    id: entry.boardId, title: entry.title, count: entry.totalMovements
+    id: entry.boardId, title: entry.title, count: entry.totalCards
   })) ?? [];
   const largestCount = rows.reduce((largest, row) => Math.max(largest, row.count), 1);
   const statusLabel = { live: "En vivo", offline: "Conexión interrumpida. Reintentando…", loading: "Conectando…" }[status];
@@ -63,7 +63,7 @@ export function ActivityDashboard() {
   return (
     <section className={`panel ${styles.activity}`} aria-labelledby="activity-heading">
       <header className={styles.header}>
-        <h2 id="activity-heading">Actividad en tiempo real</h2>
+        <h2 id="activity-heading">Tarjetas actuales</h2>
         <p role="status" className={styles.status} data-offline={status === "offline"}>{statusLabel}</p>
       </header>
       <label className={styles.filter}>
@@ -77,17 +77,13 @@ export function ActivityDashboard() {
       <div className={styles.content}>
         <dl className={styles.stats}>
           <div className={styles.primary}>
-            <dt>Movimientos en el último minuto</dt>
-            <dd>{totals ? numberFormat.format(totals.movementsLastMinute) : "—"}</dd>
-          </div>
-          <div className={styles.secondary}>
-            <dt>Total acumulado</dt>
-            <dd>{totals ? numberFormat.format(totals.totalMovements) : "—"}</dd>
+            <dt>Total de tarjetas</dt>
+            <dd>{totals ? numberFormat.format(totals.totalCards) : "—"}</dd>
           </div>
         </dl>
 
         <div className={styles.distribution}>
-          <h3>{board ? "Movimientos por lista de destino" : "Movimientos por tablero"}</h3>
+          <h3>{board ? "Tarjetas por lista" : "Tarjetas por tablero"}</h3>
           {rows.length > 0 ? (
             <ul className={styles.bars}>
               {rows.map(({ id, title, count }) => (
@@ -100,7 +96,7 @@ export function ActivityDashboard() {
                 </li>
               ))}
             </ul>
-          ) : <p className={styles.empty}>{activity ? "Aún no hay movimientos registrados." : "Sin datos de actividad."}</p>}
+          ) : <p className={styles.empty}>{activity ? "Aún no hay tableros activos." : "Sin datos de tarjetas."}</p>}
         </div>
       </div>
 
